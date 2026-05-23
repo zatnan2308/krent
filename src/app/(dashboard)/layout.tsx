@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { listRecentNotificationsForBell } from "@/features/notifications/queries-bell";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants/routes";
+import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 
 // Зависит от сессии и активной организации — всегда динамический рендер.
@@ -48,11 +50,40 @@ export default async function DashboardGroupLayout({
     );
   }
 
+  const meta = (context.user.user_metadata ?? {}) as Record<string, unknown>;
+  const userName =
+    typeof meta.full_name === "string" && meta.full_name.trim().length > 0
+      ? meta.full_name
+      : null;
+  const avatarUrl =
+    typeof meta.avatar_url === "string" && meta.avatar_url.trim().length > 0
+      ? meta.avatar_url
+      : null;
+
+  // Public site URL — резолвим verified primary domain организации.
+  const admin = createAdminClient();
+  const { data: primary } = await admin
+    .from("domains")
+    .select("domain")
+    .eq("organization_id", context.organization.id)
+    .eq("status", "verified")
+    .eq("type", "primary")
+    .maybeSingle();
+  const publicSiteUrl = primary?.domain ? `https://${primary.domain}` : null;
+
+  const notifications = await listRecentNotificationsForBell(
+    context.organization.id,
+  );
+
   return (
     <DashboardLayout
       organizations={context.organizations}
       activeOrganizationId={context.organization.id}
       userEmail={context.user.email ?? ""}
+      userName={userName}
+      avatarUrl={avatarUrl}
+      notifications={notifications}
+      publicSiteUrl={publicSiteUrl}
     >
       {children}
     </DashboardLayout>

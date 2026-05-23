@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import type { NotificationItem } from "@/components/layout/notifications-bell";
 import type { OrganizationSummary } from "@/server/organization-context";
 
 interface AppShellProps {
@@ -12,6 +13,10 @@ interface AppShellProps {
   organizations: OrganizationSummary[];
   activeOrganizationId: string;
   userEmail: string;
+  userName?: string | null;
+  avatarUrl?: string | null;
+  notifications?: NotificationItem[];
+  publicSiteUrl?: string | null;
   children: React.ReactNode;
 }
 
@@ -24,6 +29,10 @@ export function AppShell({
   organizations,
   activeOrganizationId,
   userEmail,
+  userName,
+  avatarUrl,
+  notifications,
+  publicSiteUrl,
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -60,6 +69,10 @@ export function AppShell({
           organizations={organizations}
           activeOrganizationId={activeOrganizationId}
           userEmail={userEmail}
+          userName={userName}
+          avatarUrl={avatarUrl}
+          notifications={notifications}
+          publicSiteUrl={publicSiteUrl}
           onMenuClick={() => setMobileOpen(true)}
         />
         <main className="flex-1 bg-muted/30 p-4 lg:p-6">{children}</main>

@@ -1,17 +1,24 @@
 "use client";
 
-import { Bell, LogOut, Menu, User } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, LogOut, Menu, User } from "lucide-react";
 
+import {
+  NotificationsBell,
+  type NotificationItem,
+} from "@/components/layout/notifications-bell";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { Button } from "@/components/ui/button";
 import {
   Dropdown,
   DropdownContent,
+  DropdownItem,
   DropdownLabel,
   DropdownSeparator,
   DropdownTrigger,
 } from "@/components/ui/dropdown";
 import { signOut } from "@/features/auth/actions";
+import { ROUTES } from "@/lib/constants/routes";
 import type { OrganizationSummary } from "@/server/organization-context";
 
 interface AppTopbarProps {
@@ -19,6 +26,10 @@ interface AppTopbarProps {
   organizations: OrganizationSummary[];
   activeOrganizationId: string;
   userEmail: string;
+  userName?: string | null;
+  avatarUrl?: string | null;
+  notifications?: NotificationItem[];
+  publicSiteUrl?: string | null;
   onMenuClick: () => void;
 }
 
@@ -27,6 +38,10 @@ export function AppTopbar({
   organizations,
   activeOrganizationId,
   userEmail,
+  userName,
+  avatarUrl,
+  notifications,
+  publicSiteUrl,
   onMenuClick,
 }: AppTopbarProps) {
   return (
@@ -53,19 +68,42 @@ export function AppTopbar({
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-5 w-5" />
-        </Button>
+        {publicSiteUrl ? (
+          <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+            <a href={publicSiteUrl} target="_blank" rel="noreferrer">
+              <ExternalLink className="mr-1.5 h-4 w-4" /> View site
+            </a>
+          </Button>
+        ) : null}
+        <NotificationsBell items={notifications ?? []} />
         <Dropdown>
           <DropdownTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Account">
-              <User className="h-5 w-5" />
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={userName ?? userEmail}
+                  className="h-7 w-7 rounded-full object-cover"
+                />
+              ) : (
+                <User className="h-5 w-5" />
+              )}
             </Button>
           </DropdownTrigger>
           <DropdownContent align="end" className="w-56">
-            <DropdownLabel className="truncate font-normal text-muted-foreground">
-              {userEmail}
+            <DropdownLabel className="font-medium">
+              {userName ?? "Account"}
+              <p className="truncate text-xs font-normal text-muted-foreground">
+                {userEmail}
+              </p>
             </DropdownLabel>
+            <DropdownSeparator />
+            {variant === "dashboard" ? (
+              <DropdownItem asChild>
+                <Link href={ROUTES.dashboard.settings}>Profile & settings</Link>
+              </DropdownItem>
+            ) : null}
             <DropdownSeparator />
             <form action={signOut}>
               <button
