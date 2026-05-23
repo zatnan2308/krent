@@ -16,9 +16,10 @@ import { cn } from "@/lib/utils";
 interface AppSidebarProps {
   variant: "dashboard" | "super-admin";
   onNavigate?: () => void;
+  badges?: Record<string, number>;
 }
 
-export function AppSidebar({ variant, onNavigate }: AppSidebarProps) {
+export function AppSidebar({ variant, onNavigate, badges }: AppSidebarProps) {
   const pathname = usePathname();
   const items: NavItem[] =
     variant === "super-admin" ? superAdminNav : dashboardNav;
@@ -52,7 +53,12 @@ export function AppSidebar({ variant, onNavigate }: AppSidebarProps) {
               )}
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {badges && badges[item.href] ? (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-medium text-destructive-foreground">
+                  {badges[item.href]}
+                </span>
+              ) : null}
             </Link>
           );
         })}

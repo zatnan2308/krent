@@ -12,6 +12,7 @@ interface DashboardLayoutProps {
   avatarUrl?: string | null;
   notifications?: NotificationItem[];
   publicSiteUrl?: string | null;
+  sidebarBadges?: Record<string, number>;
   children: ReactNode;
 }
 
@@ -23,6 +24,7 @@ export function DashboardLayout({
   avatarUrl,
   notifications,
   publicSiteUrl,
+  sidebarBadges,
   children,
 }: DashboardLayoutProps) {
   return (
@@ -35,6 +37,7 @@ export function DashboardLayout({
       avatarUrl={avatarUrl}
       notifications={notifications}
       publicSiteUrl={publicSiteUrl}
+      sidebarBadges={sidebarBadges}
     >
       {children}
     </AppShell>

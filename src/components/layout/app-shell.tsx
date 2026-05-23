@@ -17,6 +17,7 @@ interface AppShellProps {
   avatarUrl?: string | null;
   notifications?: NotificationItem[];
   publicSiteUrl?: string | null;
+  sidebarBadges?: Record<string, number>;
   children: React.ReactNode;
 }
 
@@ -33,6 +34,7 @@ export function AppShell({
   avatarUrl,
   notifications,
   publicSiteUrl,
+  sidebarBadges,
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -41,7 +43,7 @@ export function AppShell({
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
       <aside className="hidden border-r bg-background lg:block">
         <div className="sticky top-0 h-screen">
-          <AppSidebar variant={variant} />
+          <AppSidebar variant={variant} badges={sidebarBadges} />
         </div>
       </aside>
 
@@ -58,6 +60,7 @@ export function AppShell({
             <AppSidebar
               variant={variant}
               onNavigate={() => setMobileOpen(false)}
+              badges={sidebarBadges}
             />
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
