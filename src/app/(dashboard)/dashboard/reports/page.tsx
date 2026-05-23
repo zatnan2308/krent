@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { BarChart } from "@/components/charts/bar-chart";
+import { FunnelChart } from "@/components/charts/funnel-chart";
 import {
   getAgentReport,
   getCampaignReport,
@@ -88,14 +90,7 @@ export default async function ReportsPage() {
           <CardTitle className="text-base">Funnel (last 30 days)</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-1 text-sm">
-            {funnel.map((row) => (
-              <li key={row.step} className="flex justify-between">
-                <span>{row.step}</span>
-                <strong>{row.count}</strong>
-              </li>
-            ))}
-          </ul>
+          <FunnelChart data={funnel} />
         </CardContent>
       </Card>
 
@@ -107,6 +102,14 @@ export default async function ReportsPage() {
           {sources.length === 0 ? (
             <p className="text-sm text-muted-foreground">No data yet.</p>
           ) : (
+            <>
+              <BarChart
+                ariaLabel="Leads by source"
+                data={sources.map((row) => ({
+                  label: row.source,
+                  value: row.leads,
+                }))}
+              />
             <Table>
               <TableHeader>
                 <TableRow>
@@ -125,6 +128,7 @@ export default async function ReportsPage() {
                 ))}
               </TableBody>
             </Table>
+            </>
           )}
         </CardContent>
       </Card>
