@@ -136,6 +136,21 @@ export function ConnectionCard({
         )}
       </div>
 
+      <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs">
+        <p className="font-medium">OAuth connect</p>
+        <p className="mt-1 text-muted-foreground">
+          Requires API credentials in env vars. See{" "}
+          <code>docs/setup/{provider === "meta_ads" ? "meta-integrations-setup.md" : "google-integrations-setup.md"}</code>.
+          Once configured, this button starts the secure OAuth flow.
+        </p>
+        <a
+          href={`/api/integrations/oauth/${provider}/start`}
+          className="mt-2 inline-flex h-8 items-center rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+        >
+          Connect with OAuth
+        </a>
+      </div>
+
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="text-xs font-medium">Display name</label>
