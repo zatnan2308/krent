@@ -8,46 +8,90 @@ interface PublicFooterProps {
   locale: Locale;
   dictionary: Dictionary;
   siteName: string;
+  supportEmail?: string | null;
+  supportPhone?: string | null;
 }
 
 export function PublicFooter({
   locale,
   dictionary,
   siteName,
+  supportEmail,
+  supportPhone,
 }: PublicFooterProps) {
-  const footerLinks = [
+  const sections: { title: string; links: { label: string; href: string }[] }[] = [
     {
-      label: dictionary.nav.properties,
-      href: buildLocalizedPath(locale, "/properties"),
+      title: "Browse",
+      links: [
+        { label: "All properties", href: buildLocalizedPath(locale, "/properties") },
+        { label: "Buy", href: buildLocalizedPath(locale, "/buy") },
+        { label: "Rent", href: buildLocalizedPath(locale, "/rent") },
+        { label: "Vacation", href: buildLocalizedPath(locale, "/vacation-rentals") },
+      ],
     },
     {
-      label: dictionary.nav.rentals,
-      href: buildLocalizedPath(locale, "/rentals"),
+      title: "Company",
+      links: [
+        { label: dictionary.nav.about, href: buildLocalizedPath(locale, "/about") },
+        { label: dictionary.nav.contact, href: buildLocalizedPath(locale, "/contact") },
+        { label: "Agents", href: buildLocalizedPath(locale, "/agents") },
+      ],
     },
-    { label: dictionary.nav.about, href: buildLocalizedPath(locale, "/about") },
     {
-      label: dictionary.nav.contact,
-      href: buildLocalizedPath(locale, "/contact"),
+      title: "Legal",
+      links: [
+        { label: "Privacy policy", href: buildLocalizedPath(locale, "/privacy") },
+        { label: "Terms of service", href: buildLocalizedPath(locale, "/terms") },
+        { label: "Cookies", href: buildLocalizedPath(locale, "/cookies") },
+      ],
     },
   ];
 
   return (
     <footer className="border-t bg-muted/30">
-      <div className="container flex flex-col gap-4 py-8 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {"©"} 2026 {siteName}. {dictionary.footer.rights}
-        </p>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2">
-          {footerLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
+      <div className="container py-10">
+        <div className="grid gap-8 md:grid-cols-4">
+          <div>
+            <p className="text-base font-semibold">{siteName}</p>
+            {supportEmail ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                <a href={`mailto:${supportEmail}`} className="hover:underline">
+                  {supportEmail}
+                </a>
+              </p>
+            ) : null}
+            {supportPhone ? (
+              <p className="text-sm text-muted-foreground">
+                <a
+                  href={`tel:${supportPhone.replace(/\s+/g, "")}`}
+                  className="hover:underline"
+                >
+                  {supportPhone}
+                </a>
+              </p>
+            ) : null}
+          </div>
+          {sections.map((section) => (
+            <div key={section.title}>
+              <p className="text-sm font-semibold">{section.title}</p>
+              <ul className="mt-2 space-y-1">
+                {section.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </nav>
+        </div>
+        <p className="mt-8 border-t pt-4 text-xs text-muted-foreground">
+          {"©"} {new Date().getFullYear()} {siteName}. {dictionary.footer.rights}
+        </p>
       </div>
     </footer>
   );

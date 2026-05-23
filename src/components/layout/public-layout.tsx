@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { CookieBanner } from "@/components/layout/cookie-banner";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import type { Locale } from "@/lib/i18n";
@@ -10,6 +11,8 @@ interface PublicLayoutProps {
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
+  supportEmail?: string | null;
+  supportPhone?: string | null;
   children: ReactNode;
 }
 
@@ -18,6 +21,8 @@ export function PublicLayout({
   dictionary,
   siteName,
   logoUrl,
+  supportEmail,
+  supportPhone,
   children,
 }: PublicLayoutProps) {
   return (
@@ -27,9 +32,17 @@ export function PublicLayout({
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}
+        supportPhone={supportPhone ?? null}
       />
       <main className="flex-1">{children}</main>
-      <PublicFooter locale={locale} dictionary={dictionary} siteName={siteName} />
+      <PublicFooter
+        locale={locale}
+        dictionary={dictionary}
+        siteName={siteName}
+        supportEmail={supportEmail ?? null}
+        supportPhone={supportPhone ?? null}
+      />
+      <CookieBanner />
     </div>
   );
 }

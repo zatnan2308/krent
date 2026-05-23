@@ -44,6 +44,8 @@ export default async function LocaleLayout({
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}
+        supportEmail={null}
+        supportPhone={null}
       >
         {children}
       </PublicLayout>
