@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ContactsCsvImport } from "@/features/crm/contacts-csv-import";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { listContacts } from "@/features/crm/queries";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -41,6 +42,8 @@ export default async function CrmContactsPage() {
         </p>
       </div>
       <CrmNav />
+
+      <ContactsCsvImport />
 
       {contacts.length > 0 ? (
         <div className="rounded-lg border">
