@@ -1,0 +1,291 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+import { createAdminClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
+import { requireOrganizationContext } from "@/server/organization-context";
+import { hasPermission } from "@/server/permissions";
+
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
+// ---- Profile (auth.users.user_metadata + organization_members) ----
+
+const profileSchema = z.object({
+  fullName: z.string().trim().min(1).max(200),
+  avatarUrl: z.string().trim().max(500).nullable(),
+  bio: z.string().trim().max(2000).nullable(),
+  phone: z.string().trim().max(60).nullable(),
+});
+export type ProfileInput = z.infer<typeof profileSchema>;
+
+export async function updateProfile(input: ProfileInput): Promise<ActionResult> {
+  const parsed = profileSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the profile form." };
+  }
+  const context = await requireOrganizationContext();
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(context.user.id, {
+    user_metadata: {
+      full_name: parsed.data.fullName,
+      avatar_url: parsed.data.avatarUrl,
+      bio: parsed.data.bio,
+      phone: parsed.data.phone,
+    },
+  });
+  if (error) {
+    return { ok: false, error: "Could not update profile." };
+  }
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+// ---- Branding ----------------------------------------------------
+
+const brandingSchema = z.object({
+  primaryColor: z.string().trim().max(20).nullable(),
+  secondaryColor: z.string().trim().max(20).nullable(),
+  accentColor: z.string().trim().max(20).nullable(),
+  fontFamily: z.string().trim().max(200).nullable(),
+  logoUrl: z.string().trim().max(500).nullable(),
+  faviconUrl: z.string().trim().max(500).nullable(),
+  customCss: z.string().trim().max(20000).nullable(),
+});
+export type BrandingInput = z.infer<typeof brandingSchema>;
+
+export async function updateBranding(input: BrandingInput): Promise<ActionResult> {
+  const parsed = brandingSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the branding form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "branding.manage")) {
+    return { ok: false, error: "You cannot change branding." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("brand_settings")
+    .upsert(
+      {
+        organization_id: context.organization.id,
+        primary_color: parsed.data.primaryColor,
+        secondary_color: parsed.data.secondaryColor,
+        accent_color: parsed.data.accentColor,
+        font_family: parsed.data.fontFamily,
+        logo_url: parsed.data.logoUrl,
+        favicon_url: parsed.data.faviconUrl,
+        custom_css: parsed.data.customCss,
+      },
+      { onConflict: "organization_id" },
+    );
+  if (error) return { ok: false, error: "Could not save branding." };
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+// ---- Localization ------------------------------------------------
+
+const localizationSchema = z.object({
+  defaultLanguage: z.string().trim().min(2).max(10),
+  defaultCurrency: z.string().trim().min(3).max(10),
+  enabledLanguages: z.array(z.string().trim().min(2).max(10)).min(1),
+  enabledCurrencies: z.array(z.string().trim().min(3).max(10)).min(1),
+  timezone: z.string().trim().min(3).max(60),
+  measurementSystem: z.enum(["metric", "imperial"]),
+});
+export type LocalizationInput = z.infer<typeof localizationSchema>;
+
+export async function updateLocalization(
+  input: LocalizationInput,
+): Promise<ActionResult> {
+  const parsed = localizationSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the localization form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "organization.update")) {
+    return { ok: false, error: "You cannot change organization settings." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("organizations")
+    .update({
+      default_language: parsed.data.defaultLanguage,
+      default_currency: parsed.data.defaultCurrency,
+      enabled_languages: parsed.data.enabledLanguages,
+      enabled_currencies: parsed.data.enabledCurrencies,
+      timezone: parsed.data.timezone,
+      measurement_system: parsed.data.measurementSystem,
+    })
+    .eq("id", context.organization.id);
+  if (error) return { ok: false, error: "Could not save localization." };
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+// ---- Modules toggle ---------------------------------------------
+
+const moduleToggleSchema = z.object({
+  moduleId: z.uuid(),
+  enabled: z.boolean(),
+});
+export type ModuleToggleInput = z.infer<typeof moduleToggleSchema>;
+
+export async function toggleModule(
+  input: ModuleToggleInput,
+): Promise<ActionResult> {
+  const parsed = moduleToggleSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid input." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "modules.manage")) {
+    return { ok: false, error: "You cannot manage modules." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("organization_modules")
+    .upsert({
+      organization_id: context.organization.id,
+      module_id: parsed.data.moduleId,
+      enabled: parsed.data.enabled,
+    });
+  if (error) return { ok: false, error: "Could not toggle module." };
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "module.toggled",
+    entityType: "module",
+    entityId: parsed.data.moduleId,
+    metadata: { enabled: parsed.data.enabled },
+  });
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+// ---- Team / Members ---------------------------------------------
+
+const inviteMemberSchema = z.object({
+  email: z.email(),
+  roleId: z.uuid(),
+});
+export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+
+export async function inviteMember(
+  input: InviteMemberInput,
+): Promise<ActionResult> {
+  const parsed = inviteMemberSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid invite." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "members.invite")) {
+    return { ok: false, error: "You cannot invite members." };
+  }
+  const admin = createAdminClient();
+
+  // Создаём или находим пользователя по email.
+  const { data: list } = await admin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200,
+  });
+  let userId = list?.users.find(
+    (u) => u.email?.toLowerCase() === parsed.data.email.toLowerCase(),
+  )?.id;
+  if (!userId) {
+    const { data: invite, error: createError } =
+      await admin.auth.admin.inviteUserByEmail(parsed.data.email);
+    if (createError || !invite?.user) {
+      return { ok: false, error: "Could not invite this email." };
+    }
+    userId = invite.user.id;
+  }
+
+  const { error } = await admin
+    .from("organization_members")
+    .upsert({
+      organization_id: context.organization.id,
+      user_id: userId,
+      role_id: parsed.data.roleId,
+      status: "active",
+      invited_by: context.user.id,
+    });
+  if (error) return { ok: false, error: "Could not add member." };
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "member.invited",
+    entityType: "member",
+    entityId: userId,
+    metadata: { email: parsed.data.email, roleId: parsed.data.roleId },
+  });
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+const removeMemberSchema = z.object({ userId: z.uuid() });
+export async function removeMember(
+  input: z.infer<typeof removeMemberSchema>,
+): Promise<ActionResult> {
+  const parsed = removeMemberSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid input." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "members.manage")) {
+    return { ok: false, error: "You cannot manage members." };
+  }
+  if (parsed.data.userId === context.user.id) {
+    return { ok: false, error: "You cannot remove yourself." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("organization_members")
+    .delete()
+    .eq("organization_id", context.organization.id)
+    .eq("user_id", parsed.data.userId);
+  if (error) return { ok: false, error: "Could not remove member." };
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "member.removed",
+    entityType: "member",
+    entityId: parsed.data.userId,
+  });
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+const changeRoleSchema = z.object({
+  userId: z.uuid(),
+  roleId: z.uuid(),
+});
+export async function changeMemberRole(
+  input: z.infer<typeof changeRoleSchema>,
+): Promise<ActionResult> {
+  const parsed = changeRoleSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid input." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "roles.manage")) {
+    return { ok: false, error: "You cannot change roles." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("organization_members")
+    .update({ role_id: parsed.data.roleId })
+    .eq("organization_id", context.organization.id)
+    .eq("user_id", parsed.data.userId);
+  if (error) return { ok: false, error: "Could not change role." };
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "member.role_changed",
+    entityType: "member",
+    entityId: parsed.data.userId,
+    metadata: { roleId: parsed.data.roleId },
+  });
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
