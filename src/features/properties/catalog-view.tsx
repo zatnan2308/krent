@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CatalogFilterForm } from "@/features/properties/catalog-filter-form";
+import { CatalogResults } from "@/features/properties/catalog-results";
 import { PROPERTY_TYPE_OPTIONS } from "@/features/properties/constants";
-import { PropertyCard } from "@/features/properties/property-card";
 import {
   getPublicAmenities,
   getPublicLocations,
@@ -16,7 +16,6 @@ import type {
   PropertyType,
 } from "@/features/properties/types";
 import { shouldNoindexSearch } from "@/features/seo/noindex";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
 import { ROUTES } from "@/lib/constants/routes";
 import { isLocale, type Locale } from "@/lib/i18n";
@@ -265,25 +264,18 @@ export async function renderCatalog({
         />
 
         <div className="space-y-6">
-          {result.items.length > 0 ? (
-            <>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {result.items.map((card) => (
-                  <PropertyCard key={card.id} card={card} locale={locale} />
-                ))}
-              </div>
-              <Pagination
-                page={result.page}
-                totalPages={result.totalPages}
-                getHref={buildHref}
-              />
-            </>
-          ) : (
-            <EmptyState
-              title="No properties found"
-              description="Try adjusting or resetting the filters."
+          <CatalogResults
+            items={result.items}
+            locale={locale}
+            totalLabel={`${result.total} ${result.total === 1 ? "property" : "properties"} available`}
+          />
+          {result.totalPages > 1 ? (
+            <Pagination
+              page={result.page}
+              totalPages={result.totalPages}
+              getHref={buildHref}
             />
-          )}
+          ) : null}
         </div>
       </div>
     </section>
