@@ -6,9 +6,14 @@ import {
   getAmenityCatalog,
   getPropertyForEdit,
 } from "@/features/properties/dashboard-queries";
+import {
+  DocumentsManager,
+  VideosManager,
+} from "@/features/properties/extras-manager";
 import { PropertyForm } from "@/features/properties/property-form";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
+import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -62,6 +67,29 @@ export default async function EditPropertyPage({
         currentUserId={context.user.id}
         canDelete={hasPermission(context, "properties.delete")}
       />
+      <PropertyExtras propertyId={params.id} />
+    </div>
+  );
+}
+
+async function PropertyExtras({ propertyId }: { propertyId: string }) {
+  const admin = createAdminClient();
+  const [{ data: videos }, { data: docs }] = await Promise.all([
+    admin
+      .from("property_videos")
+      .select("id, url, title, type")
+      .eq("property_id", propertyId)
+      .order("sort_order"),
+    admin
+      .from("property_documents")
+      .select("id, name, url, type")
+      .eq("property_id", propertyId)
+      .order("sort_order"),
+  ]);
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <VideosManager propertyId={propertyId} videos={videos ?? []} />
+      <DocumentsManager propertyId={propertyId} documents={docs ?? []} />
     </div>
   );
 }

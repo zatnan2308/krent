@@ -223,3 +223,67 @@ export async function setPropertyMediaCover(
   revalidatePath(editPath(media.property_id));
   return { ok: true };
 }
+
+/** Обновляет alt-текст. */
+export async function updatePropertyMediaAlt(
+  mediaId: string,
+  alt: string,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: media } = await supabase
+    .from("property_media")
+    .select("id, property_id")
+    .eq("organization_id", context.organization.id)
+    .eq("id", mediaId)
+    .maybeSingle();
+  if (!media) return { ok: false, error: "Media not found." };
+  const { error } = await supabase
+    .from("property_media")
+    .update({ alt: alt.trim() || null })
+    .eq("id", mediaId);
+  if (error) return { ok: false, error: "Could not update alt text." };
+  revalidatePath(editPath(media.property_id));
+  return { ok: true };
+}
+
+/** Двигает media вверх/вниз по sort_order через swap с соседом. */
+export async function reorderPropertyMedia(
+  mediaId: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: current } = await supabase
+    .from("property_media")
+    .select("id, property_id, sort_order")
+    .eq("organization_id", context.organization.id)
+    .eq("id", mediaId)
+    .maybeSingle();
+  if (!current) return { ok: false, error: "Media not found." };
+  const { data: list } = await supabase
+    .from("property_media")
+    .select("id, sort_order")
+    .eq("property_id", current.property_id)
+    .order("sort_order", { ascending: true });
+  if (!list) return { ok: false, error: "No media list." };
+  const index = list.findIndex((row) => row.id === current.id);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= list.length) {
+    return { ok: true };
+  }
+  const swap = list[swapIndex];
+  if (!swap) return { ok: true };
+  await supabase
+    .from("property_media")
+    .update({ sort_order: swap.sort_order })
+    .eq("id", current.id);
+  await supabase
+    .from("property_media")
+    .update({ sort_order: current.sort_order })
+    .eq("id", swap.id);
+  revalidatePath(editPath(current.property_id));
+  return { ok: true };
+}
