@@ -1,0 +1,39 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
+import { CrmNav } from "@/features/crm/crm-nav";
+import { listTasks } from "@/features/crm/queries";
+import { TaskManager } from "@/features/crm/task-manager";
+import { ROUTES } from "@/lib/constants/routes";
+import { requireOrganizationContext } from "@/server/organization-context";
+import { hasPermission } from "@/server/permissions";
+
+export const metadata: Metadata = {
+  title: "Tasks",
+};
+
+export default async function CrmTasksPage() {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return null;
+  }
+  if (!hasPermission(context, "crm.view")) {
+    redirect(ROUTES.dashboard.root);
+  }
+
+  const tasks = await listTasks(context.organization.id);
+  const canManage = hasPermission(context, "crm.manage");
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
+        <p className="text-sm text-muted-foreground">
+          Follow-ups and to-dos across your leads and deals.
+        </p>
+      </div>
+      <CrmNav />
+      <TaskManager tasks={tasks} canManage={canManage} showRelations />
+    </div>
+  );
+}

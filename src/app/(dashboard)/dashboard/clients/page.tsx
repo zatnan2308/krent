@@ -1,0 +1,161 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
+import { listContacts } from "@/features/crm/queries";
+import { PORTAL_TYPE_LABELS } from "@/features/portal/constants";
+import { InviteForm } from "@/features/portal/invite-form";
+import { listPortalAccounts } from "@/features/portal/queries";
+import { RevokeButton } from "@/features/portal/revoke-button";
+import type { PortalAccountStatus } from "@/features/portal/types";
+import { listProperties } from "@/features/properties/dashboard-queries";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ROUTES } from "@/lib/constants/routes";
+import { requireOrganizationContext } from "@/server/organization-context";
+import { hasPermission } from "@/server/permissions";
+
+export const metadata: Metadata = {
+  title: "Client portals",
+};
+
+function statusVariant(
+  status: PortalAccountStatus,
+): "success" | "warning" | "secondary" {
+  if (status === "active") {
+    return "success";
+  }
+  if (status === "pending") {
+    return "warning";
+  }
+  return "secondary";
+}
+
+export default async function ClientsPage() {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return null;
+  }
+  if (!hasPermission(context, "crm.view")) {
+    redirect(ROUTES.dashboard.root);
+  }
+
+  const canManage = hasPermission(context, "crm.manage");
+  const [accounts, contacts, properties] = await Promise.all([
+    listPortalAccounts(context.organization.id),
+    listContacts(context.organization.id),
+    listProperties(context.organization.id),
+  ]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Client portals
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Invite buyers, sellers and guests to their personal portals.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Portal accounts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {accounts.length > 0 ? (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Portal</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Invite link</TableHead>
+                    {canManage ? <TableHead /> : null}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {accounts.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell className="font-medium">
+                        {account.contactName}
+                        <p className="text-xs text-muted-foreground">
+                          {account.email}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {PORTAL_TYPE_LABELS[account.portalType]}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant(account.status)}>
+                          {account.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs text-xs text-muted-foreground">
+                        {account.status === "pending" &&
+                        account.inviteToken ? (
+                          <span className="break-all">
+                            {`${ROUTES.portal.accept}?token=${account.inviteToken}`}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      {canManage ? (
+                        <TableCell className="text-right">
+                          {account.status !== "revoked" ? (
+                            <RevokeButton accountId={account.id} />
+                          ) : null}
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No portal accounts"
+              description="Invite a client below to give them portal access."
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {canManage ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Invite a client</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InviteForm
+              contacts={contacts.map((contact) => ({
+                id: contact.id,
+                fullName: contact.fullName,
+                email: contact.email,
+              }))}
+              properties={properties.map((property) => ({
+                id: property.id,
+                title: property.title,
+              }))}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
+  );
+}

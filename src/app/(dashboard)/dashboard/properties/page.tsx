@@ -1,0 +1,135 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import {
+  PROPERTY_PURPOSE_LABELS,
+  PROPERTY_STATUS_LABELS,
+  PROPERTY_TYPE_LABELS,
+} from "@/features/properties/constants";
+import { listProperties } from "@/features/properties/dashboard-queries";
+import type { PropertyStatus } from "@/features/properties/types";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ROUTES } from "@/lib/constants/routes";
+import { requireOrganizationContext } from "@/server/organization-context";
+import { hasPermission } from "@/server/permissions";
+
+export const metadata: Metadata = {
+  title: "Properties",
+};
+
+/** Вариант бейджа для статуса объекта. */
+function statusVariant(
+  status: PropertyStatus,
+): "default" | "secondary" | "success" | "warning" | "outline" {
+  switch (status) {
+    case "active":
+      return "success";
+    case "pending":
+      return "warning";
+    case "sold":
+    case "rented":
+      return "default";
+    case "archived":
+    case "hidden":
+      return "outline";
+    default:
+      return "secondary";
+  }
+}
+
+export default async function PropertiesListPage() {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return null;
+  }
+
+  const properties = await listProperties(context.organization.id);
+  const canCreate = hasPermission(context, "properties.create");
+  const canManageAmenities = hasPermission(context, "properties.manage_all");
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Properties</h1>
+          <p className="text-sm text-muted-foreground">
+            Listings of {context.organization.name}.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {canManageAmenities ? (
+            <Link
+              href={ROUTES.dashboard.propertiesAmenities}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Amenities
+            </Link>
+          ) : null}
+          {canCreate ? (
+            <Link
+              href={`${ROUTES.dashboard.properties}/new`}
+              className={buttonVariants()}
+            >
+              New property
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      {properties.length > 0 ? (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Purpose</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {properties.map((property) => (
+                <TableRow key={property.id}>
+                  <TableCell className="font-medium">
+                    <Link
+                      href={`${ROUTES.dashboard.properties}/${property.id}`}
+                      className="hover:underline"
+                    >
+                      {property.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {PROPERTY_TYPE_LABELS[property.propertyType]}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {PROPERTY_PURPOSE_LABELS[property.purpose]}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariant(property.status)}>
+                      {PROPERTY_STATUS_LABELS[property.status]}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <EmptyState
+          title="No properties yet"
+          description="Create your first property listing to get started."
+        />
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,67 @@
+/**
+ * Централизованная карта маршрутов платформы.
+ * Страницы добавляются по этим путям по мере разработки модулей.
+ */
+
+export const ROUTES = {
+  public: {
+    home: "/",
+    listings: "/listings",
+    buy: "/buy",
+    rent: "/rent",
+    vacationRentals: "/vacation-rentals",
+    sell: "/sell",
+    properties: "/properties",
+    propertyDetail: (slug: string) => `/properties/${slug}`,
+    rentals: "/rentals",
+    about: "/about",
+    contact: "/contact",
+  },
+  auth: {
+    signIn: "/login",
+    signUp: "/sign-up",
+    forgotPassword: "/forgot-password",
+    resetPassword: "/reset-password",
+  },
+  dashboard: {
+    root: "/dashboard",
+    pages: "/dashboard/pages",
+    navigation: "/dashboard/navigation",
+    properties: "/dashboard/properties",
+    propertiesAmenities: "/dashboard/properties/amenities",
+    crm: "/dashboard/crm",
+    crmLeads: "/dashboard/crm/leads",
+    crmContacts: "/dashboard/crm/contacts",
+    crmDeals: "/dashboard/crm/deals",
+    crmTasks: "/dashboard/crm/tasks",
+    clients: "/dashboard/clients",
+    rentals: "/dashboard/rentals",
+    bookings: "/dashboard/bookings",
+    calendar: "/dashboard/calendar",
+    messages: "/dashboard/messages",
+    email: "/dashboard/email",
+    marketing: "/dashboard/marketing",
+    seo: "/dashboard/seo",
+    analytics: "/dashboard/analytics",
+    reports: "/dashboard/reports",
+    integrations: "/dashboard/integrations",
+    agentSync: "/dashboard/agent-sync",
+    settings: "/dashboard/settings",
+  },
+  portal: {
+    hub: "/portal",
+    buyer: "/portal/buyer",
+    seller: "/portal/seller",
+    guest: "/portal/guest",
+    messages: "/portal/messages",
+    accept: "/portal/accept",
+  },
+  superAdmin: {
+    root: "/super-admin",
+    organizations: "/super-admin/organizations",
+    organizationDetail: (id: string) => `/super-admin/organizations/${id}`,
+    users: "/super-admin/users",
+    licenses: "/super-admin/licenses",
+    health: "/super-admin/health",
+  },
+} as const;
