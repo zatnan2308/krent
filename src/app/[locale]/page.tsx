@@ -204,24 +204,6 @@ export default async function LocaleHomePage({
               filter: "brightness(0.62) contrast(1.05) saturate(0.85)",
             }}
           />
-          {/* Vertical fade: тёмный сверху, cream снизу (под след. секцию) */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(180deg, rgba(11,11,12,0.45) 0%, rgba(11,11,12,0.0) 30%, rgba(245,244,238,0.0) 55%, rgba(245,244,238,0.85) 90%, rgba(245,244,238,1) 100%)",
-            }}
-          />
-          {/* Horizontal fade слева — для контрастности текста */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(90deg, rgba(11,11,12,0.55) 0%, rgba(11,11,12,0.0) 45%)",
-            }}
-          />
 
           <div
             className="on-dark"
