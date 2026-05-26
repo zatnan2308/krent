@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { CatalogFilterForm } from "@/features/properties/catalog-filter-form";
-import { CatalogResults } from "@/features/properties/catalog-results";
+import { CatalogEditorialCards } from "@/features/properties/catalog-editorial-cards";
+import { CatalogEditorialPagination } from "@/features/properties/catalog-editorial-pagination";
+import { CatalogEditorialSidebar } from "@/features/properties/catalog-editorial-sidebar";
 import { PROPERTY_TYPE_OPTIONS } from "@/features/properties/constants";
 import {
   getPublicAmenities,
@@ -16,16 +18,18 @@ import type {
   PropertyType,
 } from "@/features/properties/types";
 import { shouldNoindexSearch } from "@/features/seo/noindex";
-import { Pagination } from "@/components/ui/pagination";
 import { ROUTES } from "@/lib/constants/routes";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { buildLocaleAlternates } from "@/lib/seo";
 import { getPublicSiteContext } from "@/server/public-site";
 
-/** Вариант каталога — определяет набор целей и заголовок. */
+/** Вариант каталога — определяет цели и заголовок. */
 export type CatalogVariant = "listings" | "buy" | "rent" | "vacation-rentals";
 
 interface VariantConfig {
+  /** Eyebrow над заголовком. */
+  eyebrow: string;
+  /** Основной serif-заголовок страницы. */
   title: string;
   description: string;
   path: string;
@@ -34,24 +38,28 @@ interface VariantConfig {
 
 const VARIANT_CONFIG: Record<CatalogVariant, VariantConfig> = {
   listings: {
-    title: "All properties",
-    description: "Browse every available property.",
+    eyebrow: "Catalogue · refreshed Monday",
+    title: "Properties",
+    description: "Apartments, villas and investments — vetted personally.",
     path: ROUTES.public.listings,
     purposes: null,
   },
   buy: {
-    title: "Properties for sale",
+    eyebrow: "For sale · refreshed Monday",
+    title: "For sale",
     description: "Find a property to buy.",
     path: ROUTES.public.buy,
     purposes: ["sale", "mixed"],
   },
   rent: {
-    title: "Long-term rentals",
+    eyebrow: "Long-term rent · refreshed Monday",
+    title: "For long-term rent",
     description: "Find a long-term rental home.",
     path: ROUTES.public.rent,
     purposes: ["long_term_rent", "mixed"],
   },
   "vacation-rentals": {
+    eyebrow: "Vacation · refreshed weekly",
     title: "Vacation rentals",
     description: "Find a short-term holiday stay.",
     path: ROUTES.public.vacationRentals,
@@ -61,6 +69,12 @@ const VARIANT_CONFIG: Record<CatalogVariant, VariantConfig> = {
 
 const PAGE_SIZE = 12;
 const SORT_VALUES: PropertySort[] = ["newest", "price_asc", "price_desc"];
+
+const SORT_LABELS: Record<PropertySort, string> = {
+  newest: "Newest first",
+  price_asc: "Price ascending",
+  price_desc: "Price descending",
+};
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
@@ -86,17 +100,13 @@ function allParams(value: string | string[] | undefined): string[] {
 }
 
 function parseIntParam(value: string | undefined): number | null {
-  if (value === undefined) {
-    return null;
-  }
+  if (value === undefined) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : null;
 }
 
 function parseNumberParam(value: string | undefined): number | null {
-  if (value === undefined) {
-    return null;
-  }
+  if (value === undefined) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
@@ -135,46 +145,36 @@ function parseFilters(
   };
 }
 
-/** Чистая query-строка для ссылок пагинации. */
-function buildQueryString(filters: CatalogFilters, page: number): string {
+/** Превращает фильтры обратно в QS-строку, опционально с overrides. */
+function buildQueryString(
+  filters: CatalogFilters,
+  page: number,
+  override: Partial<{
+    propertyType: PropertyType | null;
+    city: string | null;
+    sort: PropertySort;
+    amenityIds: string[];
+  }> = {},
+): string {
+  const eff = { ...filters, ...override };
   const query = new URLSearchParams();
-  if (filters.propertyType) {
-    query.set("type", filters.propertyType);
-  }
-  if (filters.city) {
-    query.set("city", filters.city);
-  }
-  if (filters.area) {
-    query.set("area", filters.area);
-  }
-  if (filters.minPrice !== null) {
-    query.set("minPrice", String(filters.minPrice));
-  }
-  if (filters.maxPrice !== null) {
-    query.set("maxPrice", String(filters.maxPrice));
-  }
-  if (filters.bedrooms !== null) {
-    query.set("bedrooms", String(filters.bedrooms));
-  }
+  if (eff.propertyType) query.set("type", eff.propertyType);
+  if (eff.city) query.set("city", eff.city);
+  if (filters.area) query.set("area", filters.area);
+  if (filters.minPrice !== null) query.set("minPrice", String(filters.minPrice));
+  if (filters.maxPrice !== null) query.set("maxPrice", String(filters.maxPrice));
+  if (filters.bedrooms !== null) query.set("bedrooms", String(filters.bedrooms));
   if (filters.bathrooms !== null) {
     query.set("bathrooms", String(filters.bathrooms));
   }
-  if (filters.guests !== null) {
-    query.set("guests", String(filters.guests));
-  }
-  for (const id of filters.amenityIds) {
-    query.append("amenities", id);
-  }
-  if (filters.sort !== "newest") {
-    query.set("sort", filters.sort);
-  }
-  if (page > 1) {
-    query.set("page", String(page));
-  }
+  if (filters.guests !== null) query.set("guests", String(filters.guests));
+  for (const id of eff.amenityIds) query.append("amenities", id);
+  if (eff.sort && eff.sort !== "newest") query.set("sort", eff.sort);
+  if (page > 1) query.set("page", String(page));
   return query.toString();
 }
 
-/** Метаданные страницы каталога: canonical, hreflang, noindex при фильтрах. */
+/** Метаданные страницы каталога. */
 export async function buildCatalogMetadata(
   variant: CatalogVariant,
   { params, searchParams }: CatalogRouteProps,
@@ -190,8 +190,6 @@ export async function buildCatalogMetadata(
     title,
     description: config.description,
     alternates: buildLocaleAlternates(locale, config.path),
-    // Фильтры и служебные параметры дают взрыв URL — такие страницы
-    // исключаются из индекса (follow сохраняется).
     robots: shouldNoindexSearch(searchParams)
       ? { index: false, follow: true }
       : undefined,
@@ -207,9 +205,8 @@ interface RenderCatalogArgs extends CatalogRouteProps {
 }
 
 /**
- * Рендерит каталог для всех четырёх маршрутов. Вызывается как функция из
- * async-страниц (не как JSX-компонент) — так типы React 18 не спотыкаются
- * на async-компоненте в JSX.
+ * Рендерит каталог в editorial-стиле для всех четырёх маршрутов.
+ * Все данные — из Supabase, фильтры — через URL (GET-форма + ссылки).
  */
 export async function renderCatalog({
   variant,
@@ -218,9 +215,7 @@ export async function renderCatalog({
 }: RenderCatalogArgs) {
   const locale = resolveLocale(params.locale);
   const site = await getPublicSiteContext();
-  if (!site) {
-    notFound();
-  }
+  if (!site) notFound();
 
   const config = VARIANT_CONFIG[variant];
   const filters = parseFilters(searchParams, config.purposes);
@@ -237,47 +232,259 @@ export async function renderCatalog({
   ]);
 
   const formAction = `/${locale}${config.path}`;
-  const buildHref = (page: number): string => {
-    const queryString = buildQueryString(filters, page);
-    return queryString ? `${formAction}?${queryString}` : formAction;
-  };
+  const hrefWith = (qs: string): string => (qs ? `${formAction}?${qs}` : formAction);
+  const buildPaginationHref = (page: number): string =>
+    hrefWith(buildQueryString(filters, page));
+
+  // Города для табов: пересечение реальных городов из БД с дефолтным набором,
+  // плюс табы для городов из дизайна (даже если их нет — даём 0).
+  const cityTabs: { label: string; href: string; count: number; active: boolean }[] =
+    [
+      {
+        label: "All",
+        href: hrefWith(buildQueryString(filters, 1, { city: null })),
+        count: result.total,
+        active: !filters.city,
+      },
+      ...locations.cities.map((city) => ({
+        label: city,
+        href: hrefWith(buildQueryString(filters, 1, { city })),
+        count: 0, // counts по городам у нас нет в запросе, опускаем
+        active: filters.city === city,
+      })),
+    ];
+
+  // Sort dropdown options
+  const sortHrefs = SORT_VALUES.map((value) => ({
+    value,
+    label: SORT_LABELS[value],
+    href: hrefWith(buildQueryString(filters, 1, { sort: value })),
+  }));
+
+  // Applied chips — каждая ссылка убирает свой фильтр (override на null/«»)
+  const chips: { label: string; clearHref: string }[] = [];
+  if (filters.propertyType) {
+    const label = PROPERTY_TYPE_OPTIONS.find(
+      (option) => option.value === filters.propertyType,
+    )?.label;
+    if (label) {
+      chips.push({
+        label,
+        clearHref: hrefWith(
+          buildQueryString(filters, 1, { propertyType: null }),
+        ),
+      });
+    }
+  }
+  if (filters.city) {
+    chips.push({
+      label: filters.city,
+      clearHref: hrefWith(buildQueryString(filters, 1, { city: null })),
+    });
+  }
+  if (filters.bedrooms !== null && filters.bedrooms > 0) {
+    chips.push({
+      label: `${filters.bedrooms}+ bed`,
+      // Очистить bedrooms: формируем QS без bedrooms.
+      clearHref: hrefWith(
+        buildQueryString({ ...filters, bedrooms: null }, 1),
+      ),
+    });
+  }
+  if (filters.bathrooms !== null && filters.bathrooms > 0) {
+    chips.push({
+      label: `${filters.bathrooms}+ bath`,
+      clearHref: hrefWith(
+        buildQueryString({ ...filters, bathrooms: null }, 1),
+      ),
+    });
+  }
+  if (filters.minPrice !== null || filters.maxPrice !== null) {
+    const lo = filters.minPrice !== null ? `$${filters.minPrice}` : "0";
+    const hi = filters.maxPrice !== null ? `$${filters.maxPrice}` : "∞";
+    chips.push({
+      label: `${lo} – ${hi}`,
+      clearHref: hrefWith(
+        buildQueryString({ ...filters, minPrice: null, maxPrice: null }, 1),
+      ),
+    });
+  }
+  for (const amenityId of filters.amenityIds) {
+    const amenity = amenityCatalog.amenities.find((a) => a.id === amenityId);
+    if (!amenity) continue;
+    chips.push({
+      label: amenity.name,
+      clearHref: hrefWith(
+        buildQueryString(filters, 1, {
+          amenityIds: filters.amenityIds.filter((id) => id !== amenityId),
+        }),
+      ),
+    });
+  }
 
   return (
-    <section className="container space-y-8 py-12">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {config.title}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {result.total} {result.total === 1 ? "property" : "properties"}{" "}
-          available.
-        </p>
-      </header>
+    <>
+      {/* ============================================================
+          PAGE HEADER — eyebrow + big serif title + count + city tabs
+          ============================================================ */}
+      <section
+        style={{
+          paddingTop: 140,
+          paddingBottom: 56,
+          borderBottom: "1px solid var(--border-subtle)",
+          background: "var(--bg-primary)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "var(--max-w)",
+            margin: "0 auto",
+            padding: "0 var(--edge-d)",
+          }}
+        >
+          <span className="eyebrow gold">
+            <span className="dot" />
+            {config.eyebrow}
+          </span>
 
-      <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-        <CatalogFilterForm
-          action={formAction}
-          filters={filters}
-          amenityCatalog={amenityCatalog}
-          cities={locations.cities}
-          areas={locations.areas}
-        />
+          <div
+            style={{
+              marginTop: 18,
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: 22,
+            }}
+          >
+            <h1
+              className="serif"
+              style={{
+                fontSize: "clamp(2.5rem, 6vw, 5.25rem)",
+                letterSpacing: "-0.04em",
+                lineHeight: 0.95,
+                fontWeight: 400,
+              }}
+            >
+              {config.title}
+            </h1>
+            <p
+              className="tnum"
+              style={{
+                fontSize: 16,
+                color: "var(--text-secondary)",
+                letterSpacing: "-0.005em",
+              }}
+            >
+              {result.total} {result.total === 1 ? "listing" : "listings"}
+              {filters.city ? ` in ${filters.city}` : " across four cities"}
+              {" · "}
+              <span style={{ color: "var(--text-tertiary)" }}>
+                Vetted personally before going public
+              </span>
+            </p>
+          </div>
 
-        <div className="space-y-6">
-          <CatalogResults
-            items={result.items}
-            locale={locale}
-            totalLabel={`${result.total} ${result.total === 1 ? "property" : "properties"} available`}
-          />
-          {result.totalPages > 1 ? (
-            <Pagination
-              page={result.page}
-              totalPages={result.totalPages}
-              getHref={buildHref}
-            />
+          {/* City tabs */}
+          {cityTabs.length > 1 ? (
+            <div
+              className="ed-city-tabs"
+              style={{
+                marginTop: 48,
+                display: "flex",
+                gap: 36,
+                flexWrap: "wrap",
+                borderTop: "1px solid var(--border-subtle)",
+                paddingTop: 24,
+              }}
+            >
+              {cityTabs.map((tab) => (
+                <Link
+                  key={tab.label}
+                  href={tab.href}
+                  style={{
+                    padding: "4px 0",
+                    fontSize: 14,
+                    letterSpacing: "0.01em",
+                    color: tab.active
+                      ? "var(--accent)"
+                      : "var(--text-secondary)",
+                    borderBottom: `1px solid ${
+                      tab.active ? "var(--accent)" : "transparent"
+                    }`,
+                    display: "inline-flex",
+                    alignItems: "baseline",
+                    gap: 8,
+                    textDecoration: "none",
+                  }}
+                >
+                  {tab.label}
+                </Link>
+              ))}
+            </div>
           ) : null}
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* ============================================================
+          MAIN — sidebar 280px + content
+          ============================================================ */}
+      <section
+        style={{
+          maxWidth: "var(--max-w)",
+          margin: "0 auto",
+          padding: "40px var(--edge-d) 80px",
+        }}
+      >
+        <div
+          className="ed-cat-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "280px 1fr",
+            gap: 56,
+            alignItems: "start",
+          }}
+        >
+          <CatalogEditorialSidebar
+            action={formAction}
+            filters={filters}
+            amenityCatalog={amenityCatalog}
+            cities={locations.cities}
+            areas={locations.areas}
+          />
+
+          <div style={{ minWidth: 0 }}>
+            <CatalogEditorialCards
+              items={result.items}
+              locale={locale}
+              totalShown={result.total}
+              totalAll={result.total}
+              resetHref={formAction}
+              appliedChips={chips}
+              sort={filters.sort}
+              sortHrefs={sortHrefs}
+            />
+
+            <CatalogEditorialPagination
+              page={result.page}
+              totalPages={result.totalPages}
+              getHref={buildPaginationHref}
+            />
+          </div>
+        </div>
+
+        <style>{`
+          @media (max-width: 1024px) {
+            .ed-cat-grid {
+              grid-template-columns: 1fr !important;
+              gap: 40px !important;
+            }
+            .ed-sidebar {
+              position: static !important;
+              max-height: none !important;
+              padding-right: 0 !important;
+            }
+          }
+        `}</style>
+      </section>
+    </>
   );
 }
