@@ -1,6 +1,90 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ----- Editorial scope (Alexey Kachan public site) ------------ */
+.editorial {
+  --ed-bg: #F5F4EE;
+  --ed-bg-2: #ECEAE2;
+  --ed-bg-3: #FAF9F4;
+  --ed-border: #DAD7CB;
+  --ed-border-strong: #BCB8AB;
+  --ed-text: #131311;
+  --ed-text-2: #4A4842;
+  --ed-text-3: #6F6C63;
+  --ed-text-4: #A19D90;
+  --ed-accent: #8B7340;
+  --ed-accent-hover: #6F5A2C;
+  font-family: "Geist", system-ui, sans-serif;
+  background: var(--ed-bg);
+  color: var(--ed-text);
+}
+.editorial .ed-serif {
+  font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  font-feature-settings: "ss01";
+}
+.editorial .ed-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ed-text-2);
+}
+.editorial .ed-eyebrow .dot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  background: var(--ed-accent);
+  border-radius: 50%;
+  vertical-align: middle;
+  margin: 0 10px 2px;
+}
+.editorial.on-dark {
+  --ed-bg: #0B0B0C;
+  --ed-text: #F5F4EE;
+  --ed-text-2: rgba(245, 244, 238, 0.78);
+  --ed-text-3: rgba(245, 244, 238, 0.55);
+  --ed-accent: #D4B574;
+  --ed-border: rgba(245, 244, 238, 0.18);
+}
+.editorial .ed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  border: 1px solid var(--ed-accent);
+  color: var(--ed-accent);
+  background: transparent;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 500;
+}
+.editorial .ed-btn:hover {
+  background: var(--ed-accent);
+  color: var(--ed-bg);
+}
+.editorial .ed-btn-ghost {
+  border-color: var(--ed-border-strong);
+  color: var(--ed-text);
+}
+.editorial .ed-btn-ghost:hover {
+  border-color: var(--ed-text);
+  background: transparent;
+  color: var(--ed-text);
+}
+.editorial .ed-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
 
 @layer base {
   :root {
