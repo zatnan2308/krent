@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap");
+/* Шрифты подгружаются через next/font (см. src/app/layout.tsx) и
+   выставляют CSS-переменные --font-fraunces / --font-geist / --font-geist-mono.
+   Это убирает блокирующий @import Google Fonts из CSS. */
 
 @tailwind base;
 @tailwind components;
@@ -64,7 +66,7 @@
   --edge-d: 48px;
   --edge-m: 20px;
 
-  font-family: "Geist", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-geist), "Geist", system-ui, -apple-system, sans-serif;
   font-size: var(--text-body);
   line-height: var(--leading-normal);
   background: var(--bg-primary);
@@ -92,7 +94,7 @@
 /* ---- Typography utilities ---- */
 
 .editorial .serif {
-  font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  font-family: var(--font-fraunces), "Fraunces", "Cormorant Garamond", Georgia, serif;
   font-feature-settings: "ss01";
 }
 
@@ -107,7 +109,7 @@
 }
 
 .editorial .eyebrow {
-  font-family: "Geist", sans-serif;
+  font-family: var(--font-geist), "Geist", sans-serif;
   font-size: var(--text-eyebrow);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
@@ -303,7 +305,7 @@
   --ed-accent-hover: var(--accent-hover);
 }
 .editorial .ed-serif {
-  font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  font-family: var(--font-fraunces), "Fraunces", "Cormorant Garamond", Georgia, serif;
   font-feature-settings: "ss01";
 }
 .editorial .ed-eyebrow {

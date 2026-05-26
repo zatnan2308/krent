@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { isLocale, type Locale } from "@/lib/i18n";
@@ -156,6 +157,31 @@ function sortCards(
   return sorted;
 }
 
+/** Имя одного пользователя из Supabase Auth — закэшировано на 1 час,
+ *  чтобы не дёргать admin.auth.admin.getUserById на каждую карточку
+ *  каталога/страницы (это было N+1 на каждый запрос). */
+const getAgentNameById = unstable_cache(
+  async (userId: string): Promise<string | null> => {
+    try {
+      const admin = createAdminClient();
+      const { data } = await admin.auth.admin.getUserById(userId);
+      const user = data.user;
+      if (!user) return null;
+      const meta = user.user_metadata ?? {};
+      const metaName =
+        (typeof meta.full_name === "string" && meta.full_name.trim()) ||
+        (typeof meta.name === "string" && meta.name.trim()) ||
+        "";
+      const emailName = user.email ? (user.email.split("@")[0] ?? "") : "";
+      return metaName || emailName || null;
+    } catch {
+      return null;
+    }
+  },
+  ["agent-name-by-id"],
+  { revalidate: 3600, tags: ["agent-names"] },
+);
+
 /**
  * Резолвит отображаемые имена агентов через сервис-клиент (auth.users).
  * Профильной таблицы пока нет — имя берётся из user_metadata либо email.
@@ -166,33 +192,13 @@ async function resolveAgentNames(
 ): Promise<Map<string, string>> {
   const names = new Map<string, string>();
   const unique = [...new Set(agentIds)];
-  if (unique.length === 0) {
-    return names;
-  }
-  try {
-    const admin = createAdminClient();
-    await Promise.all(
-      unique.map(async (id) => {
-        const { data } = await admin.auth.admin.getUserById(id);
-        const user = data.user;
-        if (!user) {
-          return;
-        }
-        const meta = user.user_metadata ?? {};
-        const metaName =
-          (typeof meta.full_name === "string" && meta.full_name.trim()) ||
-          (typeof meta.name === "string" && meta.name.trim()) ||
-          "";
-        const emailName = user.email ? (user.email.split("@")[0] ?? "") : "";
-        const finalName = metaName || emailName;
-        if (finalName) {
-          names.set(id, finalName);
-        }
-      }),
-    );
-  } catch {
-    // Сервис-клиент недоступен — продолжаем без имён агентов.
-  }
+  if (unique.length === 0) return names;
+  await Promise.all(
+    unique.map(async (id) => {
+      const name = await getAgentNameById(id);
+      if (name) names.set(id, name);
+    }),
+  );
   return names;
 }
 
@@ -330,9 +336,11 @@ export async function getPublicProperties(
     query = query.gte("guest_capacity", filters.guests);
   }
 
+  // Лимит 200 — для публичного каталога этого с запасом достаточно. Раньше
+  // .range(0, 9999) тянуло ВСЕ объекты организации на каждый рендер.
   const { data } = await query
     .order("created_at", { ascending: false })
-    .range(0, 9999);
+    .range(0, 199);
   const rows = data ?? [];
 
   let cards = await composeCards(supabase, rows, locale, defaultLocale);

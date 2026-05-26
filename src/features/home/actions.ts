@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/server";
@@ -65,6 +65,7 @@ export async function saveHero(input: HeroInput): Promise<ActionResult> {
   if (error) return { ok: false, error: "Could not save hero." };
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -113,6 +114,7 @@ export async function saveAbout(input: AboutInput): Promise<ActionResult> {
   if (error) return { ok: false, error: "Could not save about." };
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -155,6 +157,7 @@ export async function saveCta(input: CtaInput): Promise<ActionResult> {
   if (error) return { ok: false, error: "Could not save CTA." };
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -183,6 +186,7 @@ export async function deleteHomeItem(
   if (error) return { ok: false, error: "Could not delete." };
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -231,6 +235,7 @@ export async function saveMarket(input: MarketInput): Promise<ActionResult> {
   }
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -273,6 +278,7 @@ export async function saveProcessStep(
   }
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -315,6 +321,7 @@ export async function saveTestimonial(
   }
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -353,6 +360,7 @@ export async function saveTrustBadge(input: TrustInput): Promise<ActionResult> {
   }
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }
 
@@ -391,5 +399,6 @@ export async function savePressLogo(input: PressInput): Promise<ActionResult> {
   }
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
+  revalidateTag("home-content");
   return { ok: true };
 }

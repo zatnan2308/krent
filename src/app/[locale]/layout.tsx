@@ -8,7 +8,7 @@ import { AttributionTracker } from "@/features/crm/attribution-tracker";
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { isLocale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getCurrentUser } from "@/server/auth";
+import { getCurrentUserShallow } from "@/server/auth";
 import { getPublicSiteContext } from "@/server/public-site";
 
 // Публичный сайт зависит от домена (организация-арендатор) — рендер динамический.
@@ -29,7 +29,7 @@ export default async function LocaleLayout({
   const dictionary = getDictionary(locale);
   const [site, user] = await Promise.all([
     getPublicSiteContext(),
-    getCurrentUser(),
+    getCurrentUserShallow(),
   ]);
   const siteName = site?.organization.name ?? DEFAULT_BRANDING.appName;
   const logoUrl = site?.brand?.logo_url ?? null;

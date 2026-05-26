@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { unstable_cache } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/database";
@@ -22,6 +23,39 @@ function getRequestHost(): string {
   return host.split(":")[0]?.toLowerCase() ?? "";
 }
 
+/** Резолв организации по host — закэширован per-host на 5 минут. */
+const resolveOrganizationByHostCached = unstable_cache(
+  async (host: string): Promise<Tables<"organizations"> | null> => {
+    const admin = createAdminClient();
+    if (host) {
+      const { data: domain } = await admin
+        .from("domains")
+        .select("organization_id")
+        .eq("domain", host)
+        .eq("status", "verified")
+        .maybeSingle();
+
+      if (domain) {
+        const { data: organization } = await admin
+          .from("organizations")
+          .select("*")
+          .eq("id", domain.organization_id)
+          .maybeSingle();
+        if (organization) return organization;
+      }
+    }
+    const { data: fallback } = await admin
+      .from("organizations")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return fallback;
+  },
+  ["public-organization-by-host"],
+  { revalidate: 300, tags: ["public-site"] },
+);
+
 /**
  * Резолвит организацию публичного сайта по домену запроса.
  * Fallback (домен не настроен, локальная разработка) — первая организация.
@@ -29,38 +63,30 @@ function getRequestHost(): string {
 export async function resolvePublicOrganization(): Promise<
   Tables<"organizations"> | null
 > {
-  const admin = createAdminClient();
-  const host = getRequestHost();
-
-  if (host) {
-    const { data: domain } = await admin
-      .from("domains")
-      .select("organization_id")
-      .eq("domain", host)
-      .eq("status", "verified")
-      .maybeSingle();
-
-    if (domain) {
-      const { data: organization } = await admin
-        .from("organizations")
-        .select("*")
-        .eq("id", domain.organization_id)
-        .maybeSingle();
-      if (organization) {
-        return organization;
-      }
-    }
-  }
-
-  const { data: fallback } = await admin
-    .from("organizations")
-    .select("*")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  return fallback;
+  return resolveOrganizationByHostCached(getRequestHost());
 }
+
+/** Контекст бренда и SEO по orgId — закэширован per-org на 60 секунд. */
+const getBrandAndSeoCached = unstable_cache(
+  async (organizationId: string) => {
+    const admin = createAdminClient();
+    const [brandResult, seoResult] = await Promise.all([
+      admin
+        .from("brand_settings")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .maybeSingle(),
+      admin
+        .from("seo_settings")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .maybeSingle(),
+    ]);
+    return { brand: brandResult.data, seo: seoResult.data };
+  },
+  ["public-brand-seo-by-org"],
+  { revalidate: 60, tags: ["public-site"] },
+);
 
 /** Собирает контекст публичного сайта: организация, бренд, SEO-настройки. */
 export async function getPublicSiteContext(): Promise<PublicSiteContext | null> {
@@ -68,24 +94,6 @@ export async function getPublicSiteContext(): Promise<PublicSiteContext | null> 
   if (!organization) {
     return null;
   }
-
-  const admin = createAdminClient();
-  const [brandResult, seoResult] = await Promise.all([
-    admin
-      .from("brand_settings")
-      .select("*")
-      .eq("organization_id", organization.id)
-      .maybeSingle(),
-    admin
-      .from("seo_settings")
-      .select("*")
-      .eq("organization_id", organization.id)
-      .maybeSingle(),
-  ]);
-
-  return {
-    organization,
-    brand: brandResult.data,
-    seo: seoResult.data,
-  };
+  const { brand, seo } = await getBrandAndSeoCached(organization.id);
+  return { organization, brand, seo };
 }
