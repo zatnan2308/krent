@@ -17,6 +17,8 @@ interface PublicHeaderProps {
   siteName: string;
   logoUrl: string | null;
   supportPhone?: string | null;
+  currentUserName?: string | null;
+  currentUserEmail?: string | null;
 }
 
 /** Маленький монограмм-knob AK в рамке (editorial mark). */
@@ -51,10 +53,35 @@ export function PublicHeader({
   siteName,
   logoUrl,
   supportPhone,
+  currentUserName,
+  currentUserEmail,
 }: PublicHeaderProps) {
   const [scrolled, setScrolled] = React.useState(false);
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const pathname = usePathname() ?? "";
+
+  // Закрываем dropdown по клику вне его.
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!userMenuOpen) return;
+    function onClick(event: MouseEvent) {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [userMenuOpen]);
+
+  const isAuthed = Boolean(currentUserName || currentUserEmail);
+  const greeting = currentUserName ?? currentUserEmail?.split("@")[0] ?? "User";
+  const initials = (currentUserName || currentUserEmail || "U")
+    .split(/\s+/)
+    .map((s) => s.charAt(0))
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   // Прозрачный header с on-dark текстом — только на главной (hero-photo
   // под хедером). На всех остальных страницах хедер сразу cream с blur,
@@ -215,23 +242,177 @@ export function PublicHeader({
           <LanguageSwitcher currentLocale={locale} label={dictionary.common.language} />
           <CurrencySwitcher label={dictionary.common.currency} />
           <span style={{ color: "var(--border-medium)" }}>·</span>
-          <Link
-            href={ROUTES.auth.signIn}
-            style={{
-              color: "var(--text-primary)",
-              whiteSpace: "nowrap",
-              fontSize: 12,
-            }}
-          >
-            Sign in
-          </Link>
-          <Link
-            href={ROUTES.auth.signUp}
-            className="btn btn-primary"
-            style={{ padding: "10px 16px", fontSize: 12 }}
-          >
-            Sign up
-          </Link>
+
+          {isAuthed ? (
+            <div
+              ref={userMenuRef}
+              style={{ position: "relative" }}
+            >
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "6px 8px 6px 6px",
+                  background: "transparent",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 2,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  color: "var(--text-primary)",
+                  letterSpacing: "0.01em",
+                  fontSize: 12,
+                }}
+              >
+                <span
+                  className="serif"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 28,
+                    height: 28,
+                    background: "var(--accent)",
+                    color: "var(--bg-primary)",
+                    fontSize: 11,
+                    letterSpacing: "-0.01em",
+                    fontStyle: "italic",
+                    flexShrink: 0,
+                  }}
+                >
+                  {initials}
+                </span>
+                <span style={{ whiteSpace: "nowrap" }}>{greeting}</span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    color: "var(--text-tertiary)",
+                    transform: userMenuOpen ? "rotate(180deg)" : "none",
+                    transition: "transform 200ms",
+                  }}
+                >
+                  ▾
+                </span>
+              </button>
+
+              {userMenuOpen ? (
+                <div
+                  role="menu"
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    right: 0,
+                    minWidth: 240,
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border-subtle)",
+                    boxShadow: "0 16px 36px -12px rgba(11,11,12,0.18)",
+                    zIndex: 30,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "14px 18px",
+                      borderBottom: "1px solid var(--border-subtle)",
+                    }}
+                  >
+                    <div
+                      className="serif"
+                      style={{
+                        fontSize: 15,
+                        color: "var(--text-primary)",
+                        letterSpacing: "-0.015em",
+                      }}
+                    >
+                      Welcome, {greeting}
+                    </div>
+                    {currentUserEmail ? (
+                      <div
+                        style={{
+                          marginTop: 2,
+                          fontSize: 11,
+                          color: "var(--text-tertiary)",
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {currentUserEmail}
+                      </div>
+                    ) : null}
+                  </div>
+                  <UserMenuItem href={ROUTES.dashboard.root} label="Dashboard" />
+                  <UserMenuItem
+                    href={ROUTES.dashboard.home}
+                    label="Home page"
+                  />
+                  <UserMenuItem
+                    href={ROUTES.dashboard.properties}
+                    label="Properties"
+                  />
+                  <UserMenuItem
+                    href={ROUTES.dashboard.bookings}
+                    label="Bookings"
+                  />
+                  <UserMenuItem
+                    href={ROUTES.dashboard.crmLeads}
+                    label="Leads"
+                  />
+                  <UserMenuItem
+                    href={ROUTES.dashboard.messages}
+                    label="Messages"
+                  />
+                  <UserMenuItem
+                    href={ROUTES.dashboard.settings}
+                    label="Settings"
+                  />
+                  <form action="/api/auth/sign-out" method="post">
+                    <button
+                      type="submit"
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "12px 18px",
+                        textAlign: "left",
+                        fontSize: 13,
+                        color: "var(--text-secondary)",
+                        background: "transparent",
+                        border: "none",
+                        borderTop: "1px solid var(--border-subtle)",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <Link
+                href={ROUTES.auth.signIn}
+                style={{
+                  color: "var(--text-primary)",
+                  whiteSpace: "nowrap",
+                  fontSize: 12,
+                }}
+              >
+                Sign in
+              </Link>
+              <Link
+                href={ROUTES.auth.signUp}
+                className="btn btn-primary"
+                style={{ padding: "10px 16px", fontSize: 12 }}
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Burger (mobile) */}
@@ -328,21 +509,48 @@ export function PublicHeader({
             label={dictionary.common.language}
           />
           <CurrencySwitcher label={dictionary.common.currency} />
-          <Link
-            href={ROUTES.auth.signIn}
-            onClick={() => setMenuOpen(false)}
-            style={{ fontSize: 13, color: "var(--text-primary)" }}
-          >
-            Sign in
-          </Link>
-          <Link
-            href={ROUTES.auth.signUp}
-            onClick={() => setMenuOpen(false)}
-            className="btn btn-primary"
-            style={{ marginLeft: "auto", padding: "10px 16px", fontSize: 12 }}
-          >
-            Sign up
-          </Link>
+          {isAuthed ? (
+            <>
+              <Link
+                href={ROUTES.dashboard.root}
+                onClick={() => setMenuOpen(false)}
+                style={{ fontSize: 13, color: "var(--text-primary)" }}
+              >
+                Dashboard
+              </Link>
+              <form
+                action="/api/auth/sign-out"
+                method="post"
+                style={{ marginLeft: "auto" }}
+              >
+                <button
+                  type="submit"
+                  className="btn btn-ghost"
+                  style={{ padding: "10px 16px", fontSize: 12 }}
+                >
+                  Sign out
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link
+                href={ROUTES.auth.signIn}
+                onClick={() => setMenuOpen(false)}
+                style={{ fontSize: 13, color: "var(--text-primary)" }}
+              >
+                Sign in
+              </Link>
+              <Link
+                href={ROUTES.auth.signUp}
+                onClick={() => setMenuOpen(false)}
+                className="btn btn-primary"
+                style={{ marginLeft: "auto", padding: "10px 16px", fontSize: 12 }}
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -353,5 +561,24 @@ export function PublicHeader({
         }
       `}</style>
     </header>
+  );
+}
+
+function UserMenuItem({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "block",
+        padding: "10px 18px",
+        fontSize: 13,
+        color: "var(--text-primary)",
+        background: "transparent",
+        textDecoration: "none",
+        letterSpacing: "0.01em",
+      }}
+    >
+      {label}
+    </Link>
   );
 }

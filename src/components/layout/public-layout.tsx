@@ -13,6 +13,9 @@ interface PublicLayoutProps {
   logoUrl: string | null;
   supportEmail?: string | null;
   supportPhone?: string | null;
+  /** Имя текущего пользователя (для приветствия в хедере). */
+  currentUserName?: string | null;
+  currentUserEmail?: string | null;
   children: ReactNode;
 }
 
@@ -23,6 +26,8 @@ export function PublicLayout({
   logoUrl,
   supportEmail,
   supportPhone,
+  currentUserName,
+  currentUserEmail,
   children,
 }: PublicLayoutProps) {
   return (
@@ -34,6 +39,8 @@ export function PublicLayout({
         siteName={siteName}
         logoUrl={logoUrl}
         supportPhone={supportPhone ?? null}
+        currentUserName={currentUserName ?? null}
+        currentUserEmail={currentUserEmail ?? null}
       />
       <main className="flex-1">{children}</main>
       <PublicFooter

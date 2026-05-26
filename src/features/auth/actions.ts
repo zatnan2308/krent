@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { ensureUserHasOrganization } from "@/features/auth/ensure-organization";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -40,13 +41,33 @@ export async function signIn(
   }
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,
   });
 
   if (error) {
     return { error: "Invalid email or password." };
+  }
+
+  // На случай если пользователь подтвердил email после signUp (нет сессии при
+  // signUp) — создаём ему организацию здесь при первом входе. Идемпотентно.
+  if (data.user) {
+    try {
+      const meta = (data.user.user_metadata ?? {}) as Record<string, unknown>;
+      await ensureUserHasOrganization({
+        userId: data.user.id,
+        fullName:
+          (typeof meta.full_name === "string" && meta.full_name) ||
+          (typeof meta.name === "string" && meta.name) ||
+          (data.user.email ?? "").split("@")[0] ||
+          "",
+        email: data.user.email ?? "",
+      });
+    } catch {
+      // Не блокируем вход — пользователь увидит свой dashboard без orga
+      // и сможет позвать админа / попробовать снова.
+    }
   }
 
   redirect(resolveRedirect(formData.get("redirectTo")));
@@ -102,7 +123,22 @@ export async function signUp(
   }
 
   // Если confirmation не требуется, Supabase сразу выдаёт сессию.
-  if (data.session) {
+  if (data.session && data.user) {
+    // Заводим организацию + членство org_owner до первого захода в dashboard.
+    try {
+      await ensureUserHasOrganization({
+        userId: data.user.id,
+        fullName: parsed.data.fullName,
+        email: parsed.data.email,
+      });
+    } catch (err) {
+      return {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Account created, but workspace setup failed. Try signing in.",
+      };
+    }
     redirect(ROUTES.dashboard.root);
   }
   return {
