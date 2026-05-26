@@ -201,7 +201,11 @@ export default async function LocaleHomePage({
               backgroundImage: `url(${heroBg})`,
               backgroundSize: "cover",
               backgroundPosition: "center 30%",
-              filter: "brightness(0.62) contrast(1.05) saturate(0.85)",
+              // scale + blur — слегка увеличиваем фото, чтобы размытые
+              // прозрачные края не вылезали за края секции.
+              transform: "scale(1.08)",
+              filter:
+                "blur(10px) brightness(0.62) contrast(1.05) saturate(0.85)",
             }}
           />
 
