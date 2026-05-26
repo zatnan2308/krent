@@ -12,6 +12,71 @@ interface PublicFooterProps {
   supportPhone?: string | null;
 }
 
+function Monogram({ size = 56, gold = false }: { size?: number; gold?: boolean }) {
+  return (
+    <span
+      className="serif"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: size,
+        height: size,
+        border: `1px solid ${gold ? "var(--accent)" : "var(--border-medium)"}`,
+        color: gold ? "var(--accent)" : "var(--text-primary)",
+        fontSize: size * 0.42,
+        letterSpacing: "-0.02em",
+        fontWeight: 400,
+        lineHeight: 1,
+        fontStyle: "italic",
+        flexShrink: 0,
+      }}
+    >
+      AK
+    </span>
+  );
+}
+
+function Col({
+  title,
+  items,
+}: {
+  title: string;
+  items: { label: string; href: string }[];
+}) {
+  return (
+    <div>
+      <span className="eyebrow">{title}</span>
+      <ul
+        style={{
+          listStyle: "none",
+          marginTop: 24,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}
+      >
+        {items.map((it) => (
+          <li key={it.href + it.label}>
+            <Link
+              href={it.href}
+              style={{
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                transition: "color 300ms var(--ease-out-expo)",
+                textDecoration: "none",
+              }}
+            >
+              {it.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function PublicFooter({
   locale,
   dictionary,
@@ -19,80 +84,280 @@ export function PublicFooter({
   supportEmail,
   supportPhone,
 }: PublicFooterProps) {
-  const sections: { title: string; links: { label: string; href: string }[] }[] = [
+  const colBrowse = [
     {
-      title: "Browse",
-      links: [
-        { label: "All properties", href: buildLocalizedPath(locale, "/properties") },
-        { label: "Buy", href: buildLocalizedPath(locale, "/buy") },
-        { label: "Rent", href: buildLocalizedPath(locale, "/rent") },
-        { label: "Vacation", href: buildLocalizedPath(locale, "/vacation-rentals") },
-      ],
+      label: "All properties",
+      href: buildLocalizedPath(locale, "/properties"),
     },
     {
-      title: "Company",
-      links: [
-        { label: dictionary.nav.about, href: buildLocalizedPath(locale, "/about") },
-        { label: dictionary.nav.contact, href: buildLocalizedPath(locale, "/contact") },
-        { label: "Agents", href: buildLocalizedPath(locale, "/agents") },
-      ],
+      label: "Buy",
+      href: buildLocalizedPath(locale, "/properties?purpose=sale"),
     },
     {
-      title: "Legal",
-      links: [
-        { label: "Privacy policy", href: buildLocalizedPath(locale, "/privacy") },
-        { label: "Terms of service", href: buildLocalizedPath(locale, "/terms") },
-        { label: "Cookies", href: buildLocalizedPath(locale, "/cookies") },
-      ],
+      label: "Long-term rent",
+      href: buildLocalizedPath(locale, "/properties?purpose=long_term_rent"),
     },
+    {
+      label: "Vacation rentals",
+      href: buildLocalizedPath(locale, "/properties?purpose=short_term_rental"),
+    },
+  ];
+  const colMarkets = [
+    { label: "Dubai", href: buildLocalizedPath(locale, "/properties?city=Dubai") },
+    {
+      label: "New York",
+      href: buildLocalizedPath(locale, "/properties?city=New York"),
+    },
+    {
+      label: "Toronto",
+      href: buildLocalizedPath(locale, "/properties?city=Toronto"),
+    },
+    {
+      label: "London",
+      href: buildLocalizedPath(locale, "/properties?city=London"),
+    },
+  ];
+  const colCompany = [
+    { label: dictionary.nav.about, href: buildLocalizedPath(locale, "/about") },
+    { label: dictionary.nav.contact, href: buildLocalizedPath(locale, "/contact") },
+  ];
+  const colLegal = [
+    { label: "Privacy policy", href: buildLocalizedPath(locale, "/privacy") },
+    { label: "Terms of service", href: buildLocalizedPath(locale, "/terms") },
+    { label: "Cookies", href: buildLocalizedPath(locale, "/cookies") },
   ];
 
   return (
-    <footer className="border-t bg-muted/30">
-      <div className="container py-10">
-        <div className="grid gap-8 md:grid-cols-4">
+    <footer
+      style={{
+        background: "var(--bg-primary)",
+        padding: "120px 0 40px",
+        borderTop: "1px solid var(--border-subtle)",
+        position: "relative",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "var(--max-w)",
+          margin: "0 auto",
+          padding: "0 var(--edge-d)",
+        }}
+      >
+        {/* Top: monogram + tagline + newsletter inline */}
+        <div
+          className="ed-ft-top"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 60,
+            paddingBottom: 80,
+            borderBottom: "1px solid var(--border-subtle)",
+            alignItems: "end",
+          }}
+        >
           <div>
-            <p className="text-base font-semibold">{siteName}</p>
-            {supportEmail ? (
-              <p className="mt-2 text-sm text-muted-foreground">
-                <a href={`mailto:${supportEmail}`} className="hover:underline">
-                  {supportEmail}
-                </a>
-              </p>
-            ) : null}
-            {supportPhone ? (
-              <p className="text-sm text-muted-foreground">
-                <a
-                  href={`tel:${supportPhone.replace(/\s+/g, "")}`}
-                  className="hover:underline"
-                >
-                  {supportPhone}
-                </a>
-              </p>
+            <Link
+              href={buildLocalizedPath(locale, "/")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                textDecoration: "none",
+                color: "inherit",
+              }}
+            >
+              <Monogram size={56} gold />
+              <span
+                className="serif"
+                style={{
+                  fontSize: "clamp(2rem, 4vw, 3rem)",
+                  letterSpacing: "-0.03em",
+                  fontWeight: 350,
+                  lineHeight: 1,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {siteName}
+              </span>
+            </Link>
+            <p
+              style={{
+                marginTop: 24,
+                fontSize: 15,
+                color: "var(--text-secondary)",
+                maxWidth: "44ch",
+                lineHeight: 1.55,
+              }}
+            >
+              Independent licensed realtor. Premium residential, investment and
+              relocation. Dubai · New York · Toronto · London.
+            </p>
+            {supportEmail || supportPhone ? (
+              <div
+                style={{
+                  marginTop: 20,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 24,
+                  fontSize: 14,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {supportEmail ? (
+                  <a
+                    href={`mailto:${supportEmail}`}
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {supportEmail}
+                  </a>
+                ) : null}
+                {supportPhone ? (
+                  <a
+                    href={`tel:${supportPhone.replace(/\s+/g, "")}`}
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {supportPhone}
+                  </a>
+                ) : null}
+              </div>
             ) : null}
           </div>
-          {sections.map((section) => (
-            <div key={section.title}>
-              <p className="text-sm font-semibold">{section.title}</p>
-              <ul className="mt-2 space-y-1">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+
+          {/* Newsletter inline */}
+          <div>
+            <span className="eyebrow gold">Quarterly market reports</span>
+            <p
+              style={{
+                marginTop: 14,
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                marginBottom: 24,
+                maxWidth: "38ch",
+              }}
+            >
+              Four issues per year. Written by Alexey, no filler, no unsubscribe
+              traps.
+            </p>
+            <form
+              action={buildLocalizedPath(locale, "/contact")}
+              method="get"
+              style={{
+                display: "flex",
+                gap: 12,
+                borderBottom: "1px solid var(--border-medium)",
+                paddingBottom: 8,
+              }}
+            >
+              <input
+                type="email"
+                name="email"
+                placeholder="your@email.com"
+                style={{
+                  flex: 1,
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  color: "var(--text-primary)",
+                  fontSize: 15,
+                  fontFamily: "inherit",
+                  padding: "8px 0",
+                }}
+              />
+              <button
+                type="submit"
+                className="btn-text"
+                style={{
+                  fontSize: 12,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "var(--accent)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Subscribe <span className="arrow">→</span>
+              </button>
+            </form>
+          </div>
         </div>
-        <p className="mt-8 border-t pt-4 text-xs text-muted-foreground">
-          {"©"} {new Date().getFullYear()} {siteName}. {dictionary.footer.rights}
-        </p>
+
+        {/* Link columns */}
+        <div
+          className="ed-ft-cols"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 60,
+            padding: "80px 0",
+          }}
+        >
+          <Col title="Browse" items={colBrowse} />
+          <Col title="Markets" items={colMarkets} />
+          <Col title="Company" items={colCompany} />
+          <Col title="Legal" items={colLegal} />
+        </div>
+
+        {/* Bottom strip */}
+        <div
+          className="ed-ft-bottom tnum"
+          style={{
+            paddingTop: 32,
+            borderTop: "1px solid var(--border-subtle)",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            gap: 40,
+            alignItems: "center",
+            fontSize: 11.5,
+            color: "var(--text-tertiary)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          <div>
+            © {new Date().getFullYear()} {siteName}. {dictionary.footer.rights}
+          </div>
+          <div style={{ display: "flex", gap: 28, justifyContent: "center" }}>
+            <a href="#" style={{ color: "var(--text-secondary)" }}>
+              Instagram
+            </a>
+            <a href="#" style={{ color: "var(--text-secondary)" }}>
+              LinkedIn
+            </a>
+            <a href="#" style={{ color: "var(--text-secondary)" }}>
+              WhatsApp
+            </a>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            EN · AR · RU · USD · AED · EUR · CAD · GBP
+          </div>
+        </div>
       </div>
+
+      {/* Giant outline italic siteName — типографический финал */}
+      <div
+        className="serif"
+        style={{
+          marginTop: 80,
+          textAlign: "center",
+          fontSize: "clamp(8rem, 22vw, 22rem)",
+          lineHeight: 0.85,
+          letterSpacing: "-0.06em",
+          color: "transparent",
+          WebkitTextStroke: "1px var(--border-subtle)",
+          fontWeight: 300,
+          fontStyle: "italic",
+          userSelect: "none",
+        }}
+      >
+        {siteName}
+      </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .ed-ft-top { grid-template-columns: 1fr !important; gap: 48px !important; }
+          .ed-ft-cols { grid-template-columns: 1fr 1fr !important; gap: 40px !important; }
+          .ed-ft-bottom { grid-template-columns: 1fr !important; text-align: left !important; }
+          .ed-ft-bottom > * { text-align: left !important; }
+        }
+      `}</style>
     </footer>
   );
 }

@@ -27,7 +27,7 @@ export function PublicLayout({
 }: PublicLayoutProps) {
   return (
     <div className="editorial flex min-h-screen flex-col">
-      <div className="ed-grain" />
+      <div className="grain" />
       <PublicHeader
         locale={locale}
         dictionary={dictionary}

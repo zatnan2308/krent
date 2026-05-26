@@ -1,53 +1,327 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ----- Editorial scope (Alexey Kachan public site) ------------ */
+/* ============================================================
+   Editorial scope (Alexey Kachan public site).
+   Все переменные/утилиты живут под `.editorial` чтобы не
+   конфликтовать с дашбордом (там используется shadcn-палитра).
+   Имена переменных и значения 1:1 из дизайн-бандла.
+   ============================================================ */
+
 .editorial {
-  --ed-bg: #F5F4EE;
-  --ed-bg-2: #ECEAE2;
-  --ed-bg-3: #FAF9F4;
-  --ed-border: #DAD7CB;
-  --ed-border-strong: #BCB8AB;
-  --ed-text: #131311;
-  --ed-text-2: #4A4842;
-  --ed-text-3: #6F6C63;
-  --ed-text-4: #A19D90;
-  --ed-accent: #8B7340;
-  --ed-accent-hover: #6F5A2C;
-  font-family: "Geist", system-ui, sans-serif;
-  background: var(--ed-bg);
-  color: var(--ed-text);
+  /* ---- Light palette (editorial cream) ---- */
+  --bg-primary: #F5F4EE;
+  --bg-secondary: #ECEAE2;
+  --bg-tertiary: #E2E0D6;
+  --bg-elevated: #FAF9F4;
+  --bg-overlay-rgb: 245, 244, 238;
+
+  --border-subtle: #DAD7CB;
+  --border-medium: #BCB8AB;
+  --border-strong: #908C7F;
+
+  --text-primary: #131311;
+  --text-secondary: #4A4842;
+  --text-tertiary: #6F6C63;
+  --text-quaternary: #A19D90;
+
+  --accent: #8B7340;
+  --accent-hover: #6F5A2C;
+  --accent-muted: rgba(139, 115, 64, 0.08);
+  --accent-line: rgba(139, 115, 64, 0.30);
+
+  /* Type sizes (clamp) */
+  --text-eyebrow: 11px;
+  --text-body-sm: 13px;
+  --text-body: 15px;
+  --text-body-lg: 18px;
+  --text-h3: clamp(1.5rem, 3vw, 2.25rem);
+  --text-h2: clamp(2rem, 4.5vw, 3.75rem);
+  --text-h1: clamp(3rem, 7vw, 6rem);
+  --text-display: clamp(3.5rem, 9vw, 8.5rem);
+
+  --leading-tight: 0.95;
+  --leading-snug: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  --tracking-wide: 0.18em;
+  --tracking-medium: 0.06em;
+  --tracking-tight: -0.02em;
+  --tracking-tighter: -0.035em;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Layout */
+  --max-w: 1440px;
+  --gutter-d: 24px;
+  --gutter-m: 16px;
+  --edge-d: 48px;
+  --edge-m: 20px;
+
+  font-family: "Geist", system-ui, -apple-system, sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* On-dark overlay — текст поверх тёмных фото.
+   Переопределяет ТОЛЬКО текст/accent/границы; --bg-primary
+   намеренно НЕ меняется (фон секции по-прежнему cream). */
+.editorial .on-dark {
+  --text-primary: #F5F4EE;
+  --text-secondary: rgba(245, 244, 238, 0.78);
+  --text-tertiary: rgba(245, 244, 238, 0.55);
+  --text-quaternary: rgba(245, 244, 238, 0.32);
+  --accent: #D4B574;
+  --accent-hover: #E0C385;
+  --accent-line: rgba(212, 181, 116, 0.42);
+  --border-subtle: rgba(245, 244, 238, 0.14);
+  --border-medium: rgba(245, 244, 238, 0.28);
+  --border-strong: rgba(245, 244, 238, 0.45);
+  color: #F5F4EE;
+}
+
+/* ---- Typography utilities ---- */
+
+.editorial .serif {
+  font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  font-feature-settings: "ss01";
+}
+
+.editorial h1,
+.editorial h2,
+.editorial h3,
+.editorial h4 {
+  font-weight: 400;
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.editorial .eyebrow {
+  font-family: "Geist", sans-serif;
+  font-size: var(--text-eyebrow);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 500;
+  display: inline-block;
+}
+.editorial .eyebrow.gold {
+  color: var(--accent);
+}
+.editorial .eyebrow .dot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+  vertical-align: middle;
+  margin: 0 10px 2px;
+}
+
+.editorial .tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.editorial ::selection {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+/* Drop-cap для редакционного body */
+.editorial .drop-cap::first-letter {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 5.2em;
+  float: left;
+  line-height: 0.85;
+  margin: 6px 12px 0 0;
+  color: var(--accent);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+/* ---- Buttons ---- */
+
+.editorial .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  transition: all 500ms var(--ease-out-expo);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.editorial .btn-primary {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+}
+.editorial .btn-primary:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.editorial .btn-ghost {
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+  background: transparent;
+}
+.editorial .btn-ghost:hover {
+  border-color: var(--text-primary);
+}
+
+.editorial .btn-solid {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-color: var(--accent);
+}
+.editorial .btn-solid:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.editorial .btn-text {
+  padding: 0;
+  background: none;
+  color: var(--text-primary);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+.editorial .btn-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(0.3);
+  opacity: 0.4;
+  transition: transform 600ms var(--ease-out-expo), opacity 400ms;
+}
+.editorial .btn-text:hover::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+.editorial .arrow {
+  display: inline-block;
+  transition: transform 500ms var(--ease-out-expo);
+}
+.editorial .btn:hover .arrow,
+.editorial .btn-text:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* ---- Layout helpers ---- */
+
+.editorial .ed-container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--edge-d);
+}
+@media (max-width: 768px) {
+  .editorial .ed-container { padding: 0 var(--edge-m); }
+}
+
+.editorial .hairline {
+  height: 1px;
+  background: var(--border-subtle);
+  width: 100%;
+}
+
+/* ---- Image hover (Featured cards) ---- */
+.editorial .img-hover {
+  overflow: hidden;
+}
+.editorial .img-hover img {
+  transition: transform 1400ms var(--ease-out-expo);
+}
+.editorial .img-hover:hover img {
+  transform: scale(1.035);
+}
+
+/* ---- Grain overlay ---- */
+.editorial .grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* ---- Animations ---- */
+@keyframes ed-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(125,195,131,0.18); }
+  50%      { box-shadow: 0 0 0 7px rgba(125,195,131,0.08); }
+}
+@keyframes ed-fade-quote {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Backwards-compat aliases (старые --ed-* имена, чтобы не ломать
+   разделы каталога/объекта пока их не отрефакторим).
+   ============================================================ */
+.editorial {
+  --ed-bg: var(--bg-primary);
+  --ed-bg-2: var(--bg-secondary);
+  --ed-bg-3: var(--bg-elevated);
+  --ed-border: var(--border-subtle);
+  --ed-border-strong: var(--border-medium);
+  --ed-text: var(--text-primary);
+  --ed-text-2: var(--text-secondary);
+  --ed-text-3: var(--text-tertiary);
+  --ed-text-4: var(--text-quaternary);
+  --ed-accent: var(--accent);
+  --ed-accent-hover: var(--accent-hover);
 }
 .editorial .ed-serif {
   font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
   font-feature-settings: "ss01";
 }
 .editorial .ed-eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: var(--text-eyebrow);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   font-weight: 500;
-  color: var(--ed-text-2);
+  color: var(--text-secondary);
+  display: inline-block;
 }
 .editorial .ed-eyebrow .dot {
   display: inline-block;
   width: 3px;
   height: 3px;
-  background: var(--ed-accent);
+  background: var(--accent);
   border-radius: 50%;
   vertical-align: middle;
   margin: 0 10px 2px;
-}
-.editorial.on-dark {
-  --ed-bg: #0B0B0C;
-  --ed-text: #F5F4EE;
-  --ed-text-2: rgba(245, 244, 238, 0.78);
-  --ed-text-3: rgba(245, 244, 238, 0.55);
-  --ed-accent: #D4B574;
-  --ed-border: rgba(245, 244, 238, 0.18);
 }
 .editorial .ed-btn {
   display: inline-flex;
@@ -57,34 +331,38 @@
   font-size: 13px;
   letter-spacing: 0.04em;
   border-radius: 2px;
-  border: 1px solid var(--ed-accent);
-  color: var(--ed-accent);
+  border: 1px solid var(--accent);
+  color: var(--accent);
   background: transparent;
-  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 500ms var(--ease-out-expo);
   font-weight: 500;
 }
 .editorial .ed-btn:hover {
-  background: var(--ed-accent);
-  color: var(--ed-bg);
+  background: var(--accent);
+  color: var(--bg-primary);
 }
 .editorial .ed-btn-ghost {
-  border-color: var(--ed-border-strong);
-  color: var(--ed-text);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
 }
 .editorial .ed-btn-ghost:hover {
-  border-color: var(--ed-text);
+  border-color: var(--text-primary);
   background: transparent;
-  color: var(--ed-text);
+  color: var(--text-primary);
 }
 .editorial .ed-grain {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 50;
+  z-index: 1000;
   opacity: 0.05;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
+
+/* ============================================================
+   Tailwind / shadcn (dashboard) — оставляем как было.
+   ============================================================ */
 
 @layer base {
   :root {
