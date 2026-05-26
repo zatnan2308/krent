@@ -12,7 +12,6 @@ import {
 import { TrackPropertyView } from "@/features/analytics/track-property-view";
 import { BookingWidget } from "@/features/bookings/booking-widget";
 import { PropertyHeroGallery } from "@/features/properties/property-hero-gallery";
-import { PropertyMap } from "@/features/properties/property-map";
 import { PropertyViewingForm } from "@/features/properties/property-viewing-form";
 import { getEnabledPaymentOptions } from "@/features/payments/queries";
 import { JsonLd } from "@/features/seo/json-ld";
@@ -203,17 +202,6 @@ export default async function PropertyDetailPage({
 
   const address = displayAddress(view);
   const location = view.location;
-  const mapData =
-    location &&
-    location.latitude !== null &&
-    location.longitude !== null &&
-    location.exact_address_visibility !== "hidden"
-      ? {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          precise: location.exact_address_visibility === "exact",
-        }
-      : null;
 
   // Spec strip — самые «крупные» 4 факта (beds / baths / size / floor or year).
   type Spec = { label: string; value: string; unit?: string | null };
@@ -793,157 +781,7 @@ export default async function PropertyDetailPage({
         `}</style>
       </section>
 
-      {/* 3) LOCATION ======================================== */}
-      {mapData || view.nearbyPlaces.length > 0 ? (
-        <section
-          style={{
-            background: "var(--bg-secondary)",
-            padding: "120px 0",
-            borderTop: "1px solid var(--border-subtle)",
-            borderBottom: "1px solid var(--border-subtle)",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "var(--max-w)",
-              margin: "0 auto",
-              padding: "0 var(--edge-d)",
-            }}
-          >
-            <span className="eyebrow gold">
-              <span className="dot" />
-              Where it sits
-            </span>
-            <h2
-              className="serif"
-              style={{
-                fontSize: "var(--text-h2)",
-                letterSpacing: "-0.035em",
-                marginTop: 20,
-                lineHeight: 1,
-                maxWidth: "20ch",
-              }}
-            >
-              {location?.area ?? location?.city ?? "On the map"}
-              {location?.city ? (
-                <>
-                  <br />
-                  <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                    {location.city}
-                  </em>
-                  .
-                </>
-              ) : null}
-            </h2>
-
-            <div
-              className="ed-loc-grid"
-              style={{
-                marginTop: 56,
-                display: "grid",
-                gridTemplateColumns:
-                  mapData && view.nearbyPlaces.length > 0
-                    ? "5fr 7fr"
-                    : "1fr",
-                gap: 48,
-                alignItems: "start",
-              }}
-            >
-              {view.nearbyPlaces.length > 0 ? (
-                <div>
-                  <span className="eyebrow">Nearby</span>
-                  <ul
-                    style={{
-                      marginTop: 20,
-                      listStyle: "none",
-                      padding: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    {view.nearbyPlaces.map((place) => (
-                      <li
-                        key={place.id}
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "auto 1fr auto",
-                          gap: 16,
-                          padding: "18px 0",
-                          borderBottom: "1px solid var(--border-subtle)",
-                          alignItems: "baseline",
-                        }}
-                      >
-                        <span
-                          className="tnum"
-                          style={{
-                            fontSize: 13,
-                            letterSpacing: "0.04em",
-                            color: "var(--accent)",
-                            minWidth: 64,
-                          }}
-                        >
-                          {place.distance !== null
-                            ? `${place.distance} ${place.distance_unit ?? "km"}`
-                            : "—"}
-                        </span>
-                        <span
-                          className="serif"
-                          style={{
-                            fontSize: 17,
-                            letterSpacing: "-0.015em",
-                            color: "var(--text-primary)",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {place.name}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            letterSpacing: "0.16em",
-                            textTransform: "uppercase",
-                            color: "var(--text-tertiary)",
-                          }}
-                        >
-                          {place.category ?? ""}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {mapData ? (
-                <div
-                  style={{
-                    aspectRatio: "4 / 3",
-                    minHeight: 480,
-                    border: "1px solid var(--border-subtle)",
-                    position: "relative",
-                    overflow: "hidden",
-                    background: "var(--bg-elevated)",
-                  }}
-                >
-                  <PropertyMap
-                    latitude={mapData.latitude}
-                    longitude={mapData.longitude}
-                    precise={mapData.precise}
-                    label={address || "Approximate location"}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <style>{`
-            @media (max-width: 900px) {
-              .ed-loc-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
-            }
-          `}</style>
-        </section>
-      ) : null}
-
-      {/* 4) INVESTMENT — только для sale c видимой ценой ===== */}
+      {/* 3) INVESTMENT — только для sale c видимой ценой ===== */}
       {showInvestment ? (
         <section
           style={{

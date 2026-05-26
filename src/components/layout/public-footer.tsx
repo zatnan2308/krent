@@ -331,25 +331,6 @@ export function PublicFooter({
         </div>
       </div>
 
-      {/* Giant outline italic siteName — типографический финал */}
-      <div
-        className="serif"
-        style={{
-          marginTop: 80,
-          textAlign: "center",
-          fontSize: "clamp(8rem, 22vw, 22rem)",
-          lineHeight: 0.85,
-          letterSpacing: "-0.06em",
-          color: "transparent",
-          WebkitTextStroke: "1px var(--border-subtle)",
-          fontWeight: 300,
-          fontStyle: "italic",
-          userSelect: "none",
-        }}
-      >
-        {siteName}
-      </div>
-
       <style>{`
         @media (max-width: 900px) {
           .ed-ft-top { grid-template-columns: 1fr !important; gap: 48px !important; }

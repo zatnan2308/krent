@@ -280,63 +280,6 @@ export default async function ContactPage({
               </div>
             </div>
 
-            {/* Mini SVG map */}
-            <div
-              style={{
-                marginTop: 8,
-                aspectRatio: "4 / 3",
-                border: "1px solid var(--border-subtle)",
-                background: "var(--bg-elevated)",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <ContactMap />
-              <div
-                style={{
-                  position: "absolute",
-                  left: "52%",
-                  top: "54%",
-                  transform: "translate(-50%, -100%)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "5px 11px",
-                    background: "var(--accent)",
-                    color: "var(--bg-primary)",
-                    fontFamily: "Fraunces, serif",
-                    fontSize: 12,
-                    letterSpacing: "-0.005em",
-                    whiteSpace: "nowrap",
-                    boxShadow: "0 8px 24px -8px rgba(139,115,64,0.5)",
-                  }}
-                >
-                  DIFC
-                </div>
-                <div
-                  style={{
-                    width: 1,
-                    height: 14,
-                    background: "var(--accent)",
-                  }}
-                />
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                    border: "2px solid var(--bg-elevated)",
-                    marginTop: -1,
-                    boxShadow: "0 0 0 6px rgba(139,115,64,0.18)",
-                  }}
-                />
-              </div>
-            </div>
           </aside>
         </div>
 
@@ -420,42 +363,3 @@ export default async function ContactPage({
   );
 }
 
-function ContactMap() {
-  return (
-    <svg
-      viewBox="0 0 100 75"
-      preserveAspectRatio="xMidYMid slice"
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-      }}
-    >
-      <rect x="0" y="0" width="100" height="75" fill="var(--bg-elevated)" />
-      <g
-        stroke="var(--border-medium)"
-        strokeWidth="0.18"
-        fill="none"
-        opacity="0.7"
-      >
-        <line x1="0" y1="20" x2="100" y2="22" />
-        <line x1="0" y1="30" x2="100" y2="32" />
-        <line x1="0" y1="44" x2="100" y2="46" />
-        <line x1="0" y1="56" x2="100" y2="58" />
-        <line x1="20" y1="0" x2="22" y2="75" />
-        <line x1="40" y1="0" x2="42" y2="75" />
-        <line x1="58" y1="0" x2="60" y2="75" />
-        <line x1="76" y1="0" x2="78" y2="75" />
-        <path d="M 5 50 Q 30 48 55 54 T 95 60" strokeWidth="0.25" />
-      </g>
-      <g fill="var(--border-subtle)" opacity="0.6">
-        <rect x="30" y="36" width="3" height="2" />
-        <rect x="46" y="40" width="2.5" height="2.5" />
-        <rect x="62" y="44" width="3" height="2" />
-        <rect x="36" y="50" width="2" height="2" />
-        <rect x="68" y="60" width="2.5" height="2.5" />
-      </g>
-    </svg>
-  );
-}
