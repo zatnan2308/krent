@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { CurrencySwitcher } from "@/components/shared/currency-switcher";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
@@ -53,6 +54,12 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const [scrolled, setScrolled] = React.useState(false);
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const pathname = usePathname() ?? "";
+
+  // Прозрачный header с on-dark текстом — только на главной (hero-photo
+  // под хедером). На всех остальных страницах хедер сразу cream с blur,
+  // потому что сразу под ним идёт светлый контент или светлая hero-секция.
+  const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -76,9 +83,12 @@ export function PublicHeader({
     { label: "Contact", href: buildLocalizedPath(locale, "/contact") },
   ];
 
-  // Над hero (scrollY=0) — прозрачный header с on-dark текстом.
-  // После скролла — cream c blur и border-bottom.
-  const onDark = !scrolled;
+  // onDark — прозрачный с on-dark текстом — допустимо ТОЛЬКО на главной
+  // в самом верху (когда под хедером ещё тёмная hero-фотография).
+  // На остальных страницах хедер сразу cream c blur и бордюром.
+  const lightBg = !isHome;
+  const onDark = isHome && !scrolled;
+  const showCream = lightBg || scrolled;
 
   return (
     <header
@@ -89,10 +99,10 @@ export function PublicHeader({
         right: 0,
         zIndex: 100,
         transition: "all 500ms var(--ease-out-expo)",
-        background: scrolled ? "rgba(245, 244, 238, 0.82)" : "transparent",
-        backdropFilter: scrolled ? "blur(18px) saturate(1.2)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(18px) saturate(1.2)" : "none",
-        borderBottom: scrolled
+        background: showCream ? "rgba(245, 244, 238, 0.82)" : "transparent",
+        backdropFilter: showCream ? "blur(18px) saturate(1.2)" : "none",
+        WebkitBackdropFilter: showCream ? "blur(18px) saturate(1.2)" : "none",
+        borderBottom: showCream
           ? "1px solid var(--border-subtle)"
           : "1px solid transparent",
       }}
