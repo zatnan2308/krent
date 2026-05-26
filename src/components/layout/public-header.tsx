@@ -82,8 +82,11 @@ export function PublicHeader({
             label={dictionary.common.language}
           />
           <CurrencySwitcher label={dictionary.common.currency} />
-          <Button asChild size="sm" className="ml-1">
+          <Button asChild size="sm" variant="ghost" className="ml-1">
             <Link href={ROUTES.auth.signIn}>{dictionary.common.signIn}</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href={ROUTES.auth.signUp}>Sign up</Link>
           </Button>
         </div>
 
@@ -126,9 +129,14 @@ export function PublicHeader({
                 label={dictionary.common.language}
               />
               <CurrencySwitcher label={dictionary.common.currency} />
-              <Button asChild size="sm" className="ml-auto">
+              <Button asChild size="sm" variant="outline" className="ml-auto">
                 <Link href={ROUTES.auth.signIn} onClick={() => setOpen(false)}>
                   {dictionary.common.signIn}
+                </Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href={ROUTES.auth.signUp} onClick={() => setOpen(false)}>
+                  Sign up
                 </Link>
               </Button>
             </div>
