@@ -160,6 +160,9 @@ export default async function LocaleHomePage({
   const heroChips = hero?.eyebrow_chips ?? [];
 
   const featuredMarket = markets.find((m) => m.is_featured) ?? markets[0] ?? null;
+  const smallMarkets = featuredMarket
+    ? markets.filter((m) => m.id !== featuredMarket.id)
+    : [];
 
   const aboutMetrics = about
     ? [
@@ -403,7 +406,9 @@ export default async function LocaleHomePage({
       ) : null}
 
       {/* ============================================================
-          MARKETS — Dubai 2×2 + остальные 1×1.
+          MARKETS — featured hero полной ширины + остальные в равной
+          строке. Чистый layout, который масштабируется на 2-5 markets
+          без «упавших» карточек.
           ============================================================ */}
       {markets.length > 0 ? (
         <section
@@ -468,33 +473,48 @@ export default async function LocaleHomePage({
             </div>
 
             <div
-              className="ed-markets-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 24,
-              }}
+              style={{ display: "flex", flexDirection: "column", gap: 24 }}
             >
-              {markets.map((m, i) => (
+              {featuredMarket ? (
                 <MarketCard
-                  key={m.id}
-                  market={m}
-                  featured={m.id === featuredMarket?.id}
-                  idx={String(i + 1).padStart(2, "0")}
+                  market={featuredMarket}
+                  featured
+                  idx="01"
                   locale={locale}
                 />
-              ))}
+              ) : null}
+
+              {smallMarkets.length > 0 ? (
+                <div
+                  className="ed-markets-row"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${Math.min(smallMarkets.length, 4)}, 1fr)`,
+                    gap: 24,
+                  }}
+                >
+                  {smallMarkets.map((m, i) => (
+                    <MarketCard
+                      key={m.id}
+                      market={m}
+                      featured={false}
+                      idx={String(i + 2).padStart(2, "0")}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
 
           <style>{`
-            .ed-markets-grid > .ed-market-featured {
-              grid-column: span 2;
-              grid-row: span 2;
+            @media (max-width: 1024px) {
+              .ed-markets-row {
+                grid-template-columns: repeat(2, 1fr) !important;
+              }
             }
-            @media (max-width: 900px) {
-              .ed-markets-grid { grid-template-columns: 1fr !important; }
-              .ed-markets-grid > .ed-market-featured { grid-column: span 1 !important; grid-row: span 1 !important; }
+            @media (max-width: 640px) {
+              .ed-markets-row { grid-template-columns: 1fr !important; }
               .ed-section-header { grid-template-columns: 1fr !important; gap: 32px !important; }
             }
           `}</style>
