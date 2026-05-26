@@ -25,6 +25,7 @@ export const ROUTES = {
   },
   dashboard: {
     root: "/dashboard",
+    home: "/dashboard/home",
     pages: "/dashboard/pages",
     navigation: "/dashboard/navigation",
     properties: "/dashboard/properties",

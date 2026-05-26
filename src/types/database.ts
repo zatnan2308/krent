@@ -2048,6 +2048,379 @@ export type Database = {
           },
         ]
       }
+      home_about: {
+        Row: {
+          body: string
+          eyebrow_text: string
+          headline: string
+          metric_1_label: string | null
+          metric_1_value: string | null
+          metric_2_label: string | null
+          metric_2_value: string | null
+          metric_3_label: string | null
+          metric_3_value: string | null
+          metric_4_label: string | null
+          metric_4_value: string | null
+          organization_id: string
+          portrait_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          eyebrow_text?: string
+          headline?: string
+          metric_1_label?: string | null
+          metric_1_value?: string | null
+          metric_2_label?: string | null
+          metric_2_value?: string | null
+          metric_3_label?: string | null
+          metric_3_value?: string | null
+          metric_4_label?: string | null
+          metric_4_value?: string | null
+          organization_id: string
+          portrait_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          eyebrow_text?: string
+          headline?: string
+          metric_1_label?: string | null
+          metric_1_value?: string | null
+          metric_2_label?: string | null
+          metric_2_value?: string | null
+          metric_3_label?: string | null
+          metric_3_value?: string | null
+          metric_4_label?: string | null
+          metric_4_value?: string | null
+          organization_id?: string
+          portrait_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_about_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_cta: {
+        Row: {
+          eyebrow_text: string
+          headline_italic: string
+          headline_left: string
+          headline_right: string
+          organization_id: string
+          primary_cta_href: string
+          primary_cta_label: string
+          secondary_cta_href: string
+          secondary_cta_label: string
+          subtitle: string
+          updated_at: string
+        }
+        Insert: {
+          eyebrow_text?: string
+          headline_italic?: string
+          headline_left?: string
+          headline_right?: string
+          organization_id: string
+          primary_cta_href?: string
+          primary_cta_label?: string
+          secondary_cta_href?: string
+          secondary_cta_label?: string
+          subtitle?: string
+          updated_at?: string
+        }
+        Update: {
+          eyebrow_text?: string
+          headline_italic?: string
+          headline_left?: string
+          headline_right?: string
+          organization_id?: string
+          primary_cta_href?: string
+          primary_cta_label?: string
+          secondary_cta_href?: string
+          secondary_cta_label?: string
+          subtitle?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_cta_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_hero: {
+        Row: {
+          background_image_url: string | null
+          eyebrow_chips: string[]
+          eyebrow_text: string
+          headline_bottom_italic: string
+          headline_top: string
+          organization_id: string
+          primary_cta_href: string
+          primary_cta_label: string
+          secondary_cta_href: string
+          secondary_cta_label: string
+          subtitle: string
+          updated_at: string
+        }
+        Insert: {
+          background_image_url?: string | null
+          eyebrow_chips?: string[]
+          eyebrow_text?: string
+          headline_bottom_italic?: string
+          headline_top?: string
+          organization_id: string
+          primary_cta_href?: string
+          primary_cta_label?: string
+          secondary_cta_href?: string
+          secondary_cta_label?: string
+          subtitle?: string
+          updated_at?: string
+        }
+        Update: {
+          background_image_url?: string | null
+          eyebrow_chips?: string[]
+          eyebrow_text?: string
+          headline_bottom_italic?: string
+          headline_top?: string
+          organization_id?: string
+          primary_cta_href?: string
+          primary_cta_label?: string
+          secondary_cta_href?: string
+          secondary_cta_label?: string
+          subtitle?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_hero_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_markets: {
+        Row: {
+          badge: string | null
+          blurb: string | null
+          created_at: string
+          href: string | null
+          id: string
+          image_url: string | null
+          is_featured: boolean
+          name: string
+          organization_id: string
+          region: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          badge?: string | null
+          blurb?: string | null
+          created_at?: string
+          href?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          name: string
+          organization_id: string
+          region?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          badge?: string | null
+          blurb?: string | null
+          created_at?: string
+          href?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          name?: string
+          organization_id?: string
+          region?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_markets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_press_logos: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          organization_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_press_logos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_process_steps: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          sort_order: number
+          step_number: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          sort_order?: number
+          step_number: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          sort_order?: number
+          step_number?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_process_steps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_testimonials: {
+        Row: {
+          author_name: string | null
+          created_at: string
+          deal_label: string | null
+          id: string
+          organization_id: string
+          quote: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          created_at?: string
+          deal_label?: string | null
+          id?: string
+          organization_id: string
+          quote: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          created_at?: string
+          deal_label?: string | null
+          id?: string
+          organization_id?: string
+          quote?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_testimonials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_trust_badges: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          organization_id: string
+          sort_order: number
+          sub: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          organization_id: string
+          sort_order?: number
+          sub?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          organization_id?: string
+          sort_order?: number
+          sub?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_trust_badges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ical_export_tokens: {
         Row: {
           calendar_id: string

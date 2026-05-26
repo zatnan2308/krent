@@ -4,6 +4,7 @@ import {
   CalendarCheck,
   CalendarDays,
   FileText,
+  Home,
   KeyRound,
   LayoutDashboard,
   Mail,
@@ -31,6 +32,7 @@ export interface NavItem {
 /** Навигация рабочего пространства dashboard. */
 export const dashboardNav: NavItem[] = [
   { label: "Dashboard", href: ROUTES.dashboard.root, icon: LayoutDashboard },
+  { label: "Home page", href: ROUTES.dashboard.home, icon: Home },
   { label: "Pages", href: ROUTES.dashboard.pages, icon: FileText },
   {
     label: "Navigation",
