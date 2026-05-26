@@ -47,7 +47,13 @@ export function LanguageSwitcher({
         <Globe className="h-4 w-4 text-muted-foreground" />
         <span className="uppercase">{currentLocale}</span>
       </DropdownTrigger>
-      <DropdownContent align="end" className="w-44">
+      <DropdownContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        avoidCollisions={false}
+        className="w-44"
+      >
         <DropdownLabel>{label}</DropdownLabel>
         <DropdownSeparator />
         {LOCALES.map((locale) => (

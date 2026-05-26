@@ -65,7 +65,13 @@ export function CurrencySwitcher({ label }: CurrencySwitcherProps) {
         </span>
         <span>{current}</span>
       </DropdownTrigger>
-      <DropdownContent align="end" className="w-44">
+      <DropdownContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        avoidCollisions={false}
+        className="w-44"
+      >
         <DropdownLabel>{label}</DropdownLabel>
         <DropdownSeparator />
         {CURRENCIES.map((currency) => (
