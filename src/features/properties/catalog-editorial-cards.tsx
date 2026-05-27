@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import type { PublicPropertyCard } from "@/features/properties/queries";
 import { DEFAULT_CURRENCY, isCurrencyCode } from "@/lib/currency/config";
@@ -67,6 +68,8 @@ export function CatalogEditorialCards({
   sort,
   sortHrefs,
 }: Props) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
   const [view, setView] = React.useState<View>("list");
   const [density, setDensity] = React.useState<Density>(2);
   const [sortOpen, setSortOpen] = React.useState(false);
@@ -74,6 +77,13 @@ export function CatalogEditorialCards({
   const currentSort =
     sortHrefs.find((option) => option.value === sort) ?? sortHrefs[0]!;
   const total = String(totalShown).padStart(2, "0");
+
+  /** Soft-navigation: меняет URL без full reload + ставит pending. */
+  function softNavigate(href: string) {
+    startTransition(() => {
+      router.replace(href, { scroll: false });
+    });
+  }
 
   return (
     <div>
@@ -172,10 +182,13 @@ export function CatalogEditorialCards({
                   }}
                 >
                   {sortHrefs.map((option) => (
-                    <Link
+                    <button
                       key={option.value}
-                      href={option.href}
-                      onClick={() => setSortOpen(false)}
+                      type="button"
+                      onClick={() => {
+                        setSortOpen(false);
+                        softNavigate(option.href);
+                      }}
                       style={{
                         display: "block",
                         width: "100%",
@@ -187,11 +200,14 @@ export function CatalogEditorialCards({
                             ? "var(--accent)"
                             : "var(--text-primary)",
                         letterSpacing: "0.01em",
-                        textDecoration: "none",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
                       }}
                     >
                       {option.label}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               ) : null}
@@ -306,9 +322,10 @@ export function CatalogEditorialCards({
               Applied
             </span>
             {appliedChips.map((c) => (
-              <Link
+              <button
                 key={c.label + c.clearHref}
-                href={c.clearHref}
+                type="button"
+                onClick={() => softNavigate(c.clearHref)}
                 style={{
                   padding: "6px 12px",
                   fontSize: 12,
@@ -319,7 +336,8 @@ export function CatalogEditorialCards({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  textDecoration: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 {c.label}
@@ -332,10 +350,11 @@ export function CatalogEditorialCards({
                 >
                   ×
                 </span>
-              </Link>
+              </button>
             ))}
-            <Link
-              href={resetHref}
+            <button
+              type="button"
+              onClick={() => softNavigate(resetHref)}
               style={{
                 fontSize: 11,
                 letterSpacing: "0.06em",
@@ -343,50 +362,62 @@ export function CatalogEditorialCards({
                 textDecoration: "underline",
                 textUnderlineOffset: 3,
                 marginLeft: 4,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
               }}
             >
               Reset all
-            </Link>
+            </button>
           </div>
         ) : null}
       </div>
 
       {/* RESULTS */}
-      {items.length === 0 ? (
-        <EmptyState resetHref={resetHref} />
-      ) : view === "grid" ? (
-        <div
-          style={{
-            paddingTop: 40,
-            display: "grid",
-            gridTemplateColumns: `repeat(${density}, 1fr)`,
-            gap: "48px 32px",
-          }}
-          className="ed-grid-view"
-        >
-          {items.map((card, i) => (
-            <EditorialGridCard
-              key={card.id}
-              card={card}
-              locale={locale}
-              idx={String(i + 1).padStart(2, "0")}
-              total={total}
-            />
-          ))}
-        </div>
-      ) : (
-        <div>
-          {items.map((card, i) => (
-            <EditorialListCard
-              key={card.id}
-              card={card}
-              locale={locale}
-              idx={String(i + 1).padStart(2, "0")}
-              total={total}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          opacity: pending ? 0.5 : 1,
+          pointerEvents: pending ? "none" : "auto",
+          transition: "opacity 200ms var(--ease-out-expo)",
+        }}
+      >
+        {items.length === 0 ? (
+          <EmptyState resetHref={resetHref} />
+        ) : view === "grid" ? (
+          <div
+            style={{
+              paddingTop: 40,
+              display: "grid",
+              gridTemplateColumns: `repeat(${density}, 1fr)`,
+              gap: "48px 32px",
+            }}
+            className="ed-grid-view"
+          >
+            {items.map((card, i) => (
+              <EditorialGridCard
+                key={card.id}
+                card={card}
+                locale={locale}
+                idx={String(i + 1).padStart(2, "0")}
+                total={total}
+              />
+            ))}
+          </div>
+        ) : (
+          <div>
+            {items.map((card, i) => (
+              <EditorialListCard
+                key={card.id}
+                card={card}
+                locale={locale}
+                idx={String(i + 1).padStart(2, "0")}
+                total={total}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <style>{`
         @media (max-width: 640px) {

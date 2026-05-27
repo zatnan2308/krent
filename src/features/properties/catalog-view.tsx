@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CatalogCityTabs } from "@/features/properties/catalog-city-tabs";
 import { CatalogEditorialCards } from "@/features/properties/catalog-editorial-cards";
 import { CatalogEditorialPagination } from "@/features/properties/catalog-editorial-pagination";
 import { CatalogEditorialSidebar } from "@/features/properties/catalog-editorial-sidebar";
@@ -236,23 +236,15 @@ export async function renderCatalog({
   const buildPaginationHref = (page: number): string =>
     hrefWith(buildQueryString(filters, page));
 
-  // Города для табов: пересечение реальных городов из БД с дефолтным набором,
-  // плюс табы для городов из дизайна (даже если их нет — даём 0).
-  const cityTabs: { label: string; href: string; count: number; active: boolean }[] =
-    [
-      {
-        label: "All",
-        href: hrefWith(buildQueryString(filters, 1, { city: null })),
-        count: result.total,
-        active: !filters.city,
-      },
-      ...locations.cities.map((city) => ({
-        label: city,
-        href: hrefWith(buildQueryString(filters, 1, { city })),
-        count: 0, // counts по городам у нас нет в запросе, опускаем
-        active: filters.city === city,
-      })),
-    ];
+  // Города для табов — All + реальные города из БД.
+  const cityTabs: { label: string; city: string | null; active: boolean }[] = [
+    { label: "All", city: null, active: !filters.city },
+    ...locations.cities.map((city) => ({
+      label: city,
+      city,
+      active: filters.city === city,
+    })),
+  ];
 
   // Sort dropdown options
   const sortHrefs = SORT_VALUES.map((value) => ({
@@ -383,43 +375,9 @@ export async function renderCatalog({
             </p>
           </div>
 
-          {/* City tabs */}
+          {/* City tabs — клиентский AJAX-переключатель */}
           {cityTabs.length > 1 ? (
-            <div
-              className="ed-city-tabs"
-              style={{
-                marginTop: 48,
-                display: "flex",
-                gap: 36,
-                flexWrap: "wrap",
-                borderTop: "1px solid var(--border-subtle)",
-                paddingTop: 24,
-              }}
-            >
-              {cityTabs.map((tab) => (
-                <Link
-                  key={tab.label}
-                  href={tab.href}
-                  style={{
-                    padding: "4px 0",
-                    fontSize: 14,
-                    letterSpacing: "0.01em",
-                    color: tab.active
-                      ? "var(--accent)"
-                      : "var(--text-secondary)",
-                    borderBottom: `1px solid ${
-                      tab.active ? "var(--accent)" : "transparent"
-                    }`,
-                    display: "inline-flex",
-                    alignItems: "baseline",
-                    gap: 8,
-                    textDecoration: "none",
-                  }}
-                >
-                  {tab.label}
-                </Link>
-              ))}
-            </div>
+            <CatalogCityTabs action={formAction} tabs={cityTabs} />
           ) : null}
         </div>
       </section>

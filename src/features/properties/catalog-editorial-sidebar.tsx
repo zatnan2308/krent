@@ -1,10 +1,15 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { PROPERTY_TYPE_OPTIONS } from "@/features/properties/constants";
 import type { CatalogFilters } from "@/features/properties/queries";
 import type { Amenity, AmenityCategory } from "@/features/properties/types";
 
 interface Props {
+  /** Базовый URL страницы (/{locale}/{path}) — без query. */
   action: string;
   filters: CatalogFilters;
   amenityCatalog: { categories: AmenityCategory[]; amenities: Amenity[] };
@@ -23,8 +28,16 @@ const BEDS_OPTIONS: { value: string; label: string }[] = [
 
 /**
  * Editorial-стилизованный сайдбар фильтров.
- * Чистая GET-форма, без клиентского JS — submit формирует query-параметры,
- * страница парсит их и перерисовывает каталог.
+ *
+ * Все изменения применяются мгновенно (auto-apply): каждый onChange
+ * пишет соответствующий query-параметр в URL через router.replace, что
+ * приводит к streaming-обновлению результатов без полной перезагрузки.
+ *
+ * Текстовые числовые поля (minPrice/maxPrice) дебаунсятся на 500ms
+ * чтобы не дёргать сервер на каждое нажатие клавиши.
+ *
+ * useTransition даёт `pending`-состояние — сайдбар чуть притухает, пока
+ * результат загружается.
  */
 export function CatalogEditorialSidebar({
   action,
@@ -33,6 +46,75 @@ export function CatalogEditorialSidebar({
   cities,
   areas,
 }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = React.useTransition();
+
+  // Локальное состояние числовых полей — чтобы input не «прыгал» назад
+  // в момент server-round-trip'а.
+  const [minPriceLocal, setMinPriceLocal] = React.useState(
+    filters.minPrice !== null ? String(filters.minPrice) : "",
+  );
+  const [maxPriceLocal, setMaxPriceLocal] = React.useState(
+    filters.maxPrice !== null ? String(filters.maxPrice) : "",
+  );
+  // Синхронизируемся, если фильтры пришли извне (например, по reset chip).
+  React.useEffect(() => {
+    setMinPriceLocal(filters.minPrice !== null ? String(filters.minPrice) : "");
+  }, [filters.minPrice]);
+  React.useEffect(() => {
+    setMaxPriceLocal(filters.maxPrice !== null ? String(filters.maxPrice) : "");
+  }, [filters.maxPrice]);
+
+  /** Записывает один параметр в URL и стартует transition.
+   *  value === "" → параметр удаляется. */
+  const pushParam = React.useCallback(
+    (key: string, value: string | string[] | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      // Сбрасываем номер страницы при любом изменении фильтра.
+      params.delete("page");
+      params.delete(key);
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          if (v) params.append(key, v);
+        }
+      } else if (value !== null && value !== "") {
+        params.set(key, value);
+      }
+      const qs = params.toString();
+      startTransition(() => {
+        router.replace(qs ? `${action}?${qs}` : action, { scroll: false });
+      });
+    },
+    [action, router, searchParams],
+  );
+
+  // Дебаунс для числовых полей.
+  const minDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  function handleMinPriceChange(value: string) {
+    setMinPriceLocal(value);
+    if (minDebounceRef.current) clearTimeout(minDebounceRef.current);
+    minDebounceRef.current = setTimeout(() => {
+      pushParam("minPrice", value.trim() || null);
+    }, 500);
+  }
+  function handleMaxPriceChange(value: string) {
+    setMaxPriceLocal(value);
+    if (maxDebounceRef.current) clearTimeout(maxDebounceRef.current);
+    maxDebounceRef.current = setTimeout(() => {
+      pushParam("maxPrice", value.trim() || null);
+    }, 500);
+  }
+
+  function toggleAmenity(id: string) {
+    const current = filters.amenityIds;
+    const next = current.includes(id)
+      ? current.filter((x) => x !== id)
+      : [...current, id];
+    pushParam("amenities", next);
+  }
+
   const categoryIds = new Set(amenityCatalog.categories.map((c) => c.id));
   const groups = amenityCatalog.categories
     .map((category) => ({
@@ -49,9 +131,7 @@ export function CatalogEditorialSidebar({
   const hasAmenities = groups.length > 0 || uncategorized.length > 0;
 
   return (
-    <form
-      method="get"
-      action={action}
+    <aside
       className="ed-sidebar"
       style={{
         position: "sticky",
@@ -61,6 +141,8 @@ export function CatalogEditorialSidebar({
         overflowY: "auto",
         paddingRight: 16,
         scrollbarWidth: "thin",
+        opacity: pending ? 0.6 : 1,
+        transition: "opacity 200ms var(--ease-out-expo)",
       }}
     >
       <div
@@ -82,16 +164,21 @@ export function CatalogEditorialSidebar({
             padding: 0,
             textDecoration: "none",
           }}
+          onClick={(event) => {
+            event.preventDefault();
+            startTransition(() => {
+              router.replace(action, { scroll: false });
+            });
+          }}
         >
           Reset all
         </Link>
       </div>
 
-      {/* Property type */}
       <Section title="Property type">
         <select
-          name="type"
-          defaultValue={filters.propertyType ?? ""}
+          value={filters.propertyType ?? ""}
+          onChange={(e) => pushParam("type", e.target.value || null)}
           className="ed-select"
         >
           <option value="">Any type</option>
@@ -103,12 +190,11 @@ export function CatalogEditorialSidebar({
         </select>
       </Section>
 
-      {/* City */}
       {cities.length > 0 ? (
         <Section title="City">
           <select
-            name="city"
-            defaultValue={filters.city ?? ""}
+            value={filters.city ?? ""}
+            onChange={(e) => pushParam("city", e.target.value || null)}
             className="ed-select"
           >
             <option value="">Any city</option>
@@ -121,12 +207,11 @@ export function CatalogEditorialSidebar({
         </Section>
       ) : null}
 
-      {/* Area */}
       {areas.length > 0 ? (
         <Section title="Area">
           <select
-            name="area"
-            defaultValue={filters.area ?? ""}
+            value={filters.area ?? ""}
+            onChange={(e) => pushParam("area", e.target.value || null)}
             className="ed-select"
           >
             <option value="">Any area</option>
@@ -139,35 +224,33 @@ export function CatalogEditorialSidebar({
         </Section>
       ) : null}
 
-      {/* Price */}
       <Section title="Price (USD)">
         <div style={{ display: "flex", gap: 8 }}>
           <input
             type="number"
-            name="minPrice"
             min={0}
             placeholder="Min"
-            defaultValue={filters.minPrice ?? ""}
+            value={minPriceLocal}
+            onChange={(e) => handleMinPriceChange(e.target.value)}
             aria-label="Minimum price"
             className="ed-input"
           />
           <input
             type="number"
-            name="maxPrice"
             min={0}
             placeholder="Max"
-            defaultValue={filters.maxPrice ?? ""}
+            value={maxPriceLocal}
+            onChange={(e) => handleMaxPriceChange(e.target.value)}
             aria-label="Maximum price"
             className="ed-input"
           />
         </div>
       </Section>
 
-      {/* Bedrooms */}
       <Section title="Bedrooms">
         <select
-          name="bedrooms"
-          defaultValue={filters.bedrooms ?? ""}
+          value={filters.bedrooms ?? ""}
+          onChange={(e) => pushParam("bedrooms", e.target.value || null)}
           className="ed-select"
         >
           {BEDS_OPTIONS.map((option) => (
@@ -178,11 +261,10 @@ export function CatalogEditorialSidebar({
         </select>
       </Section>
 
-      {/* Bathrooms */}
       <Section title="Bathrooms">
         <select
-          name="bathrooms"
-          defaultValue={filters.bathrooms ?? ""}
+          value={filters.bathrooms ?? ""}
+          onChange={(e) => pushParam("bathrooms", e.target.value || null)}
           className="ed-select"
         >
           {BEDS_OPTIONS.map((option) => (
@@ -193,12 +275,12 @@ export function CatalogEditorialSidebar({
         </select>
       </Section>
 
-      {/* Guests (актуально для vacation) */}
-      {filters.guests !== null || filters.purposes?.includes("short_term_rental") ? (
+      {filters.guests !== null ||
+      filters.purposes?.includes("short_term_rental") ? (
         <Section title="Guests">
           <select
-            name="guests"
-            defaultValue={filters.guests ?? ""}
+            value={filters.guests ?? ""}
+            onChange={(e) => pushParam("guests", e.target.value || null)}
             className="ed-select"
           >
             {BEDS_OPTIONS.map((option) => (
@@ -210,7 +292,6 @@ export function CatalogEditorialSidebar({
         </Section>
       ) : null}
 
-      {/* Amenities */}
       {hasAmenities ? (
         <Section title="Amenities">
           <div
@@ -247,13 +328,13 @@ export function CatalogEditorialSidebar({
                       gap: 8,
                       fontSize: 13,
                       color: "var(--text-secondary)",
+                      cursor: "pointer",
                     }}
                   >
                     <input
                       type="checkbox"
-                      name="amenities"
-                      value={amenity.id}
-                      defaultChecked={filters.amenityIds.includes(amenity.id)}
+                      checked={filters.amenityIds.includes(amenity.id)}
+                      onChange={() => toggleAmenity(amenity.id)}
                       style={{ accentColor: "var(--accent)" }}
                     />
                     {amenity.name}
@@ -282,13 +363,13 @@ export function CatalogEditorialSidebar({
                       gap: 8,
                       fontSize: 13,
                       color: "var(--text-secondary)",
+                      cursor: "pointer",
                     }}
                   >
                     <input
                       type="checkbox"
-                      name="amenities"
-                      value={amenity.id}
-                      defaultChecked={filters.amenityIds.includes(amenity.id)}
+                      checked={filters.amenityIds.includes(amenity.id)}
+                      onChange={() => toggleAmenity(amenity.id)}
                       style={{ accentColor: "var(--accent)" }}
                     />
                     {amenity.name}
@@ -300,9 +381,6 @@ export function CatalogEditorialSidebar({
         </Section>
       ) : null}
 
-      {/* Sort hidden — фактический value управляется отдельным элементом ниже */}
-      <input type="hidden" name="sort" value={filters.sort} />
-
       <div
         style={{
           marginTop: 28,
@@ -311,13 +389,6 @@ export function CatalogEditorialSidebar({
           gap: 10,
         }}
       >
-        <button
-          type="submit"
-          className="btn btn-primary"
-          style={{ width: "100%", justifyContent: "center" }}
-        >
-          Apply filters <span className="arrow">→</span>
-        </button>
         <Link
           href="/contact"
           className="btn btn-ghost"
@@ -346,7 +417,7 @@ export function CatalogEditorialSidebar({
           border-color: var(--accent);
         }
       `}</style>
-    </form>
+    </aside>
   );
 }
 
