@@ -20,12 +20,12 @@ const INQUIRY_OPTIONS = [
 ];
 
 const REGION_OPTIONS = [
-  "Dubai",
-  "New York",
-  "Toronto",
-  "London",
-  "Multiple",
-  "Not sure yet",
+  "Downtown Dubai",
+  "Dubai Marina & JBR",
+  "Palm Jumeirah",
+  "Emirates Hills & Dubai Hills",
+  "Business Bay / DIFC",
+  "Other / not sure yet",
 ];
 
 const CONTACT_OPTIONS = ["WhatsApp", "Email", "Phone call", "Video call"];
@@ -182,10 +182,10 @@ export function EditorialContactForm({ locale }: Props) {
           placeholder="+ country code"
         />
         <UDropdown
-          label="Region of interest"
+          label="Area of interest"
           value={data.region}
           onChange={(v) => upd("region", v)}
-          placeholder="Select a region"
+          placeholder="Select an area"
           options={REGION_OPTIONS}
         />
       </div>

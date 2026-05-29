@@ -194,7 +194,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
         <Field
           label="Eyebrow chips (CSV)"
           wide
-          hint="Separator dots are added automatically. E.g. Dubai, New York, Toronto."
+          hint="Separator dots are added automatically. E.g. Downtown, Marina, Palm Jumeirah."
         >
           <Input
             value={form.eyebrowChips.join(", ")}

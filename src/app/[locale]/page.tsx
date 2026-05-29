@@ -425,7 +425,7 @@ export default async function LocaleHomePage({
               <div>
                 <span className="eyebrow gold">
                   <span className="dot" />
-                  Markets
+                  Areas of Dubai
                 </span>
                 <h2
                   className="serif"
@@ -437,10 +437,10 @@ export default async function LocaleHomePage({
                     maxWidth: "12ch",
                   }}
                 >
-                  {markets.length === 1 ? "One city," : `${markets.length} cities,`}
+                  One city,
                   <br />
                   <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                    one broker.
+                    block by block.
                   </em>
                 </h2>
               </div>
@@ -453,8 +453,9 @@ export default async function LocaleHomePage({
                   lineHeight: 1.55,
                 }}
               >
-                Licensed in Dubai. Networked in New York, Toronto, London — through
-                partners worked with for years, not lead-trading platforms.
+                RERA-licensed and Dubai-based full time. I walk every building
+                before I list it — and know the views, the service charges and
+                the developers block by block.
               </p>
             </div>
 
@@ -1115,8 +1116,8 @@ export default async function LocaleHomePage({
                 <ContactLine label="Direct" value="One message · one reply" />
                 <ContactLine label="Response" value="Within the hour" />
                 <ContactLine
-                  label="Markets"
-                  value="Dubai · NY · Toronto · London"
+                  label="Areas"
+                  value="Downtown · Marina · Palm · the Hills"
                 />
               </div>
             </div>
@@ -1126,8 +1127,8 @@ export default async function LocaleHomePage({
                 <FieldStatic label="Name" placeholder="Full name" />
                 <FieldStatic label="Email" placeholder="you@example.com" />
                 <FieldStatic
-                  label="Region of interest"
-                  placeholder="Dubai, New York, Toronto, London…"
+                  label="Area of interest"
+                  placeholder="Downtown, Marina, Palm Jumeirah, the Hills…"
                 />
                 <FieldStatic
                   label="Message"

@@ -367,7 +367,7 @@ export async function renderCatalog({
               }}
             >
               {result.total} {result.total === 1 ? "listing" : "listings"}
-              {filters.city ? ` in ${filters.city}` : " across four cities"}
+              {filters.city ? ` in ${filters.city}` : " across Dubai"}
               {" · "}
               <span style={{ color: "var(--text-tertiary)" }}>
                 Vetted personally before going public

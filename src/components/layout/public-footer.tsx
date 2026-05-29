@@ -103,18 +103,21 @@ export function PublicFooter({
     },
   ];
   const colMarkets = [
-    { label: "Dubai", href: buildLocalizedPath(locale, "/properties?city=Dubai") },
     {
-      label: "New York",
-      href: buildLocalizedPath(locale, "/properties?city=New York"),
+      label: "Downtown Dubai",
+      href: buildLocalizedPath(locale, "/properties?area=Downtown Dubai"),
     },
     {
-      label: "Toronto",
-      href: buildLocalizedPath(locale, "/properties?city=Toronto"),
+      label: "Dubai Marina",
+      href: buildLocalizedPath(locale, "/properties?area=Dubai Marina"),
     },
     {
-      label: "London",
-      href: buildLocalizedPath(locale, "/properties?city=London"),
+      label: "Palm Jumeirah",
+      href: buildLocalizedPath(locale, "/properties?area=Palm Jumeirah"),
+    },
+    {
+      label: "Emirates Hills",
+      href: buildLocalizedPath(locale, "/properties?area=Emirates Hills"),
     },
   ];
   const colCompany = [
@@ -189,8 +192,8 @@ export function PublicFooter({
                 lineHeight: 1.55,
               }}
             >
-              Independent licensed realtor. Premium residential, investment and
-              relocation. Dubai · New York · Toronto · London.
+              Independent RERA-licensed realtor. Premium residential,
+              investment and relocation — Dubai only, known block by block.
             </p>
             {supportEmail || supportPhone ? (
               <div
@@ -291,7 +294,7 @@ export function PublicFooter({
           }}
         >
           <Col title="Browse" items={colBrowse} />
-          <Col title="Markets" items={colMarkets} />
+          <Col title="Areas" items={colMarkets} />
           <Col title="Company" items={colCompany} />
           <Col title="Legal" items={colLegal} />
         </div>

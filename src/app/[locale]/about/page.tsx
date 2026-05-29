@@ -21,38 +21,38 @@ const DEFAULT_PORTRAIT =
 const DEFAULT_TIMELINE = [
   {
     year: "2016",
-    title: "First deal closed",
-    body: "Two-bedroom on Ostozhenka, Moscow. Nine months of patience, six weeks of negotiation.",
+    title: "Arrived in Dubai",
+    body: "Took the RERA exam in three months and joined one of the city's largest Marina-focused agencies.",
   },
   {
     year: "2018",
-    title: "Boutique brokerage, Moscow Centre",
-    body: "Joined a 6-person team specialising in centre-only luxury. Closed 18 deals in the year.",
+    title: "First off-market deal",
+    body: "A villa in Emirates Hills, sold before it ever reached a portal. The model became the method.",
   },
   {
     year: "2019",
-    title: "Moved to Dubai",
-    body: "Took the RERA exam in three months. Joined one of the city's largest agencies.",
+    title: "Went independent",
+    body: "Left the volume agency, capped the book at twelve active clients. Dubai only, by choice.",
   },
   {
-    year: "2020",
-    title: "Re-licensed independently",
-    body: "Capped the book at 12 active clients. First off-market deal in Emirates Hills.",
+    year: "2021",
+    title: "Branded residences",
+    body: "Deepened into Downtown and Palm Jumeirah — Bulgari, Armani, One at Palm Jumeirah.",
   },
   {
-    year: "2022",
-    title: "First cross-border deals",
-    body: "Tribeca and Yorkville, both for existing Dubai clients relocating.",
+    year: "2023",
+    title: "Property Finder Superagent",
+    body: "Top 1% of Dubai agents by client rating, two years running. Featured in Forbes Middle East.",
   },
   {
     year: "2024",
-    title: "NAR registered, US",
-    body: "Property Finder Superagent. Featured in Forbes Middle East.",
+    title: "Two hundredth deal",
+    body: "Across Marina, Downtown, Palm and the Hills — every one walked personally before listing.",
   },
   {
     year: String(new Date().getFullYear()),
     title: "Today",
-    body: "4 markets · ~12 clients at any time · cross-border-end-to-end.",
+    body: "One city · ~12 clients at any time · every building known by name.",
   },
 ];
 
@@ -68,7 +68,7 @@ export async function generateMetadata({
   return {
     title: baseTitle,
     description:
-      "One person, twelve clients, four markets. Licensed in Dubai, networked in New York, Toronto and London.",
+      "One person, twelve clients, one city. A RERA-licensed Dubai realtor who walks every building before listing it.",
     alternates: buildLocaleAlternates(locale, "/about"),
   };
 }
@@ -99,7 +99,7 @@ export default async function AboutPage({
   const portrait = about?.portrait_url || DEFAULT_PORTRAIT;
   const heroParagraph =
     about?.body ||
-    `${siteName} has spent the last years selling property the old way — by walking through it, knowing the building, and answering personally. Licensed in Dubai. Networked in New York, Toronto and London.`;
+    `${siteName} has spent the last years selling Dubai property the old way — by walking through it, knowing the building, and answering personally. RERA-licensed, Dubai-based, one city known street by street.`;
 
   const stats = about
     ? [
@@ -205,7 +205,7 @@ export default async function AboutPage({
                 Twelve clients.
               </em>
               <br />
-              Four markets.
+              One city.
             </h1>
 
             <p
@@ -306,7 +306,7 @@ export default async function AboutPage({
                 fontWeight: 400,
               }}
             >
-              How a Moscow agent ended up handling Dubai&apos;s quiet listings.
+              How one agent ended up knowing Dubai block by block.
             </h2>
           </div>
 
@@ -319,16 +319,16 @@ export default async function AboutPage({
                 color: "var(--text-secondary)",
               }}
             >
-              Moscow, a few years back. The first deal closed — a two-bedroom on
-              Ostozhenka, sold to a family who had been waiting for the right
+              Dubai, a few years back. The first deal closed — an apartment in
+              the Marina, sold to a family who had been waiting for the right
               building for nine months. Four of them spent walking that family
-              through every property in person. The commission covered the next
-              two years. The lesson stayed longer.
+              through every tower in person. The commission covered the next two
+              years. The lesson stayed longer.
             </p>
 
             <PullQuote>
               Most agents were closing twenty deals a year by saying yes to
-              everyone. We were closing six by saying no.
+              everyone. I was closing six by saying no.
             </PullQuote>
 
             <p
@@ -339,10 +339,10 @@ export default async function AboutPage({
                 marginTop: 24,
               }}
             >
-              By 2019 — Dubai, RERA exam in Arabic, and a major brokerage. Left
-              within a year. Volume agencies are built to maximise the broker —
-              not the client. Re-licensed independently, capped the book at
-              twelve active clients, never looked back.
+              The RERA exam, then a year inside one of the city&apos;s largest
+              agencies. Left within twelve months. Volume agencies are built to
+              maximise the broker — not the client. Re-licensed independently,
+              capped the book at twelve active clients, never looked back.
             </p>
 
             <p
@@ -353,12 +353,11 @@ export default async function AboutPage({
                 marginTop: 24,
               }}
             >
-              The cross-border work came later — first from existing clients
-              asking for help in New York, then Toronto, then London. Three
-              brokers on the other side, built deal by deal. Today about forty
-              percent of the work is cross-border. The other sixty percent is
-              Dubai, where every property is walked personally before listing
-              it.
+              The depth came from staying put. One city, learned tower by tower
+              — which floors get the morning light, which buildings hold their
+              service charges, which developers actually hand over on time.
+              Downtown, the Marina, Palm Jumeirah, the Hills. Every property
+              walked personally before it is ever listed.
             </p>
 
             <PullQuote>
@@ -527,7 +526,7 @@ export default async function AboutPage({
               <div>
                 <span className="eyebrow gold">
                   <span className="dot" />
-                  Markets I serve
+                  Where I work
                 </span>
                 <h2
                   className="serif"
@@ -538,11 +537,10 @@ export default async function AboutPage({
                     lineHeight: 1,
                   }}
                 >
-                  {markets.length > 1 ? `${markets.length} addresses` : "One address"}
-                  ,
+                  One city,
                   <br />
                   <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                    one direct line.
+                    known block by block.
                   </em>
                 </h2>
               </div>
@@ -555,9 +553,9 @@ export default async function AboutPage({
                   paddingBottom: 12,
                 }}
               >
-                Primary market covered full-time. Other cities through partners
-                worked with for years — every cross-border deal shepherded end
-                to end.
+                Every premium community in Dubai, covered full-time and in
+                person — from Downtown and the Marina to Palm Jumeirah and the
+                Hills.
               </p>
             </div>
 
