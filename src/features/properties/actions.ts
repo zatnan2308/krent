@@ -171,6 +171,13 @@ export async function updateProperty(
       year_built: data.yearBuilt,
       parking: data.parking,
       garage: data.garage,
+      listing_view: data.listingView,
+      furnishing: data.furnishing,
+      completion: data.completion,
+      ownership: data.ownership,
+      rental_yield: data.rentalYield,
+      lifestyle_tags: data.lifestyleTags,
+      badge: data.badge,
     })
     .eq("id", data.id)
     .eq("organization_id", organizationId);

@@ -4178,6 +4178,13 @@ export type Database = {
       properties: {
         Row: {
           assigned_agent_id: string | null
+          badge: string | null
+          completion: string | null
+          furnishing: string | null
+          lifestyle_tags: string[]
+          listing_view: string | null
+          ownership: string | null
+          rental_yield: number | null
           bathrooms: number | null
           bedrooms: number | null
           beds: number | null
@@ -4205,6 +4212,13 @@ export type Database = {
         }
         Insert: {
           assigned_agent_id?: string | null
+          badge?: string | null
+          completion?: string | null
+          furnishing?: string | null
+          lifestyle_tags?: string[]
+          listing_view?: string | null
+          ownership?: string | null
+          rental_yield?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           beds?: number | null
@@ -4232,6 +4246,13 @@ export type Database = {
         }
         Update: {
           assigned_agent_id?: string | null
+          badge?: string | null
+          completion?: string | null
+          furnishing?: string | null
+          lifestyle_tags?: string[]
+          listing_view?: string | null
+          ownership?: string | null
+          rental_yield?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           beds?: number | null

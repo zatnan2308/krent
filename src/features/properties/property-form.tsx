@@ -76,6 +76,13 @@ interface FormState {
   yearBuilt: string;
   parking: string;
   garage: boolean;
+  listingView: string;
+  furnishing: string;
+  completion: string;
+  ownership: string;
+  rentalYield: string;
+  lifestyleTags: string;
+  badge: string;
   priceEnabled: boolean;
   amount: string;
   currency: CurrencyCode;
@@ -209,6 +216,13 @@ export function PropertyForm({
     yearBuilt: numToStr(initial.property.year_built),
     parking: numToStr(initial.property.parking),
     garage: initial.property.garage,
+    listingView: initial.property.listing_view ?? "",
+    furnishing: initial.property.furnishing ?? "",
+    completion: initial.property.completion ?? "",
+    ownership: initial.property.ownership ?? "",
+    rentalYield: numToStr(initial.property.rental_yield),
+    lifestyleTags: (initial.property.lifestyle_tags ?? []).join(", "),
+    badge: initial.property.badge ?? "",
     priceEnabled: initial.price !== null,
     amount: numToStr(initial.price?.amount ?? null),
     currency: resolveCurrency(initial.price?.currency),
@@ -282,6 +296,17 @@ export function PropertyForm({
       yearBuilt: toInt(form.yearBuilt),
       parking: toInt(form.parking),
       garage: form.garage,
+      listingView: form.listingView.trim() || null,
+      furnishing: form.furnishing.trim() || null,
+      completion: form.completion.trim() || null,
+      ownership: form.ownership.trim() || null,
+      rentalYield: toNum(form.rentalYield),
+      lifestyleTags: form.lifestyleTags
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 12),
+      badge: form.badge.trim() || null,
       price: form.priceEnabled
         ? {
             amount: toNum(form.amount) ?? 0,
@@ -551,6 +576,112 @@ export function PropertyForm({
                 <label htmlFor="garage" className="text-sm font-medium">
                   Has a garage
                 </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ---- Catalogue attributes (фильтры публичного каталога) ---- */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base">Catalogue attributes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Power the public catalogue filters: View, Furnishing, Completion,
+                Ownership, Rental yield, Lifestyle tags and the card Badge.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Field
+                  label="View"
+                  htmlFor="listingView"
+                  hint="e.g. Sea view, Marina view"
+                >
+                  <Input
+                    id="listingView"
+                    value={form.listingView}
+                    onChange={(event) =>
+                      update("listingView", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Furnishing" htmlFor="furnishing">
+                  <select
+                    id="furnishing"
+                    className={FIELD_CLASS}
+                    value={form.furnishing}
+                    onChange={(event) =>
+                      update("furnishing", event.target.value)
+                    }
+                  >
+                    <option value="">—</option>
+                    <option value="Furnished">Furnished</option>
+                    <option value="Semi-furnished">Semi-furnished</option>
+                    <option value="Unfurnished">Unfurnished</option>
+                  </select>
+                </Field>
+                <Field label="Ownership" htmlFor="ownership">
+                  <select
+                    id="ownership"
+                    className={FIELD_CLASS}
+                    value={form.ownership}
+                    onChange={(event) =>
+                      update("ownership", event.target.value)
+                    }
+                  >
+                    <option value="">—</option>
+                    <option value="Freehold">Freehold</option>
+                    <option value="Leasehold">Leasehold</option>
+                  </select>
+                </Field>
+                <Field
+                  label="Completion"
+                  htmlFor="completion"
+                  hint={'"Ready" or "Off-plan · Q3 2027"'}
+                >
+                  <Input
+                    id="completion"
+                    value={form.completion}
+                    onChange={(event) =>
+                      update("completion", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Rental yield (%)" htmlFor="rentalYield">
+                  <Input
+                    id="rentalYield"
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    value={form.rentalYield}
+                    onChange={(event) =>
+                      update("rentalYield", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field
+                  label="Badge"
+                  htmlFor="badge"
+                  hint="e.g. Off-market, New"
+                >
+                  <Input
+                    id="badge"
+                    value={form.badge}
+                    onChange={(event) => update("badge", event.target.value)}
+                  />
+                </Field>
+                <Field
+                  label="Lifestyle tags"
+                  htmlFor="lifestyleTags"
+                  hint="Comma-separated: Beachfront, Investment"
+                >
+                  <Input
+                    id="lifestyleTags"
+                    value={form.lifestyleTags}
+                    onChange={(event) =>
+                      update("lifestyleTags", event.target.value)
+                    }
+                  />
+                </Field>
               </div>
             </CardContent>
           </Card>

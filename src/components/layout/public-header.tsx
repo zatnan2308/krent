@@ -97,15 +97,6 @@ export function PublicHeader({
 
   const navItems = [
     { label: "Properties", href: buildLocalizedPath(locale, "/properties") },
-    { label: "Buy", href: buildLocalizedPath(locale, "/properties?purpose=sale") },
-    {
-      label: "Rent",
-      href: buildLocalizedPath(locale, "/properties?purpose=long_term_rent"),
-    },
-    {
-      label: "Vacation",
-      href: buildLocalizedPath(locale, "/properties?purpose=short_term_rental"),
-    },
     { label: "About", href: buildLocalizedPath(locale, "/about") },
     { label: "Contact", href: buildLocalizedPath(locale, "/contact") },
   ];

@@ -54,6 +54,14 @@ export interface PublicPropertyCard {
   price: PublicPropertyPrice | null;
   agentName: string | null;
   createdAt: string;
+  /** Каталожные атрибуты (фильтры нового дизайна /properties). */
+  listingView: string | null;
+  furnishing: string | null;
+  completion: string | null;
+  ownership: string | null;
+  rentalYield: number | null;
+  tags: string[];
+  badge: string | null;
 }
 
 /** Способ сортировки каталога. */
@@ -273,6 +281,13 @@ async function composeCards(
       price: price ? toPublicPrice(price) : null,
       agentName: null,
       createdAt: row.created_at,
+      listingView: row.listing_view,
+      furnishing: row.furnishing,
+      completion: row.completion,
+      ownership: row.ownership,
+      rentalYield: row.rental_yield,
+      tags: row.lifestyle_tags ?? [],
+      badge: row.badge,
     };
   });
 }
@@ -400,6 +415,36 @@ export async function getPublicProperties(
   const items = await attachAgents(pageCards, rows);
 
   return { items, total, page, pageSize, totalPages };
+}
+
+/** Имена удобств по каждому объекту (для клиентского фильтра каталога). */
+export async function getPropertyAmenityNames(
+  propertyIds: string[],
+): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (propertyIds.length === 0) return map;
+  const supabase = createClient();
+  const { data: links } = await supabase
+    .from("property_amenities")
+    .select("property_id, amenity_id")
+    .in("property_id", propertyIds);
+  const amenityIds = Array.from(
+    new Set((links ?? []).map((l) => l.amenity_id)),
+  );
+  if (amenityIds.length === 0) return map;
+  const { data: amenities } = await supabase
+    .from("amenities")
+    .select("id, name")
+    .in("id", amenityIds);
+  const nameById = new Map((amenities ?? []).map((a) => [a.id, a.name]));
+  for (const link of links ?? []) {
+    const name = nameById.get(link.amenity_id);
+    if (!name) continue;
+    const arr = map.get(link.property_id) ?? [];
+    arr.push(name);
+    map.set(link.property_id, arr);
+  }
+  return map;
 }
 
 /** Похожие объекты: та же организация и цель, кроме текущего. */
