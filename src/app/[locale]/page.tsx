@@ -4,6 +4,8 @@ import Link from "next/link";
 import { buildPageMetadata } from "@/features/cms/metadata";
 import { getHomePage } from "@/features/cms/queries";
 import { getHomeContent } from "@/features/home/queries";
+import type { HomeSectionsMap } from "@/features/home/queries";
+import { SubscribeBand } from "@/features/home/subscribe-band";
 import { TestimonialsCarousel } from "@/features/home/testimonials-carousel";
 import { getPublicProperties } from "@/features/properties/queries";
 import type { PublicPropertyCard } from "@/features/properties/queries";
@@ -27,9 +29,9 @@ function resolveLocale(value: string): Locale {
   return isLocale(value) ? value : "en";
 }
 
-// Фолбэк hero-фоном — если в БД ещё не загружено своё.
+// Фолбэк hero-фоном — тёмное фото Дубая, если в БД ещё ничего не загружено.
 const DEFAULT_HERO_IMG =
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=2400&q=85&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=2400&q=85&auto=format&fit=crop";
 
 /** Префиксует internal-ссылки локалью; external/mailto/tel оставляет. */
 function localize(href: string | null | undefined, locale: Locale): string {
@@ -78,11 +80,42 @@ function formatPrice(amount: number, currency: string): string {
   }
 }
 
-function dealLabelFor(purpose: string): string {
-  if (purpose === "sale") return "For sale";
-  if (purpose === "long_term_rent") return "Long-term rent";
+/** Бейдж сделки для карточки объекта. */
+function dealBadge(purpose: string): string {
+  if (purpose === "sale") return "For Sale";
+  if (purpose === "long_term_rent") return "For Lease";
   if (purpose === "short_term_rental") return "Vacation";
   return "Featured";
+}
+
+/** Период цены (/mo, /night) — по назначению объекта. */
+function priceCycle(purpose: string): string | null {
+  if (purpose === "long_term_rent") return "/mo";
+  if (purpose === "short_term_rental") return "/night";
+  return null;
+}
+
+/** Достаёт заголовок секции из map с фолбэком на дефолты дизайна. */
+interface SectionCopy {
+  eyebrow: string | null;
+  lead: string | null;
+  accent: string | null;
+  subtitle: string | null;
+  imageUrl: string | null;
+}
+function sectionCopy(
+  sections: HomeSectionsMap,
+  key: string,
+  fallback: Partial<SectionCopy>,
+): SectionCopy {
+  const s = sections[key];
+  return {
+    eyebrow: s?.eyebrow ?? fallback.eyebrow ?? null,
+    lead: s?.lead ?? fallback.lead ?? null,
+    accent: s?.accent ?? fallback.accent ?? null,
+    subtitle: s?.subtitle ?? fallback.subtitle ?? null,
+    imageUrl: s?.image_url ?? fallback.imageUrl ?? null,
+  };
 }
 
 export default async function LocaleHomePage({
@@ -131,7 +164,7 @@ export default async function LocaleHomePage({
             amenityIds: [],
             sort: "newest",
             page: 1,
-            pageSize: 5,
+            pageSize: 6,
           },
         ),
       ])
@@ -145,143 +178,163 @@ export default async function LocaleHomePage({
           testimonials: [],
           trust: [],
           press: [],
+          sections: {} as HomeSectionsMap,
+          intent: [],
+          reasons: [],
+          stats: [],
         },
-        { items: [] },
+        { items: [] as PublicPropertyCard[] },
       ];
 
-  const { hero, about, cta, markets, process, testimonials, trust, press } =
+  const { hero, about, markets, testimonials, trust, sections, intent, reasons, stats } =
     content;
 
-  const propertiesHref = buildLocalizedPath(locale, "/properties");
-  const contactHref = buildLocalizedPath(locale, "/contact");
-  const aboutHref = buildLocalizedPath(locale, "/about");
-
+  const featured = catalog.items.slice(0, 6);
   const heroBg = hero?.background_image_url || DEFAULT_HERO_IMG;
-  const heroChips = hero?.eyebrow_chips ?? [];
 
-  const featuredMarket = markets.find((m) => m.is_featured) ?? markets[0] ?? null;
-  const smallMarkets = featuredMarket
-    ? markets.filter((m) => m.id !== featuredMarket.id)
-    : [];
-
-  const aboutMetrics = about
-    ? [
-        { v: about.metric_1_value, l: about.metric_1_label },
-        { v: about.metric_2_value, l: about.metric_2_label },
-        { v: about.metric_3_value, l: about.metric_3_label },
-        { v: about.metric_4_value, l: about.metric_4_label },
-      ].filter((m): m is { v: string; l: string } => Boolean(m.v && m.l))
-    : [];
-
-  // Из 5 featured-карточек дизайн использует 5 разных layout-функций A–E.
-  // Если в каталоге меньше, рендерим только сколько есть.
-  const featured = catalog.items.slice(0, 5);
+  const intentCopy = sectionCopy(sections, "intent", {
+    eyebrow: "Where to begin",
+    lead: "How can I",
+    accent: "help you?",
+  });
+  const featuredCopy = sectionCopy(sections, "featured", {
+    eyebrow: "On the market",
+    lead: "Featured",
+    accent: "listings",
+  });
+  const whyCopy = sectionCopy(sections, "why", {
+    eyebrow: "The difference",
+    lead: "Why work with",
+    accent: "Alexey",
+  });
+  const communitiesCopy = sectionCopy(sections, "communities", {
+    eyebrow: "Where I work",
+    lead: "Featured",
+    accent: "neighbourhoods",
+  });
+  const storiesCopy = sectionCopy(sections, "stories", {
+    eyebrow: "In their words",
+    lead: "Success",
+    accent: "stories",
+  });
+  const subscribeCopy = sectionCopy(sections, "subscribe", {
+    eyebrow: "Stay close to the market",
+    lead: "Quarterly market",
+    accent: "reports",
+    subtitle: "Four issues a year — written by Alexey, no filler, no spam.",
+  });
 
   return (
     <>
       {siteJsonLd.length > 0 ? <JsonLd data={siteJsonLd} /> : null}
 
       {/* ============================================================
-          HERO — full-screen фото с overlay и нижним fade в cream
+          1 · HERO — full-bleed фото Дубая, текст по центру.
           ============================================================ */}
       {hero ? (
         <section
           id="top"
+          className="on-dark"
           style={{
             position: "relative",
-            minHeight: "100vh",
-            background: "var(--bg-primary)",
+            height: "100vh",
+            minHeight: 600,
             overflow: "hidden",
+            background: "#0F0F12",
           }}
         >
           <div
+            className="v3-hero-bg"
             style={{
               position: "absolute",
               inset: 0,
               backgroundImage: `url(${heroBg})`,
               backgroundSize: "cover",
-              backgroundPosition: "center 30%",
-              // scale + blur — слегка увеличиваем фото, чтобы размытые
-              // прозрачные края не вылезали за края секции.
-              transform: "scale(1.08)",
-              filter:
-                "blur(10px) brightness(0.62) contrast(1.05) saturate(0.85)",
+              backgroundPosition: "center",
+              filter: "brightness(0.66)",
             }}
           />
-
           <div
-            className="on-dark"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(11,11,12,0.45) 0%, rgba(11,11,12,0.05) 30%, rgba(11,11,12,0.1) 55%, rgba(11,11,12,0.75) 100%)",
+            }}
+          />
+          <div
             style={{
               position: "relative",
-              minHeight: "100vh",
+              height: "100%",
               maxWidth: "var(--max-w)",
               margin: "0 auto",
-              padding: "140px var(--edge-d) 220px",
+              padding: "0 var(--edge-d)",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "flex-end",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
             }}
           >
-            <div style={{ marginBottom: 36 }}>
-              <span className="eyebrow gold">
-                {hero.eyebrow_text}
-                {heroChips.map((chip) => (
-                  <span key={chip}>
-                    <span className="dot" />
-                    {chip}
-                  </span>
-                ))}
-              </span>
-            </div>
-
-            <h1
-              className="serif"
+            <div
+              className="v3-hero-in"
               style={{
-                fontSize: "var(--text-display)",
-                lineHeight: 0.92,
-                letterSpacing: "-0.045em",
-                color: "var(--text-primary)",
-                maxWidth: "14ch",
-                fontWeight: 350,
-                marginBottom: 24,
+                fontSize: 12,
+                letterSpacing: "0.34em",
+                textTransform: "uppercase",
+                color: "rgba(245,244,238,0.85)",
+                marginBottom: 28,
+              }}
+            >
+              {hero.eyebrow_text}
+            </div>
+            <h1
+              className="serif v3-hero-in"
+              style={{
+                fontSize: "clamp(2.75rem, 7vw, 6rem)",
+                letterSpacing: "-0.03em",
+                lineHeight: 0.98,
+                color: "#F5F4EE",
+                fontWeight: 400,
+                maxWidth: "16ch",
+                textWrap: "balance",
               }}
             >
               {hero.headline_top}
               <br />
-              <em
-                style={{
-                  fontStyle: "italic",
-                  fontWeight: 300,
-                  color: "var(--accent)",
-                  fontVariationSettings: '"SOFT" 100',
-                }}
-              >
+              <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
                 {hero.headline_bottom_italic}
               </em>
             </h1>
-
             {hero.subtitle ? (
               <p
+                className="v3-hero-in"
                 style={{
-                  maxWidth: "52ch",
-                  fontSize: "var(--text-body-lg)",
-                  color: "var(--text-secondary)",
+                  marginTop: 26,
+                  fontSize: "clamp(1rem, 1.4vw, 1.125rem)",
+                  color: "rgba(245,244,238,0.82)",
+                  maxWidth: "48ch",
                   lineHeight: 1.55,
-                  letterSpacing: "-0.005em",
-                  marginBottom: 40,
                 }}
               >
                 {hero.subtitle}
               </p>
             ) : null}
-
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <div
+              className="v3-hero-in"
+              style={{
+                marginTop: 40,
+                display: "flex",
+                gap: 14,
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
               <Link
                 href={localize(hero.primary_cta_href, locale)}
-                className="btn btn-primary"
+                className="btn btn-solid"
               >
-                {hero.primary_cta_label}
-                <span className="arrow">→</span>
+                {hero.primary_cta_label} <span className="arrow">→</span>
               </Link>
               <Link
                 href={localize(hero.secondary_cta_href, locale)}
@@ -291,259 +344,209 @@ export default async function LocaleHomePage({
               </Link>
             </div>
           </div>
-        </section>
-      ) : null}
 
-      {/* ============================================================
-          FEATURED — 5 editorial layouts на реальных объектах из каталога.
-          ============================================================ */}
-      {featured.length > 0 ? (
-        <section
-          id="properties"
-          style={{
-            position: "relative",
-            padding: "200px 0 140px",
-            background: "var(--bg-primary)",
-          }}
-        >
+          {/* Scroll cue */}
           <div
             style={{
-              maxWidth: "var(--max-w)",
-              margin: "0 auto",
-              padding: "0 var(--edge-d)",
-              marginBottom: 120,
+              position: "absolute",
+              bottom: 32,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+              opacity: 0.8,
             }}
           >
-            <div
-              className="ed-section-header"
+            <span
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 60,
-                alignItems: "end",
+                fontSize: 10,
+                letterSpacing: "0.28em",
+                textTransform: "uppercase",
+                color: "rgba(245,244,238,0.7)",
               }}
             >
-              <div>
-                <span className="eyebrow gold">
-                  <span className="dot" />
-                  This week&apos;s selection
-                </span>
-                <h2
-                  className="serif"
-                  style={{
-                    fontSize: "var(--text-h1)",
-                    letterSpacing: "-0.04em",
-                    marginTop: 22,
-                    lineHeight: 1,
-                    maxWidth: "14ch",
-                  }}
-                >
-                  Five rooms worth
-                  <br />
-                  <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                    walking through.
-                  </em>
-                </h2>
-              </div>
-              <div style={{ paddingBottom: 14 }}>
-                <p
-                  style={{
-                    fontSize: "var(--text-body-lg)",
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.55,
-                    maxWidth: "40ch",
-                    marginBottom: 28,
-                  }}
-                >
-                  A short, curated edit — refreshed every Monday. Photographed in
-                  daylight, written without superlatives.
-                </p>
-                <Link
-                  href={propertiesHref}
-                  className="btn-text"
-                  style={{
-                    fontSize: 13,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  All listings <span className="arrow">→</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 180 }}>
-            {featured.map((card, idx) => {
-              const props = {
-                card,
-                idx: String(idx + 1).padStart(2, "0"),
-                total: String(featured.length).padStart(2, "0"),
-                locale,
-              };
-              if (idx === 0) return <PropertyA key={card.id} {...props} />;
-              if (idx === 1) return <PropertyB key={card.id} {...props} />;
-              if (idx === 2) return <PropertyC key={card.id} {...props} />;
-              if (idx === 3) return <PropertyD key={card.id} {...props} />;
-              return <PropertyE key={card.id} {...props} />;
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {/* ============================================================
-          MARKETS — featured hero полной ширины + остальные в равной
-          строке. Чистый layout, который масштабируется на 2-5 markets
-          без «упавших» карточек.
-          ============================================================ */}
-      {markets.length > 0 ? (
-        <section
-          id="markets"
-          style={{
-            padding: "180px 0 140px",
-            background: "var(--bg-primary)",
-            position: "relative",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "var(--max-w)",
-              margin: "0 auto",
-              padding: "0 var(--edge-d)",
-            }}
-          >
-            <div
-              className="ed-section-header"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 60,
-                alignItems: "end",
-                marginBottom: 80,
-              }}
-            >
-              <div>
-                <span className="eyebrow gold">
-                  <span className="dot" />
-                  Areas of Dubai
-                </span>
-                <h2
-                  className="serif"
-                  style={{
-                    fontSize: "var(--text-h1)",
-                    letterSpacing: "-0.04em",
-                    marginTop: 22,
-                    lineHeight: 1,
-                    maxWidth: "12ch",
-                  }}
-                >
-                  One city,
-                  <br />
-                  <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                    block by block.
-                  </em>
-                </h2>
-              </div>
-              <p
-                style={{
-                  fontSize: "var(--text-body-lg)",
-                  color: "var(--text-secondary)",
-                  maxWidth: "38ch",
-                  paddingBottom: 14,
-                  lineHeight: 1.55,
-                }}
-              >
-                RERA-licensed and Dubai-based full time. I walk every building
-                before I list it — and know the views, the service charges and
-                the developers block by block.
-              </p>
-            </div>
-
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: 24 }}
-            >
-              {featuredMarket ? (
-                <MarketCard
-                  market={featuredMarket}
-                  featured
-                  idx="01"
-                  locale={locale}
-                />
-              ) : null}
-
-              {smallMarkets.length > 0 ? (
-                <div
-                  className="ed-markets-row"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${Math.min(smallMarkets.length, 4)}, 1fr)`,
-                    gap: 24,
-                  }}
-                >
-                  {smallMarkets.map((m, i) => (
-                    <MarketCard
-                      key={m.id}
-                      market={m}
-                      featured={false}
-                      idx={String(i + 2).padStart(2, "0")}
-                      locale={locale}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
+              Scroll
+            </span>
+            <span
+              style={{ width: 1, height: 40, background: "rgba(245,244,238,0.4)" }}
+            />
           </div>
 
           <style>{`
-            @media (max-width: 1024px) {
-              .ed-markets-row {
-                grid-template-columns: repeat(2, 1fr) !important;
-              }
-            }
-            @media (max-width: 640px) {
-              .ed-markets-row { grid-template-columns: 1fr !important; }
-              .ed-section-header { grid-template-columns: 1fr !important; gap: 32px !important; }
-            }
+            @keyframes v3HeroZoom { from { transform: scale(1.08); } to { transform: scale(1); } }
+            @keyframes v3HeroIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+            .v3-hero-bg { animation: v3HeroZoom 2600ms var(--ease-out-expo); }
+            .v3-hero-in { animation: v3HeroIn 1000ms var(--ease-out-expo) backwards; }
+            .v3-hero-in:nth-of-type(1) { animation-delay: 180ms; }
           `}</style>
         </section>
       ) : null}
 
       {/* ============================================================
-          ABOUT — портрет 5fr / quote+metrics+body 7fr
+          2 · INTENT — "How can I help you?" (3 карточки)
+          ============================================================ */}
+      {intent.length > 0 ? (
+        <section
+          style={{
+            background: "var(--bg-primary)",
+            padding: "clamp(72px, 8vw, 110px) 0",
+          }}
+        >
+          <div
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
+          >
+            <SectionTitle copy={intentCopy} />
+            <div
+              className="v3-intent"
+              style={{
+                marginTop: "clamp(40px, 5vw, 64px)",
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.min(intent.length, 3)}, 1fr)`,
+                gap: 1,
+                background: "var(--border-subtle)",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              {intent.map((option, i) => (
+                <Link
+                  key={option.id}
+                  href={localize(option.href, locale)}
+                  className="v3-intent-card"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    padding: "clamp(32px, 3.4vw, 52px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    color: "inherit",
+                    minHeight: 220,
+                  }}
+                >
+                  <span
+                    className="serif tnum"
+                    style={{
+                      fontSize: 13,
+                      letterSpacing: "0.04em",
+                      color: "var(--accent)",
+                      marginBottom: 22,
+                    }}
+                  >
+                    0{i + 1}
+                  </span>
+                  <h3
+                    className="serif"
+                    style={{
+                      fontSize: "clamp(1.5rem, 2.4vw, 2rem)",
+                      letterSpacing: "-0.02em",
+                      fontWeight: 400,
+                      lineHeight: 1.05,
+                    }}
+                  >
+                    {option.title}
+                  </h3>
+                  {option.description ? (
+                    <p
+                      style={{
+                        marginTop: 14,
+                        fontSize: 14.5,
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.55,
+                        maxWidth: "32ch",
+                      }}
+                    >
+                      {option.description}
+                    </p>
+                  ) : null}
+                  <span
+                    className="v3-intent-more"
+                    style={{
+                      marginTop: "auto",
+                      paddingTop: 24,
+                      fontSize: 12,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    Continue →
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+          <style>{`
+            .v3-intent-card { transition: background 400ms var(--ease-out-expo); }
+            .v3-intent-card:hover { background: var(--bg-secondary); }
+            .v3-intent-card:hover .v3-intent-more { color: var(--accent); transform: translateX(4px); }
+            .v3-intent-more { transition: all 400ms var(--ease-out-expo); }
+            @media (max-width: 760px) { .v3-intent { grid-template-columns: 1fr !important; } }
+          `}</style>
+        </section>
+      ) : null}
+
+      {/* ============================================================
+          3 · FEATURED — реальные объекты из каталога (топ-6)
+          ============================================================ */}
+      {featured.length > 0 ? (
+        <section
+          id="properties"
+          style={{
+            background: "var(--bg-secondary)",
+            padding: "clamp(72px, 8vw, 110px) 0",
+          }}
+        >
+          <div
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
+          >
+            <SectionTitle copy={featuredCopy} />
+            <div
+              className="v3-feat-grid"
+              style={{
+                marginTop: "clamp(40px, 5vw, 64px)",
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "clamp(28px, 3vw, 48px) clamp(24px, 2.4vw, 36px)",
+              }}
+            >
+              {featured.map((card) => (
+                <FeaturedCard key={card.id} card={card} locale={locale} />
+              ))}
+            </div>
+            <div style={{ marginTop: "clamp(40px, 5vw, 60px)", textAlign: "center" }}>
+              <Link
+                href={buildLocalizedPath(locale, "/properties")}
+                className="btn btn-primary"
+              >
+                View all listings <span className="arrow">→</span>
+              </Link>
+            </div>
+          </div>
+          <style>{`
+            @media (max-width: 860px) { .v3-feat-grid { grid-template-columns: 1fr 1fr !important; } }
+            @media (max-width: 560px) { .v3-feat-grid { grid-template-columns: 1fr !important; } }
+          `}</style>
+        </section>
+      ) : null}
+
+      {/* ============================================================
+          4 · WELCOME — портрет + био
           ============================================================ */}
       {about ? (
         <section
           id="about"
-          style={{
-            background: "var(--bg-secondary)",
-            padding: "200px 0 180px",
-            position: "relative",
-            borderTop: "1px solid var(--border-subtle)",
-            borderBottom: "1px solid var(--border-subtle)",
-          }}
+          style={{ background: "var(--bg-primary)", padding: "clamp(72px, 8vw, 120px) 0" }}
         >
           <div
-            style={{
-              maxWidth: "var(--max-w)",
-              margin: "0 auto",
-              padding: "0 var(--edge-d)",
-            }}
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
           >
-            {about.eyebrow_text ? (
-              <span className="eyebrow gold">
-                <span className="dot" />
-                {about.eyebrow_text}
-              </span>
-            ) : null}
-
             <div
-              className="ed-alexey-grid"
+              className="v3-welcome"
               style={{
                 display: "grid",
-                gridTemplateColumns: about.portrait_url ? "5fr 7fr" : "1fr",
-                gap: 80,
-                marginTop: 60,
-                alignItems: "start",
+                gridTemplateColumns: about.portrait_url ? "0.85fr 1.15fr" : "1fr",
+                gap: "clamp(40px, 6vw, 90px)",
+                alignItems: "center",
               }}
             >
               {about.portrait_url ? (
@@ -552,7 +555,7 @@ export default async function LocaleHomePage({
                     position: "relative",
                     aspectRatio: "4 / 5",
                     overflow: "hidden",
-                    background: "#1A1A1F",
+                    background: "var(--bg-tertiary)",
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -563,1395 +566,595 @@ export default async function LocaleHomePage({
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
-                      filter: "grayscale(0.55) contrast(1.05) brightness(0.92)",
+                      filter: "grayscale(0.5) contrast(1.03)",
                     }}
                   />
-                  <div
-                    className="on-dark"
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      padding: "20px 24px",
-                      background:
-                        "linear-gradient(180deg, rgba(11,11,12,0) 0%, rgba(11,11,12,0.9) 100%)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "baseline",
-                      fontSize: 11,
-                      letterSpacing: "0.18em",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    <span>{site?.organization.name}</span>
-                    <span style={{ color: "var(--accent)" }}>
-                      Dubai, {new Date().getFullYear()}
-                    </span>
-                  </div>
                 </div>
               ) : null}
-
               <div>
-                <blockquote
-                  className="serif"
-                  style={{
-                    fontSize: "clamp(1.75rem, 3.6vw, 3rem)",
-                    lineHeight: 1.12,
-                    letterSpacing: "-0.03em",
-                    color: "var(--text-primary)",
-                    fontWeight: 350,
-                    margin: 0,
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "var(--accent)",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    “
-                  </span>
-                  {about.headline}
-                  <span
-                    style={{
-                      color: "var(--accent)",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    ”
-                  </span>
-                </blockquote>
-                <div
-                  style={{
-                    marginTop: 32,
-                    fontSize: 12,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "var(--text-tertiary)",
-                  }}
-                >
-                  — {site?.organization.name}
-                </div>
-
-                {aboutMetrics.length > 0 ? (
+                {about.eyebrow_text ? (
                   <div
-                    className="ed-metrics-grid"
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: `repeat(${aboutMetrics.length}, 1fr)`,
-                      gap: 40,
-                      marginTop: 80,
-                      paddingTop: 48,
-                      borderTop: "1px solid var(--border-subtle)",
+                      fontSize: 11,
+                      letterSpacing: "0.32em",
+                      textTransform: "uppercase",
+                      color: "var(--accent)",
+                      marginBottom: 18,
+                      fontWeight: 500,
                     }}
                   >
-                    {aboutMetrics.map((m) => (
-                      <div key={m.l}>
-                        <div
-                          className="serif tnum"
-                          style={{
-                            fontSize: "clamp(2.2rem, 4vw, 3.25rem)",
-                            letterSpacing: "-0.035em",
-                            lineHeight: 1,
-                            color: "var(--text-primary)",
-                            fontWeight: 350,
-                          }}
-                        >
-                          {m.v}
-                        </div>
-                        <div
-                          style={{
-                            marginTop: 14,
-                            fontSize: 12,
-                            color: "var(--text-tertiary)",
-                            letterSpacing: "0.04em",
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {m.l}
-                        </div>
-                      </div>
-                    ))}
+                    {about.eyebrow_text}
                   </div>
                 ) : null}
-
+                <h2
+                  className="serif"
+                  style={{
+                    fontSize: "clamp(2rem, 3.6vw, 3rem)",
+                    letterSpacing: "-0.025em",
+                    lineHeight: 1.08,
+                    fontWeight: 400,
+                    maxWidth: "18ch",
+                  }}
+                >
+                  {about.headline}
+                  {about.headline_accent ? (
+                    <>
+                      {" "}
+                      <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
+                        {about.headline_accent}
+                      </em>
+                    </>
+                  ) : null}
+                  {about.headline_suffix ? <> {about.headline_suffix}</> : null}
+                </h2>
                 {about.body ? (
                   <p
                     style={{
-                      marginTop: 60,
-                      fontSize: 16,
-                      lineHeight: 1.7,
+                      marginTop: 24,
+                      fontSize: 16.5,
+                      lineHeight: 1.65,
                       color: "var(--text-secondary)",
-                      maxWidth: "62ch",
-                      whiteSpace: "pre-line",
+                      maxWidth: "54ch",
+                      textWrap: "pretty",
                     }}
                   >
                     {about.body}
                   </p>
                 ) : null}
-
-                <div style={{ marginTop: 32 }}>
-                  <Link
-                    href={aboutHref}
-                    className="btn-text"
+                {about.body_2 ? (
+                  <p
                     style={{
-                      fontSize: 13,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
+                      marginTop: 18,
+                      fontSize: 16.5,
+                      lineHeight: 1.65,
+                      color: "var(--text-secondary)",
+                      maxWidth: "54ch",
+                      textWrap: "pretty",
                     }}
                   >
-                    Read more about me <span className="arrow">→</span>
+                    {about.body_2}
+                  </p>
+                ) : null}
+                <div style={{ marginTop: 32 }}>
+                  <Link
+                    href={localize(about.cta_href, locale)}
+                    className="btn btn-primary"
+                  >
+                    {about.cta_label} <span className="arrow">→</span>
                   </Link>
                 </div>
               </div>
             </div>
           </div>
-
           <style>{`
-            @media (max-width: 900px) {
-              .ed-alexey-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
-              .ed-metrics-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
-            }
+            @media (max-width: 860px) { .v3-welcome { grid-template-columns: 1fr !important; gap: 40px !important; } }
           `}</style>
         </section>
       ) : null}
 
       {/* ============================================================
-          PROCESS — 4-col строки с большим italic-номером и hover.
+          5 · WHY — тёмная секция, причины
           ============================================================ */}
-      {process.length > 0 ? (
+      {reasons.length > 0 ? (
         <section
-          id="process"
-          style={{
-            background: "var(--bg-primary)",
-            padding: "180px 0",
-          }}
+          className="on-dark"
+          style={{ background: "#131311", color: "#F5F4EE", padding: "clamp(72px, 8vw, 120px) 0" }}
         >
           <div
-            style={{
-              maxWidth: "var(--max-w)",
-              margin: "0 auto",
-              padding: "0 var(--edge-d)",
-            }}
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
           >
-            <div style={{ maxWidth: 680, marginBottom: 100 }}>
-              <span className="eyebrow gold">
-                <span className="dot" />
-                The process
-              </span>
-              <h2
-                className="serif"
-                style={{
-                  fontSize: "var(--text-h1)",
-                  letterSpacing: "-0.04em",
-                  marginTop: 22,
-                  lineHeight: 1,
-                }}
-              >
-                How it
-                <br />
-                <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                  actually works.
-                </em>
-              </h2>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {process.map((step, i) => (
+            <SectionTitle copy={whyCopy} light />
+            <div
+              className="v3-why"
+              style={{
+                marginTop: "clamp(44px, 5vw, 72px)",
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.min(reasons.length, 4)}, 1fr)`,
+                gap: "clamp(28px, 3vw, 44px)",
+              }}
+            >
+              {reasons.map((reason, i) => (
                 <div
-                  key={step.id}
-                  className="ed-process-row"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "auto 1fr 1fr auto",
-                    gap: 60,
-                    alignItems: "baseline",
-                    padding: "48px 0",
-                    borderTop: "1px solid var(--border-subtle)",
-                    borderBottom:
-                      i === process.length - 1
-                        ? "1px solid var(--border-subtle)"
-                        : "none",
-                    transition: "background 500ms var(--ease-out-expo)",
-                  }}
+                  key={reason.id}
+                  style={{ borderTop: "1px solid rgba(245,244,238,0.18)", paddingTop: 22 }}
                 >
                   <div
                     className="serif tnum"
-                    style={{
-                      fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
-                      letterSpacing: "-0.04em",
-                      lineHeight: 1,
-                      color: "var(--text-quaternary)",
-                      transition: "color 500ms var(--ease-out-expo)",
-                      fontWeight: 350,
-                      minWidth: 120,
-                      fontStyle: "italic",
-                    }}
+                    style={{ fontSize: 13, color: "var(--accent)", marginBottom: 18 }}
                   >
-                    {step.step_number}
+                    0{i + 1}
                   </div>
                   <h3
                     className="serif"
                     style={{
-                      fontSize: "clamp(1.5rem, 2.5vw, 2.25rem)",
-                      letterSpacing: "-0.03em",
-                      color: "var(--text-primary)",
-                      lineHeight: 1.05,
-                      fontWeight: 350,
+                      fontSize: "1.375rem",
+                      letterSpacing: "-0.02em",
+                      fontWeight: 400,
+                      lineHeight: 1.1,
+                      color: "#F5F4EE",
                     }}
                   >
-                    {step.title}
+                    {reason.title}
                   </h3>
-                  <p
-                    style={{
-                      fontSize: 15,
-                      color: "var(--text-secondary)",
-                      lineHeight: 1.6,
-                      maxWidth: "46ch",
-                    }}
-                  >
-                    {step.body}
-                  </p>
-                  <span
-                    aria-hidden
-                    style={{
-                      fontSize: 22,
-                      color: "var(--border-medium)",
-                      transition: "all 500ms var(--ease-out-expo)",
-                    }}
-                  >
-                    →
-                  </span>
+                  {reason.body ? (
+                    <p
+                      style={{
+                        marginTop: 14,
+                        fontSize: 14.5,
+                        lineHeight: 1.6,
+                        color: "rgba(245,244,238,0.66)",
+                        textWrap: "pretty",
+                      }}
+                    >
+                      {reason.body}
+                    </p>
+                  ) : null}
                 </div>
               ))}
             </div>
           </div>
-
           <style>{`
-            .ed-process-row:hover {
-              background: rgba(139, 115, 64, 0.025);
-            }
-            .ed-process-row:hover .serif.tnum {
-              color: var(--accent) !important;
-            }
-            .ed-process-row:hover > span:last-child {
-              color: var(--accent) !important;
-              transform: translateX(6px);
-            }
-            @media (max-width: 900px) {
-              .ed-process-row {
-                grid-template-columns: auto 1fr !important;
-                gap: 24px !important;
-                padding: 32px 0 !important;
-              }
-              .ed-process-row > p, .ed-process-row > span { grid-column: 1 / -1; }
-            }
+            @media (max-width: 860px) { .v3-why { grid-template-columns: 1fr 1fr !important; } }
+            @media (max-width: 480px) { .v3-why { grid-template-columns: 1fr !important; } }
           `}</style>
         </section>
       ) : null}
 
       {/* ============================================================
-          TRUST + PRESS — горизонтальная строка с разделителем.
+          6 · ADVANTAGE — крупные цифры + строка партнёров
           ============================================================ */}
-      {trust.length > 0 || press.length > 0 ? (
+      {stats.length > 0 || trust.length > 0 ? (
         <section
-          style={{
-            background: "var(--bg-primary)",
-            padding: "80px 0",
-            borderTop: "1px solid var(--border-subtle)",
-            borderBottom: "1px solid var(--border-subtle)",
-          }}
+          style={{ background: "var(--bg-secondary)", padding: "clamp(64px, 7vw, 96px) 0" }}
         >
           <div
-            style={{
-              maxWidth: "var(--max-w)",
-              margin: "0 auto",
-              padding: "0 var(--edge-d)",
-            }}
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
           >
-            {trust.length > 0 ? (
+            {stats.length > 0 ? (
               <div
-                className="ed-trust-grid"
+                className="v3-stats"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: 60,
-                  alignItems: "center",
+                  gridTemplateColumns: `repeat(${Math.min(stats.length, 4)}, 1fr)`,
+                  gap: "clamp(24px, 3vw, 48px)",
+                  textAlign: "center",
                 }}
               >
-                <span className="eyebrow">
-                  Licensed &amp;<br />
-                  Featured in
-                </span>
-                <div
-                  className="ed-trust-row"
-                  style={{
-                    display: "flex",
-                    gap: 56,
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  {trust.map((t) => (
-                    <div key={t.id}>
-                      <div
-                        className="serif"
-                        style={{
-                          fontSize: 22,
-                          letterSpacing: "-0.02em",
-                          color: "var(--text-primary)",
-                          lineHeight: 1,
-                          fontWeight: 350,
-                        }}
-                      >
-                        {t.label}
-                      </div>
-                      {t.sub ? (
-                        <div
-                          style={{
-                            marginTop: 6,
-                            fontSize: 10.5,
-                            letterSpacing: "0.16em",
-                            textTransform: "uppercase",
-                            color: "var(--text-tertiary)",
-                          }}
-                        >
-                          {t.sub}
-                        </div>
+                {stats.map((stat) => (
+                  <div key={stat.id}>
+                    <div
+                      className="serif tnum"
+                      style={{
+                        fontSize: "clamp(2.75rem, 6vw, 4.5rem)",
+                        letterSpacing: "-0.035em",
+                        lineHeight: 0.95,
+                        color: "var(--text-primary)",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {stat.value}
+                      {stat.suffix ? (
+                        <span style={{ color: "var(--accent)" }}>{stat.suffix}</span>
                       ) : null}
                     </div>
-                  ))}
-                </div>
+                    <div
+                      style={{
+                        marginTop: 14,
+                        fontSize: 12,
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        color: "var(--text-tertiary)",
+                      }}
+                    >
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : null}
 
-            {press.length > 0 ? (
+            {trust.length > 0 ? (
               <div
-                className="ed-trust-grid"
+                className="v3-partners"
                 style={{
-                  marginTop: trust.length > 0 ? 60 : 0,
-                  paddingTop: trust.length > 0 ? 40 : 0,
-                  borderTop: trust.length > 0 ? "1px dashed var(--border-subtle)" : "none",
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: 60,
+                  marginTop: stats.length > 0 ? "clamp(44px, 5vw, 64px)" : 0,
+                  paddingTop: stats.length > 0 ? "clamp(32px, 4vw, 44px)" : 0,
+                  borderTop: stats.length > 0 ? "1px solid var(--border-subtle)" : "none",
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "clamp(28px, 5vw, 64px)",
+                  flexWrap: "wrap",
                   alignItems: "center",
                 }}
               >
-                <span className="eyebrow">Featured</span>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 48,
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  }}
-                >
-                  {press.map((p) =>
-                    p.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={p.id}
-                        src={p.logo_url}
-                        alt={p.name}
-                        style={{ height: 24, width: "auto", opacity: 0.8 }}
-                      />
-                    ) : (
-                      <span
-                        key={p.id}
-                        className="serif"
-                        style={{
-                          fontSize: 18,
-                          color: "var(--text-secondary)",
-                          fontStyle: "italic",
-                          letterSpacing: "-0.01em",
-                          fontWeight: 350,
-                        }}
-                      >
-                        {p.name}
-                      </span>
-                    ),
-                  )}
-                </div>
+                {trust.map((badge) => (
+                  <span
+                    key={badge.id}
+                    className="serif"
+                    style={{
+                      fontSize: "clamp(1.125rem, 1.6vw, 1.5rem)",
+                      color: "var(--text-tertiary)",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {badge.label}
+                  </span>
+                ))}
               </div>
             ) : null}
           </div>
-
           <style>{`
-            @media (max-width: 900px) {
-              .ed-trust-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-              .ed-trust-row { gap: 32px !important; }
-            }
+            @media (max-width: 680px) { .v3-stats { grid-template-columns: 1fr 1fr !important; gap: 36px !important; } }
           `}</style>
         </section>
       ) : null}
 
       {/* ============================================================
-          TESTIMONIALS — одна большая цитата + pagination (client).
+          7 · COMMUNITIES — районы Дубая (2 колонки)
+          ============================================================ */}
+      {markets.length > 0 ? (
+        <section
+          id="markets"
+          style={{ background: "var(--bg-primary)", padding: "clamp(72px, 8vw, 110px) 0" }}
+        >
+          <div
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
+          >
+            <SectionTitle copy={communitiesCopy} />
+            <div
+              className="v3-comm"
+              style={{
+                marginTop: "clamp(40px, 5vw, 64px)",
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "clamp(20px, 2.2vw, 32px)",
+              }}
+            >
+              {markets.map((market) => (
+                <Link
+                  key={market.id}
+                  href={
+                    market.href
+                      ? localize(market.href, locale)
+                      : buildLocalizedPath(locale, "/properties")
+                  }
+                  className="on-dark img-hover v3-comm-card"
+                  style={{
+                    position: "relative",
+                    display: "block",
+                    aspectRatio: "16 / 10",
+                    overflow: "hidden",
+                    background: "#0F0F12",
+                  }}
+                >
+                  {market.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={market.image_url}
+                      alt={market.name}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        filter: "brightness(0.66)",
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(180deg, rgba(11,11,12,0.1) 0%, rgba(11,11,12,0) 40%, rgba(11,11,12,0.8) 100%)",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "clamp(24px,3vw,40px)",
+                      right: "clamp(24px,3vw,40px)",
+                      bottom: "clamp(24px,3vw,36px)",
+                    }}
+                  >
+                    <h3
+                      className="serif"
+                      style={{
+                        fontSize: "clamp(1.75rem, 3vw, 2.75rem)",
+                        letterSpacing: "-0.03em",
+                        lineHeight: 1,
+                        color: "#F5F4EE",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {market.name}
+                    </h3>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto",
+                        gap: 20,
+                        alignItems: "end",
+                        marginTop: 14,
+                      }}
+                    >
+                      {market.blurb ? (
+                        <p
+                          style={{
+                            fontSize: 13.5,
+                            color: "rgba(245,244,238,0.78)",
+                            lineHeight: 1.5,
+                            maxWidth: "38ch",
+                            margin: 0,
+                          }}
+                        >
+                          {market.blurb}
+                        </p>
+                      ) : (
+                        <span />
+                      )}
+                      <span
+                        style={{
+                          fontSize: 11,
+                          letterSpacing: "0.16em",
+                          textTransform: "uppercase",
+                          color: "var(--accent)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Explore →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+          <style>{`
+            @media (max-width: 680px) { .v3-comm { grid-template-columns: 1fr !important; } }
+          `}</style>
+        </section>
+      ) : null}
+
+      {/* ============================================================
+          8 · STORIES — отзывы
           ============================================================ */}
       {testimonials.length > 0 ? (
         <section
-          style={{
-            background: "var(--bg-primary)",
-            padding: "200px 0 180px",
-            position: "relative",
-          }}
+          style={{ background: "var(--bg-secondary)", padding: "clamp(72px, 8vw, 120px) 0" }}
         >
           <div
             style={{
               maxWidth: "var(--max-w)",
               margin: "0 auto",
               padding: "0 var(--edge-d)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
             }}
           >
-            <span className="eyebrow gold">
-              <span className="dot" />
-              What clients say
-            </span>
+            <SectionTitle copy={storiesCopy} />
             <TestimonialsCarousel items={testimonials} />
           </div>
         </section>
       ) : null}
 
       {/* ============================================================
-          CTA — split-screen 50/50, слева заголовок+контакты,
-          справа — реальная mini-форма-ссылка на /contact.
+          9 · SUBSCRIBE — тёмный баннер с формой (client)
           ============================================================ */}
-      <section
-        id="contact"
-        style={{
-          background: "var(--bg-secondary)",
-          padding: "180px 0",
-          borderTop: "1px solid var(--border-subtle)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Декоративный гигантский AK на фоне */}
-        <span
-          aria-hidden
-          className="serif"
-          style={{
-            position: "absolute",
-            right: -40,
-            top: -120,
-            fontSize: "clamp(20rem, 40vw, 36rem)",
-            lineHeight: 1,
-            color: "var(--accent)",
-            opacity: 0.04,
-            pointerEvents: "none",
-            fontStyle: "italic",
-            letterSpacing: "-0.06em",
-            fontWeight: 300,
-            userSelect: "none",
-          }}
-        >
-          {(site?.organization.name ?? "AK").slice(0, 2).toUpperCase()}
-        </span>
-
-        <div
-          style={{
-            maxWidth: "var(--max-w)",
-            margin: "0 auto",
-            padding: "0 var(--edge-d)",
-            position: "relative",
-          }}
-        >
-          <div
-            className="ed-cta-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 100,
-              alignItems: "start",
-            }}
-          >
-            <div>
-              <span className="eyebrow gold">
-                <span className="dot" />
-                {cta?.eyebrow_text || "Get in touch"}
-              </span>
-              <h2
-                className="serif"
-                style={{
-                  fontSize: "var(--text-h1)",
-                  letterSpacing: "-0.04em",
-                  marginTop: 22,
-                  lineHeight: 1,
-                }}
-              >
-                {cta?.headline_left || "Tell me what you"}{" "}
-                <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                  {cta?.headline_italic || "actually"}
-                </em>{" "}
-                {cta?.headline_right || "need."}
-              </h2>
-              {cta?.subtitle ? (
-                <p
-                  style={{
-                    marginTop: 28,
-                    fontSize: 17,
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.55,
-                    maxWidth: "38ch",
-                  }}
-                >
-                  {cta.subtitle}
-                </p>
-              ) : null}
-
-              <div
-                style={{
-                  marginTop: 56,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 16,
-                }}
-              >
-                <ContactLine label="Direct" value="One message · one reply" />
-                <ContactLine label="Response" value="Within the hour" />
-                <ContactLine
-                  label="Areas"
-                  value="Downtown · Marina · Palm · the Hills"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-                <FieldStatic label="Name" placeholder="Full name" />
-                <FieldStatic label="Email" placeholder="you@example.com" />
-                <FieldStatic
-                  label="Area of interest"
-                  placeholder="Downtown, Marina, Palm Jumeirah, the Hills…"
-                />
-                <FieldStatic
-                  label="Message"
-                  placeholder="What are you looking for?"
-                  textarea
-                />
-                <div
-                  style={{
-                    marginTop: 8,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 24,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: 11,
-                      letterSpacing: "0.06em",
-                      color: "var(--text-tertiary)",
-                      maxWidth: "32ch",
-                      lineHeight: 1.5,
-                      margin: 0,
-                    }}
-                  >
-                    By submitting you agree to be contacted directly. Never
-                    shared, never resold.
-                  </p>
-                  <Link
-                    href={contactHref}
-                    className="btn btn-solid"
-                    style={{
-                      padding: "16px 28px",
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      fontSize: 12,
-                    }}
-                  >
-                    {cta?.primary_cta_label || "Send"}{" "}
-                    <span className="arrow">→</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <style>{`
-          @media (max-width: 900px) {
-            .ed-cta-grid { grid-template-columns: 1fr !important; gap: 60px !important; }
-          }
-        `}</style>
-      </section>
+      <SubscribeBand
+        eyebrow={subscribeCopy.eyebrow}
+        lead={subscribeCopy.lead}
+        accent={subscribeCopy.accent}
+        subtitle={subscribeCopy.subtitle}
+        imageUrl={subscribeCopy.imageUrl}
+        locale={locale}
+      />
     </>
   );
 }
 
 // ============================================================
-//  Featured property layouts — 5 разных editorial-вёрсток.
+//  Заголовок секции: eyebrow + lead + курсивный accent.
 // ============================================================
 
-interface PropLayoutProps {
-  card: PublicPropertyCard;
-  idx: string;
-  total: string;
-  locale: Locale;
-}
-
-function PriceBlock({
-  card,
-  small,
-  block,
+function SectionTitle({
+  copy,
+  light,
 }: {
-  card: PublicPropertyCard;
-  small?: boolean;
-  block?: boolean;
+  copy: SectionCopy;
+  light?: boolean;
 }) {
-  if (!card.price) return null;
-  const main = formatPrice(card.price.amount, card.price.currency);
   return (
-    <div style={{ textAlign: block ? "left" : "right" }}>
-      <div
-        className="serif tnum"
+    <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto" }}>
+      {copy.eyebrow ? (
+        <div
+          style={{
+            fontSize: 11,
+            letterSpacing: "0.32em",
+            textTransform: "uppercase",
+            color: "var(--accent)",
+            marginBottom: 18,
+            fontWeight: 500,
+          }}
+        >
+          {copy.eyebrow}
+        </div>
+      ) : null}
+      <h2
+        className="serif"
         style={{
-          fontSize: small
-            ? "clamp(1.5rem, 2.8vw, 2.25rem)"
-            : "clamp(1.75rem, 3.2vw, 2.75rem)",
-          letterSpacing: "-0.025em",
-          color: "var(--accent)",
-          lineHeight: 1,
+          fontSize: "clamp(2rem, 4.4vw, 3.5rem)",
+          letterSpacing: "-0.02em",
+          lineHeight: 1.04,
           fontWeight: 400,
+          color: light ? "#F5F4EE" : "var(--text-primary)",
         }}
       >
-        {main}
-      </div>
+        {copy.lead}{" "}
+        {copy.accent ? (
+          <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
+            {copy.accent}
+          </em>
+        ) : null}
+      </h2>
     </div>
   );
 }
 
-function PropertyMeta({
+// ============================================================
+//  Карточка объекта (Featured) — фото 4:3, цена, beds/baths/size.
+// ============================================================
+
+function FeaturedCard({
   card,
-  idx,
-  total,
   locale,
-}: PropLayoutProps) {
-  const location = [card.city, card.area].filter(Boolean).join(", ") || "Location on request";
+}: {
+  card: PublicPropertyCard;
+  locale: Locale;
+}) {
+  const city = card.city || card.area || "Dubai";
+  const cycle = priceCycle(card.purpose);
   const specs = [
-    card.bedrooms ? `${card.bedrooms} bed` : null,
-    card.bathrooms ? `${card.bathrooms} bath` : null,
+    card.bedrooms && card.bedrooms > 0 ? `${card.bedrooms} Beds` : null,
+    card.bathrooms ? `${card.bathrooms} Baths` : null,
     card.size ? `${card.size} ${card.sizeUnit}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter(Boolean) as string[];
+
   return (
-    <div>
+    <Link
+      href={buildLocalizedPath(locale, `/properties/${card.slug}`)}
+      className="img-hover"
+      style={{ display: "flex", flexDirection: "column", color: "inherit" }}
+    >
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: 18,
+          position: "relative",
+          aspectRatio: "4 / 3",
+          overflow: "hidden",
+          background: "var(--bg-tertiary)",
         }}
       >
-        <span className="eyebrow gold">{dealLabelFor(card.purpose)}</span>
+        {card.coverImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={card.coverImageUrl}
+            alt={card.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : null}
         <span
-          className="tnum"
+          className="on-dark"
+          style={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            fontSize: 10,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "#F5F4EE",
+            background: "rgba(11,11,12,0.45)",
+            backdropFilter: "blur(6px)",
+            padding: "6px 12px",
+          }}
+        >
+          {dealBadge(card.purpose)}
+        </span>
+      </div>
+      <div style={{ paddingTop: 20, textAlign: "center" }}>
+        <div
           style={{
             fontSize: 11,
-            letterSpacing: "0.22em",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
             color: "var(--text-tertiary)",
           }}
         >
-          {idx} / {total}
-        </span>
-      </div>
-      <h3
-        className="serif"
-        style={{
-          fontSize: "clamp(1.75rem, 3.5vw, 3rem)",
-          letterSpacing: "-0.035em",
-          lineHeight: 1,
-        }}
-      >
-        {card.title}
-      </h3>
-      <div
-        style={{
-          marginTop: 20,
-          fontSize: 14,
-          color: "var(--text-secondary)",
-          lineHeight: 1.5,
-        }}
-      >
-        {location}
-        <br />
-        {specs}
-      </div>
-      <div
-        style={{
-          marginTop: 36,
-          paddingTop: 24,
-          borderTop: "1px solid var(--border-subtle)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "end",
-          gap: 16,
-        }}
-      >
-        <PriceBlock card={card} block />
-        <Link
-          href={buildLocalizedPath(locale, `/properties/${card.slug}`)}
-          className="btn-text"
-          style={{ fontSize: 13, letterSpacing: "0.06em" }}
-        >
-          View details <span className="arrow">→</span>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-/** 01 — Full-bleed 21:10, текст наложен снизу-слева, on-dark scope. */
-function PropertyA({ card, idx, total, locale }: PropLayoutProps) {
-  const href = buildLocalizedPath(locale, `/properties/${card.slug}`);
-  const location = [card.city, card.area].filter(Boolean).join(", ") || "Location on request";
-  const specs = [
-    card.bedrooms ? `${card.bedrooms} bed` : null,
-    card.bathrooms ? `${card.bathrooms} bath` : null,
-    card.size ? `${card.size} ${card.sizeUnit}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  return (
-    <article style={{ position: "relative", width: "100%" }}>
-      <Link
-        href={href}
-        className="img-hover on-dark"
-        style={{
-          position: "relative",
-          display: "block",
-          width: "100%",
-          aspectRatio: "21 / 10",
-          overflow: "hidden",
-        }}
-      >
-        {card.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.coverImageUrl}
-            alt={card.title}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        ) : null}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(11,11,12,0.0) 50%, rgba(11,11,12,0.85) 100%)",
-          }}
-        />
-        {/* Top-right index */}
-        <div
-          className="tnum"
-          style={{
-            position: "absolute",
-            top: 32,
-            right: 40,
-            fontSize: 11,
-            letterSpacing: "0.22em",
-            color: "var(--text-primary)",
-          }}
-        >
-          {idx} <span style={{ opacity: 0.4 }}>/ {total}</span>
+          {city}
         </div>
-        {/* Bottom text */}
-        <div
-          style={{
-            position: "absolute",
-            left: "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-            right: "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-            bottom: 48,
-            display: "grid",
-            gridTemplateColumns: "1fr auto",
-            alignItems: "end",
-            gap: 40,
-          }}
-        >
-          <div>
-            <span className="eyebrow gold">{dealLabelFor(card.purpose)}</span>
-            <h3
-              className="serif"
-              style={{
-                fontSize: "clamp(2rem, 5vw, 4rem)",
-                letterSpacing: "-0.035em",
-                marginTop: 14,
-                lineHeight: 1,
-                color: "var(--text-primary)",
-              }}
-            >
-              {card.title}
-            </h3>
-            <div
-              style={{
-                marginTop: 18,
-                fontSize: 14,
-                color: "var(--text-secondary)",
-                letterSpacing: "0.01em",
-              }}
-            >
-              {location}
-              <span style={{ color: "var(--border-strong)", margin: "0 12px" }}>
-                ·
-              </span>
-              {specs}
-            </div>
-          </div>
-          <PriceBlock card={card} />
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-/** 02 — Фото 60% слева, meta 40% справа. */
-function PropertyB({ card, idx, total, locale }: PropLayoutProps) {
-  return (
-    <article
-      className="ed-prop-2col"
-      style={{
-        maxWidth: "var(--max-w)",
-        margin: "0 auto",
-        padding: "0 var(--edge-d)",
-        display: "grid",
-        gridTemplateColumns: "6fr 4fr",
-        gap: 80,
-        alignItems: "center",
-      }}
-    >
-      <Link
-        href={buildLocalizedPath(locale, `/properties/${card.slug}`)}
-        className="img-hover"
-        style={{
-          display: "block",
-          aspectRatio: "5 / 4",
-          overflow: "hidden",
-        }}
-      >
-        {card.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.coverImageUrl}
-            alt={card.title}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : null}
-      </Link>
-      <PropertyMeta card={card} idx={idx} total={total} locale={locale} />
-    </article>
-  );
-}
-
-/** 03 — Meta 40% слева, фото 60% справа. */
-function PropertyC({ card, idx, total, locale }: PropLayoutProps) {
-  return (
-    <article
-      className="ed-prop-2col"
-      style={{
-        maxWidth: "var(--max-w)",
-        margin: "0 auto",
-        padding: "0 var(--edge-d)",
-        display: "grid",
-        gridTemplateColumns: "4fr 6fr",
-        gap: 80,
-        alignItems: "center",
-      }}
-    >
-      <PropertyMeta card={card} idx={idx} total={total} locale={locale} />
-      <Link
-        href={buildLocalizedPath(locale, `/properties/${card.slug}`)}
-        className="img-hover"
-        style={{
-          display: "block",
-          aspectRatio: "5 / 4",
-          overflow: "hidden",
-        }}
-      >
-        {card.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.coverImageUrl}
-            alt={card.title}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : null}
-      </Link>
-    </article>
-  );
-}
-
-/** 04 — Диптих фото 7/5 + текст-блок 7/5 снизу. */
-function PropertyD({ card, idx, total, locale }: PropLayoutProps) {
-  const href = buildLocalizedPath(locale, `/properties/${card.slug}`);
-  const location = [card.city, card.area].filter(Boolean).join(", ") || "Location on request";
-  const specs = [
-    card.bedrooms ? `${card.bedrooms} bed` : null,
-    card.bathrooms ? `${card.bathrooms} bath` : null,
-    card.size ? `${card.size} ${card.sizeUnit}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  return (
-    <article
-      className="ed-prop-2col"
-      style={{
-        maxWidth: "var(--max-w)",
-        margin: "0 auto",
-        padding: "0 var(--edge-d)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 32,
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "7fr 5fr",
-          gap: 24,
-        }}
-      >
-        <Link
-          href={href}
-          className="img-hover"
-          style={{
-            display: "block",
-            aspectRatio: "5 / 4",
-            overflow: "hidden",
-          }}
-        >
-          {card.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={card.coverImageUrl}
-              alt={card.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : null}
-        </Link>
-        <div
-          className="img-hover"
-          style={{
-            aspectRatio: "4 / 5",
-            overflow: "hidden",
-            background: "var(--bg-tertiary)",
-          }}
-        >
-          {card.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={card.coverImageUrl}
-              alt={card.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : null}
-        </div>
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "7fr 5fr",
-          gap: 24,
-          paddingTop: 8,
-        }}
-      >
-        <div>
-          <span className="eyebrow gold">{dealLabelFor(card.purpose)}</span>
-          <h3
-            className="serif"
-            style={{
-              fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)",
-              letterSpacing: "-0.035em",
-              marginTop: 14,
-              lineHeight: 1,
-            }}
-          >
-            {card.title}
-          </h3>
-          <div
-            style={{
-              marginTop: 16,
-              fontSize: 14,
-              color: "var(--text-secondary)",
-            }}
-          >
-            {location} · {specs}
-          </div>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "end",
-          }}
-        >
-          <div style={{ alignSelf: "flex-end" }}>
-            <div
-              className="tnum"
-              style={{
-                fontSize: 11,
-                letterSpacing: "0.22em",
-                color: "var(--text-tertiary)",
-                marginBottom: 6,
-              }}
-            >
-              {idx} / {total}
-            </div>
-            <Link
-              href={href}
-              className="btn-text"
-              style={{ fontSize: 13, letterSpacing: "0.06em" }}
-            >
-              View details <span className="arrow">→</span>
-            </Link>
-          </div>
-          <PriceBlock card={card} small />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-/** 05 — Full-bleed, текст справа по центру вертикально. */
-function PropertyE({ card, idx, total, locale }: PropLayoutProps) {
-  const href = buildLocalizedPath(locale, `/properties/${card.slug}`);
-  const location = [card.city, card.area].filter(Boolean).join(", ") || "Location on request";
-  const specs = [
-    card.bedrooms ? `${card.bedrooms} bed` : null,
-    card.bathrooms ? `${card.bathrooms} bath` : null,
-    card.size ? `${card.size} ${card.sizeUnit}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  return (
-    <article style={{ position: "relative", width: "100%" }}>
-      <Link
-        href={href}
-        className="img-hover on-dark"
-        style={{
-          position: "relative",
-          display: "block",
-          width: "100%",
-          aspectRatio: "21 / 10",
-          overflow: "hidden",
-        }}
-      >
-        {card.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.coverImageUrl}
-            alt={card.title}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              filter: "brightness(0.78)",
-            }}
-          />
-        ) : null}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(270deg, rgba(11,11,12,0.85) 0%, rgba(11,11,12,0.0) 55%)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            right:
-              "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-            top: "50%",
-            transform: "translateY(-50%)",
-            maxWidth: 440,
-          }}
-        >
-          <div
-            className="tnum"
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.22em",
-              color: "var(--text-secondary)",
-              marginBottom: 18,
-            }}
-          >
-            {idx} / {total}
-          </div>
-          <span className="eyebrow gold">{dealLabelFor(card.purpose)}</span>
-          <h3
-            className="serif"
-            style={{
-              fontSize: "clamp(2rem, 4.5vw, 3.5rem)",
-              letterSpacing: "-0.035em",
-              marginTop: 14,
-              lineHeight: 1,
-            }}
-          >
-            {card.title}
-          </h3>
-          <div
-            style={{
-              marginTop: 18,
-              fontSize: 14,
-              color: "var(--text-secondary)",
-              marginBottom: 28,
-            }}
-          >
-            {location}
-            <br />
-            {specs}
-          </div>
-          <PriceBlock card={card} block />
-          <div style={{ marginTop: 28 }}>
-            <span
-              className="btn-text"
-              style={{ fontSize: 13, letterSpacing: "0.06em" }}
-            >
-              View property <span className="arrow">→</span>
-            </span>
-          </div>
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-// ============================================================
-//  MARKETS card — Dubai 4:3, остальные 4:5 на on-dark.
-// ============================================================
-
-function MarketCard({
-  market,
-  featured,
-  idx,
-  locale,
-}: {
-  market: import("@/features/home/queries").HomeMarket;
-  featured: boolean;
-  idx: string;
-  locale: Locale;
-}) {
-  return (
-    <Link
-      href={
-        market.href
-          ? localize(market.href, locale)
-          : buildLocalizedPath(locale, "/properties")
-      }
-      className={`on-dark img-hover ${featured ? "ed-market-featured" : ""}`}
-      style={{
-        position: "relative",
-        display: "block",
-        aspectRatio: featured ? "4 / 3" : "4 / 5",
-        overflow: "hidden",
-        background: "#0F0F12",
-      }}
-    >
-      {market.image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={market.image_url}
-          alt={market.name}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: "brightness(0.62) saturate(0.85)",
-          }}
-        />
-      ) : null}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(11,11,12,0.2) 0%, rgba(11,11,12,0.0) 35%, rgba(11,11,12,0.85) 100%)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: featured ? 36 : 24,
-          left: featured ? 40 : 24,
-          right: featured ? 40 : 24,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        {market.region ? (
-          <span className="eyebrow gold">{market.region}</span>
-        ) : (
-          <span />
-        )}
-        <span
-          className="tnum"
-          style={{
-            fontSize: 11,
-            letterSpacing: "0.22em",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {idx}
-        </span>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: featured ? 40 : 24,
-          right: featured ? 40 : 24,
-          bottom: featured ? 36 : 24,
-        }}
-      >
         <h3
           className="serif"
           style={{
-            fontSize: featured
-              ? "clamp(3rem, 7vw, 5.5rem)"
-              : "clamp(1.75rem, 3vw, 2.75rem)",
-            letterSpacing: "-0.04em",
-            lineHeight: 0.95,
+            fontSize: "1.375rem",
+            letterSpacing: "-0.015em",
+            lineHeight: 1.15,
+            marginTop: 10,
+            fontWeight: 400,
             color: "var(--text-primary)",
+            textWrap: "pretty",
           }}
         >
-          {market.name}
+          {card.title}
         </h3>
-        <div
-          style={{
-            marginTop: featured ? 18 : 10,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "end",
-            gap: 24,
-          }}
-        >
-          {market.blurb ? (
-            <p
-              style={{
-                fontSize: featured ? 14 : 12,
-                color: "var(--text-secondary)",
-                maxWidth: featured ? "40ch" : "28ch",
-                lineHeight: 1.5,
-                margin: 0,
-              }}
-            >
-              {market.blurb}
-            </p>
-          ) : (
-            <span />
-          )}
-          {market.badge ? (
-            <span
-              style={{
-                fontSize: 11,
-                color: "var(--accent)",
-                letterSpacing: "0.12em",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {market.badge} →
-            </span>
-          ) : null}
-        </div>
+        {card.price ? (
+          <div
+            className="serif tnum"
+            style={{
+              marginTop: 12,
+              fontSize: "1.375rem",
+              color: "var(--accent)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {formatPrice(card.price.amount, card.price.currency)}
+            {cycle ? (
+              <span
+                style={{
+                  fontSize: "0.6em",
+                  color: "var(--text-tertiary)",
+                  fontStyle: "italic",
+                }}
+              >
+                {" "}
+                {cycle}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {specs.length > 0 ? (
+          <div
+            style={{
+              marginTop: 16,
+              paddingTop: 16,
+              borderTop: "1px solid var(--border-subtle)",
+              display: "flex",
+              justifyContent: "center",
+              gap: 14,
+              fontSize: 12.5,
+              color: "var(--text-secondary)",
+              letterSpacing: "0.02em",
+              flexWrap: "wrap",
+            }}
+          >
+            {specs.map((spec, i) => (
+              <span key={spec} style={{ display: "inline-flex", gap: 14 }}>
+                {i > 0 ? (
+                  <span style={{ color: "var(--border-medium)" }}>·</span>
+                ) : null}
+                {spec}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
     </Link>
-  );
-}
-
-// ============================================================
-//  CTA — статические поля (визуально как форма; click → /contact)
-// ============================================================
-
-function FieldStatic({
-  label,
-  placeholder,
-  textarea,
-}: {
-  label: string;
-  placeholder: string;
-  textarea?: boolean;
-}) {
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 10.5,
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color: "var(--text-tertiary)",
-          marginBottom: 12,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          borderBottom: "1px solid var(--border-medium)",
-          padding: "8px 0 14px",
-          color: "var(--text-tertiary)",
-          fontSize: 16,
-          minHeight: textarea ? 72 : "auto",
-        }}
-      >
-        {placeholder}
-      </div>
-    </div>
-  );
-}
-
-function ContactLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "120px 1fr",
-        gap: 24,
-        padding: "14px 0",
-        borderBottom: "1px solid var(--border-subtle)",
-        alignItems: "baseline",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 11,
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color: "var(--text-tertiary)",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        className="serif"
-        style={{
-          fontSize: 18,
-          color: "var(--text-primary)",
-          letterSpacing: "-0.015em",
-          fontWeight: 350,
-        }}
-      >
-        {value}
-      </span>
-    </div>
   );
 }

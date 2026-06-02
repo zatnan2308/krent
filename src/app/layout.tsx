@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Fraunces, Inter } from "next/font/google";
+import { Spectral, Inter } from "next/font/google";
 
 import "@/styles/globals.css";
 
 // next/font устраняет блокирующий @import Google Fonts в CSS — шрифты
 // загружаются параллельно и инжектируются как CSS-переменные, доступные
-// глобально (.editorial scope их использует через var(--font-…)).
-// Inter используем как замену Geist — он есть в google fonts из коробки,
-// визуально близок и широкого Latin-покрытия достаточно.
-const fraunces = Fraunces({
+// глобально (.editorial scope использует их через var(--font-…)).
+// Spectral — серифный шрифт нового дизайна (заголовки .serif).
+// Inter используем как замену Geist для body — он есть в google fonts
+// из коробки, визуально близок и широкого Latin-покрытия достаточно.
+const spectral = Spectral({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
-  variable: "--font-fraunces",
+  variable: "--font-spectral",
 });
 const inter = Inter({
   subsets: ["latin"],
@@ -34,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${fraunces.variable} ${inter.variable}`}
+      className={`${spectral.variable} ${inter.variable}`}
     >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         {children}

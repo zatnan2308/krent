@@ -11,41 +11,57 @@ import {
   saveAbout,
   saveCta,
   saveHero,
+  saveIntentOption,
   saveMarket,
   savePressLogo,
   saveProcessStep,
+  saveReason,
+  saveSection,
+  saveStat,
   saveTestimonial,
   saveTrustBadge,
   type AboutInput,
   type CtaInput,
   type HeroInput,
+  type IntentInput,
   type MarketInput,
   type PressInput,
   type ProcessInput,
+  type ReasonInput,
+  type SectionInput,
+  type StatInput,
   type TestimonialInput,
   type TrustInput,
 } from "./actions";
-import type { HomeContent } from "./queries";
+import type { HomeContent, HomeSection } from "./queries";
 
 type Tab =
   | "hero"
+  | "intent"
   | "about"
+  | "why"
+  | "stats"
   | "markets"
-  | "process"
   | "testimonials"
   | "trust"
-  | "press"
-  | "cta";
+  | "sections"
+  | "process"
+  | "cta"
+  | "press";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "hero", label: "Hero" },
-  { key: "about", label: "About" },
-  { key: "markets", label: "Markets" },
+  { key: "intent", label: "Intent" },
+  { key: "about", label: "Welcome" },
+  { key: "why", label: "Why" },
+  { key: "stats", label: "Stats" },
+  { key: "markets", label: "Communities" },
+  { key: "testimonials", label: "Stories" },
+  { key: "trust", label: "Partners" },
+  { key: "sections", label: "Section titles" },
   { key: "process", label: "Process" },
-  { key: "testimonials", label: "Testimonials" },
-  { key: "trust", label: "Trust badges" },
-  { key: "press", label: "Press" },
   { key: "cta", label: "CTA" },
+  { key: "press", label: "Press" },
 ];
 
 export function HomeEditor({ content }: { content: HomeContent }) {
@@ -70,7 +86,13 @@ export function HomeEditor({ content }: { content: HomeContent }) {
       </div>
 
       {tab === "hero" ? <HeroSection initial={content.hero} /> : null}
+      {tab === "intent" ? <IntentSection items={content.intent} /> : null}
       {tab === "about" ? <AboutSection initial={content.about} /> : null}
+      {tab === "why" ? <ReasonsSection items={content.reasons} /> : null}
+      {tab === "stats" ? <StatsSection items={content.stats} /> : null}
+      {tab === "sections" ? (
+        <SectionsSection sections={content.sections} />
+      ) : null}
       {tab === "markets" ? <MarketsSection items={content.markets} /> : null}
       {tab === "process" ? <ProcessSection items={content.process} /> : null}
       {tab === "testimonials" ? (
@@ -284,6 +306,11 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
     headline: initial?.headline ?? "",
     body: initial?.body ?? "",
     portraitUrl: initial?.portrait_url ?? null,
+    headlineAccent: initial?.headline_accent ?? null,
+    headlineSuffix: initial?.headline_suffix ?? null,
+    body2: initial?.body_2 ?? "",
+    ctaLabel: initial?.cta_label ?? "More about me",
+    ctaHref: initial?.cta_href ?? "/about",
     metric1Value: initial?.metric_1_value ?? null,
     metric1Label: initial?.metric_1_label ?? null,
     metric2Value: initial?.metric_2_value ?? null,
@@ -313,11 +340,36 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
             onChange={(e) => setForm({ ...form, eyebrowText: e.target.value })}
           />
         </Field>
-        <Field label="Headline" wide>
+        <Field
+          label="Headline — lead"
+          hint='Начало заголовка, напр. "A single broker,".'
+        >
           <Input
             value={form.headline}
             onChange={(e) => setForm({ ...form, headline: e.target.value })}
             required
+          />
+        </Field>
+        <Field
+          label="Headline — accent (курсив, золото)"
+          hint='Акцентное слово в середине, напр. "entirely".'
+        >
+          <Input
+            value={form.headlineAccent ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, headlineAccent: e.target.value || null })
+            }
+          />
+        </Field>
+        <Field
+          label="Headline — suffix"
+          hint='Хвост после акцента, напр. "in your corner.".'
+        >
+          <Input
+            value={form.headlineSuffix ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, headlineSuffix: e.target.value || null })
+            }
           />
         </Field>
         <Field label="Portrait URL" wide hint="Square or 4:5 portrait photo.">
@@ -329,11 +381,30 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
             placeholder="https://…"
           />
         </Field>
-        <Field label="Body" wide hint="Plain text. Line breaks are preserved.">
+        <Field label="Body — paragraph 1" wide hint="Plain text.">
           <textarea
-            className="min-h-[140px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="min-h-[120px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.body}
             onChange={(e) => setForm({ ...form, body: e.target.value })}
+          />
+        </Field>
+        <Field label="Body — paragraph 2" wide hint="Второй абзац (опционально).">
+          <textarea
+            className="min-h-[100px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+            value={form.body2}
+            onChange={(e) => setForm({ ...form, body2: e.target.value })}
+          />
+        </Field>
+        <Field label="CTA label">
+          <Input
+            value={form.ctaLabel}
+            onChange={(e) => setForm({ ...form, ctaLabel: e.target.value })}
+          />
+        </Field>
+        <Field label="CTA href" hint="Internal e.g. /about">
+          <Input
+            value={form.ctaHref}
+            onChange={(e) => setForm({ ...form, ctaHref: e.target.value })}
           />
         </Field>
 
@@ -1428,6 +1499,656 @@ function PressForm({
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
+    </form>
+  );
+}
+
+// ---- INTENT ("How can I help you?") -----------------------------
+
+function IntentSection({ items }: { items: HomeContent["intent"] }) {
+  const router = useRouter();
+  const { msg, setMsg } = useToast();
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
+  const [draft, setDraft] = React.useState<IntentInput | null>(null);
+
+  function blank(): IntentInput {
+    return {
+      id: null,
+      sortOrder: items.length * 10,
+      title: "",
+      description: null,
+      href: "/properties",
+    };
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Cards in the “How can I help you?” section. Three work best.
+        </p>
+        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+          Add option
+        </Button>
+      </div>
+      <ul className="space-y-2">
+        {items.map((o) => (
+          <li
+            key={o.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+          >
+            <div>
+              <p className="text-sm font-medium">{o.title}</p>
+              <p className="text-xs text-muted-foreground">
+                #{o.sort_order} · {o.href ?? "—"} ·{" "}
+                {o.description
+                  ? o.description.slice(0, 60) +
+                    (o.description.length > 60 ? "…" : "")
+                  : "no description"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setDraft({
+                    id: o.id,
+                    sortOrder: o.sort_order,
+                    title: o.title,
+                    description: o.description,
+                    href: o.href,
+                  })
+                }
+              >
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive"
+                disabled={pendingId === o.id}
+                onClick={async () => {
+                  if (!confirm(`Delete "${o.title}"?`)) return;
+                  setPendingId(o.id);
+                  const r = await deleteHomeItem("home_intent_options", o.id);
+                  setPendingId(null);
+                  setMsg(r.ok ? "Option deleted." : r.error);
+                  if (r.ok) router.refresh();
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </li>
+        ))}
+        {items.length === 0 ? (
+          <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            No options yet.
+          </li>
+        ) : null}
+      </ul>
+      {msg ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
+      {draft ? (
+        <IntentForm
+          initial={draft}
+          onCancel={() => setDraft(null)}
+          onSaved={() => {
+            setDraft(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function IntentForm({
+  initial,
+  onCancel,
+  onSaved,
+}: {
+  initial: IntentInput;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [form, setForm] = React.useState<IntentInput>(initial);
+  return (
+    <form
+      className="space-y-3 rounded-md border bg-muted/20 p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setPending(true);
+        const r = await saveIntentOption(form);
+        setPending(false);
+        if (r.ok) {
+          setMsg("Option saved.");
+          onSaved();
+        } else {
+          setMsg(r.error);
+        }
+      }}
+    >
+      <p className="text-sm font-semibold">
+        {form.id ? "Edit option" : "New option"}
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <Field label="Title">
+          <Input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+            placeholder="Buy a home"
+          />
+        </Field>
+        <Field label="Href" hint="Internal path like /buy, /rent, /contact.">
+          <Input
+            value={form.href ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, href: e.target.value || null })
+            }
+          />
+        </Field>
+        <Field label="Sort order">
+          <Input
+            type="number"
+            value={form.sortOrder}
+            onChange={(e) =>
+              setForm({ ...form, sortOrder: Number(e.target.value) || 0 })
+            }
+          />
+        </Field>
+        <Field label="Description" wide>
+          <textarea
+            className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+            value={form.description ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value || null })
+            }
+          />
+        </Field>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button size="sm" type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save option"}
+        </Button>
+        <Button size="sm" type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
+      </div>
+    </form>
+  );
+}
+
+// ---- WHY (reasons) ----------------------------------------------
+
+function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
+  const router = useRouter();
+  const { msg, setMsg } = useToast();
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
+  const [draft, setDraft] = React.useState<ReasonInput | null>(null);
+
+  function blank(): ReasonInput {
+    return { id: null, sortOrder: items.length * 10, title: "", body: null };
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Reasons in the dark “Why work with…” section. Four work best.
+        </p>
+        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+          Add reason
+        </Button>
+      </div>
+      <ul className="space-y-2">
+        {items.map((r) => (
+          <li
+            key={r.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+          >
+            <div>
+              <p className="text-sm font-medium">{r.title}</p>
+              <p className="text-xs text-muted-foreground">
+                #{r.sort_order} ·{" "}
+                {r.body
+                  ? r.body.slice(0, 70) + (r.body.length > 70 ? "…" : "")
+                  : "no body"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setDraft({
+                    id: r.id,
+                    sortOrder: r.sort_order,
+                    title: r.title,
+                    body: r.body,
+                  })
+                }
+              >
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive"
+                disabled={pendingId === r.id}
+                onClick={async () => {
+                  if (!confirm(`Delete "${r.title}"?`)) return;
+                  setPendingId(r.id);
+                  const res = await deleteHomeItem("home_reasons", r.id);
+                  setPendingId(null);
+                  setMsg(res.ok ? "Reason deleted." : res.error);
+                  if (res.ok) router.refresh();
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </li>
+        ))}
+        {items.length === 0 ? (
+          <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            No reasons yet.
+          </li>
+        ) : null}
+      </ul>
+      {msg ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
+      {draft ? (
+        <ReasonForm
+          initial={draft}
+          onCancel={() => setDraft(null)}
+          onSaved={() => {
+            setDraft(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ReasonForm({
+  initial,
+  onCancel,
+  onSaved,
+}: {
+  initial: ReasonInput;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [form, setForm] = React.useState<ReasonInput>(initial);
+  return (
+    <form
+      className="space-y-3 rounded-md border bg-muted/20 p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setPending(true);
+        const r = await saveReason(form);
+        setPending(false);
+        if (r.ok) {
+          setMsg("Reason saved.");
+          onSaved();
+        } else {
+          setMsg(r.error);
+        }
+      }}
+    >
+      <p className="text-sm font-semibold">
+        {form.id ? "Edit reason" : "New reason"}
+      </p>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Field label="Title" wide>
+          <Input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+            placeholder="Off-market access"
+          />
+        </Field>
+        <Field label="Sort order">
+          <Input
+            type="number"
+            value={form.sortOrder}
+            onChange={(e) =>
+              setForm({ ...form, sortOrder: Number(e.target.value) || 0 })
+            }
+          />
+        </Field>
+        <Field label="Body" wide>
+          <textarea
+            className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+            value={form.body ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, body: e.target.value || null })
+            }
+          />
+        </Field>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button size="sm" type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save reason"}
+        </Button>
+        <Button size="sm" type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
+      </div>
+    </form>
+  );
+}
+
+// ---- STATS (Advantage big numbers) ------------------------------
+
+function StatsSection({ items }: { items: HomeContent["stats"] }) {
+  const router = useRouter();
+  const { msg, setMsg } = useToast();
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
+  const [draft, setDraft] = React.useState<StatInput | null>(null);
+
+  function blank(): StatInput {
+    return {
+      id: null,
+      sortOrder: items.length * 10,
+      value: "",
+      suffix: null,
+      label: "",
+    };
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Big numbers in the Advantage band. Value + accent suffix + label.
+        </p>
+        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+          Add stat
+        </Button>
+      </div>
+      <ul className="space-y-2">
+        {items.map((s) => (
+          <li
+            key={s.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+          >
+            <div>
+              <p className="text-sm font-medium">
+                {s.value}
+                {s.suffix ?? ""} — {s.label}
+              </p>
+              <p className="text-xs text-muted-foreground">#{s.sort_order}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setDraft({
+                    id: s.id,
+                    sortOrder: s.sort_order,
+                    value: s.value,
+                    suffix: s.suffix,
+                    label: s.label,
+                  })
+                }
+              >
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive"
+                disabled={pendingId === s.id}
+                onClick={async () => {
+                  if (!confirm(`Delete "${s.label}"?`)) return;
+                  setPendingId(s.id);
+                  const res = await deleteHomeItem("home_stats", s.id);
+                  setPendingId(null);
+                  setMsg(res.ok ? "Stat deleted." : res.error);
+                  if (res.ok) router.refresh();
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </li>
+        ))}
+        {items.length === 0 ? (
+          <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            No stats yet.
+          </li>
+        ) : null}
+      </ul>
+      {msg ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
+      {draft ? (
+        <StatForm
+          initial={draft}
+          onCancel={() => setDraft(null)}
+          onSaved={() => {
+            setDraft(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function StatForm({
+  initial,
+  onCancel,
+  onSaved,
+}: {
+  initial: StatInput;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [form, setForm] = React.useState<StatInput>(initial);
+  return (
+    <form
+      className="space-y-3 rounded-md border bg-muted/20 p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setPending(true);
+        const r = await saveStat(form);
+        setPending(false);
+        if (r.ok) {
+          setMsg("Stat saved.");
+          onSaved();
+        } else {
+          setMsg(r.error);
+        }
+      }}
+    >
+      <p className="text-sm font-semibold">
+        {form.id ? "Edit stat" : "New stat"}
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Value" hint='Напр. "200", "$2.4".'>
+          <Input
+            value={form.value}
+            onChange={(e) => setForm({ ...form, value: e.target.value })}
+            required
+            placeholder="200"
+          />
+        </Field>
+        <Field label="Suffix" hint='Акцентный хвост: "+", "M", " yrs".'>
+          <Input
+            value={form.suffix ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, suffix: e.target.value || null })
+            }
+            placeholder="+"
+          />
+        </Field>
+        <Field label="Label">
+          <Input
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            required
+            placeholder="Deals closed"
+          />
+        </Field>
+        <Field label="Sort order">
+          <Input
+            type="number"
+            value={form.sortOrder}
+            onChange={(e) =>
+              setForm({ ...form, sortOrder: Number(e.target.value) || 0 })
+            }
+          />
+        </Field>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button size="sm" type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save stat"}
+        </Button>
+        <Button size="sm" type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
+      </div>
+    </form>
+  );
+}
+
+// ---- SECTION TITLES (home_sections, eyebrow/lead/accent) --------
+
+const SECTION_DEFS: {
+  key: SectionInput["sectionKey"];
+  label: string;
+  hasMedia?: boolean;
+}[] = [
+  { key: "intent", label: "Intent — “How can I help you?”" },
+  { key: "featured", label: "Featured listings" },
+  { key: "why", label: "Why work with…" },
+  { key: "communities", label: "Communities / neighbourhoods" },
+  { key: "stories", label: "Success stories" },
+  { key: "subscribe", label: "Subscribe band", hasMedia: true },
+];
+
+function SectionsSection({
+  sections,
+}: {
+  sections: HomeContent["sections"];
+}) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Eyebrow + lead + italic accent word above each section. The Subscribe
+        band also has a subtitle and a background image.
+      </p>
+      {SECTION_DEFS.map((def) => (
+        <SectionHeadingForm
+          key={def.key}
+          sectionKey={def.key}
+          label={def.label}
+          hasMedia={Boolean(def.hasMedia)}
+          initial={sections[def.key]}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SectionHeadingForm({
+  sectionKey,
+  label,
+  hasMedia,
+  initial,
+}: {
+  sectionKey: SectionInput["sectionKey"];
+  label: string;
+  hasMedia: boolean;
+  initial: HomeSection | undefined;
+}) {
+  const router = useRouter();
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [form, setForm] = React.useState<SectionInput>({
+    sectionKey,
+    eyebrow: initial?.eyebrow ?? null,
+    lead: initial?.lead ?? null,
+    accent: initial?.accent ?? null,
+    subtitle: initial?.subtitle ?? null,
+    imageUrl: initial?.image_url ?? null,
+  });
+
+  return (
+    <form
+      className="space-y-3 rounded-md border p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setPending(true);
+        const r = await saveSection(form);
+        setPending(false);
+        setMsg(r.ok ? "Saved." : r.error);
+        if (r.ok) router.refresh();
+      }}
+    >
+      <p className="text-sm font-semibold">{label}</p>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <Field label="Eyebrow">
+          <Input
+            value={form.eyebrow ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, eyebrow: e.target.value || null })
+            }
+            placeholder="Where to begin"
+          />
+        </Field>
+        <Field label="Lead">
+          <Input
+            value={form.lead ?? ""}
+            onChange={(e) => setForm({ ...form, lead: e.target.value || null })}
+            placeholder="How can I"
+          />
+        </Field>
+        <Field label="Accent (italic gold)">
+          <Input
+            value={form.accent ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, accent: e.target.value || null })
+            }
+            placeholder="help you?"
+          />
+        </Field>
+        {hasMedia ? (
+          <>
+            <Field label="Subtitle" wide>
+              <textarea
+                className="min-h-[60px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={form.subtitle ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, subtitle: e.target.value || null })
+                }
+              />
+            </Field>
+            <Field label="Background image URL" wide>
+              <Input
+                value={form.imageUrl ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, imageUrl: e.target.value || null })
+                }
+                placeholder="https://…"
+              />
+            </Field>
+          </>
+        ) : null}
+      </div>
+      <Submit pending={pending} msg={msg} />
     </form>
   );
 }

@@ -76,6 +76,11 @@ const aboutSchema = z.object({
   headline: z.string().trim().min(1).max(240),
   body: z.string().trim().max(2000),
   portraitUrl: z.string().trim().max(500).nullable(),
+  headlineAccent: z.string().trim().max(120).nullable(),
+  headlineSuffix: z.string().trim().max(120).nullable(),
+  body2: z.string().trim().max(2000),
+  ctaLabel: z.string().trim().min(1).max(60),
+  ctaHref: z.string().trim().min(1).max(500),
   metric1Value: z.string().trim().max(20).nullable(),
   metric1Label: z.string().trim().max(80).nullable(),
   metric2Value: z.string().trim().max(20).nullable(),
@@ -100,6 +105,11 @@ export async function saveAbout(input: AboutInput): Promise<ActionResult> {
       headline: parsed.data.headline,
       body: parsed.data.body,
       portrait_url: parsed.data.portraitUrl,
+      headline_accent: parsed.data.headlineAccent,
+      headline_suffix: parsed.data.headlineSuffix,
+      body_2: parsed.data.body2,
+      cta_label: parsed.data.ctaLabel,
+      cta_href: parsed.data.ctaHref,
       metric_1_value: parsed.data.metric1Value,
       metric_1_label: parsed.data.metric1Label,
       metric_2_value: parsed.data.metric2Value,
@@ -168,7 +178,10 @@ type ListTable =
   | "home_process_steps"
   | "home_testimonials"
   | "home_trust_badges"
-  | "home_press_logos";
+  | "home_press_logos"
+  | "home_intent_options"
+  | "home_reasons"
+  | "home_stats";
 
 export async function deleteHomeItem(
   table: ListTable,
@@ -396,6 +409,175 @@ export async function savePressLogo(input: PressInput): Promise<ActionResult> {
   } else {
     const { error } = await admin.from("home_press_logos").insert(row);
     if (error) return { ok: false, error: "Could not create press logo." };
+  }
+  revalidatePath("/dashboard/home");
+  revalidatePath("/", "layout");
+  revalidateTag("home-content");
+  return { ok: true };
+}
+
+// ---- Section headings (home_sections, keyed by section_key) -----
+
+const SECTION_KEYS = [
+  "intent",
+  "featured",
+  "why",
+  "communities",
+  "stories",
+  "subscribe",
+] as const;
+
+const sectionSchema = z.object({
+  sectionKey: z.enum(SECTION_KEYS),
+  eyebrow: z.string().trim().max(120).nullable(),
+  lead: z.string().trim().max(160).nullable(),
+  accent: z.string().trim().max(160).nullable(),
+  subtitle: z.string().trim().max(600).nullable(),
+  imageUrl: z.string().trim().max(500).nullable(),
+});
+export type SectionInput = z.infer<typeof sectionSchema>;
+
+export async function saveSection(input: SectionInput): Promise<ActionResult> {
+  const parsed = sectionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the section form." };
+  const g = await gate();
+  if (!g.ok) return g;
+  const admin = createAdminClient();
+  const { error } = await admin.from("home_sections").upsert(
+    {
+      organization_id: g.organizationId,
+      section_key: parsed.data.sectionKey,
+      eyebrow: parsed.data.eyebrow,
+      lead: parsed.data.lead,
+      accent: parsed.data.accent,
+      subtitle: parsed.data.subtitle,
+      image_url: parsed.data.imageUrl,
+    },
+    { onConflict: "organization_id,section_key" },
+  );
+  if (error) return { ok: false, error: "Could not save section." };
+  revalidatePath("/dashboard/home");
+  revalidatePath("/", "layout");
+  revalidateTag("home-content");
+  return { ok: true };
+}
+
+// ---- Intent option ("How can I help you?") ----------------------
+
+const intentSchema = z.object({
+  id: z.uuid().nullable(),
+  sortOrder: z.number().int().min(0).max(999),
+  title: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(400).nullable(),
+  href: z.string().trim().max(500).nullable(),
+});
+export type IntentInput = z.infer<typeof intentSchema>;
+
+export async function saveIntentOption(
+  input: IntentInput,
+): Promise<ActionResult> {
+  const parsed = intentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the intent form." };
+  const g = await gate();
+  if (!g.ok) return g;
+  const admin = createAdminClient();
+  const row = {
+    organization_id: g.organizationId,
+    sort_order: parsed.data.sortOrder,
+    title: parsed.data.title,
+    description: parsed.data.description,
+    href: parsed.data.href,
+  };
+  if (parsed.data.id) {
+    const { error } = await admin
+      .from("home_intent_options")
+      .update(row)
+      .eq("id", parsed.data.id)
+      .eq("organization_id", g.organizationId);
+    if (error) return { ok: false, error: "Could not save option." };
+  } else {
+    const { error } = await admin.from("home_intent_options").insert(row);
+    if (error) return { ok: false, error: "Could not create option." };
+  }
+  revalidatePath("/dashboard/home");
+  revalidatePath("/", "layout");
+  revalidateTag("home-content");
+  return { ok: true };
+}
+
+// ---- Reason ("Why work with Alexey") ----------------------------
+
+const reasonSchema = z.object({
+  id: z.uuid().nullable(),
+  sortOrder: z.number().int().min(0).max(999),
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().max(600).nullable(),
+});
+export type ReasonInput = z.infer<typeof reasonSchema>;
+
+export async function saveReason(input: ReasonInput): Promise<ActionResult> {
+  const parsed = reasonSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the reason form." };
+  const g = await gate();
+  if (!g.ok) return g;
+  const admin = createAdminClient();
+  const row = {
+    organization_id: g.organizationId,
+    sort_order: parsed.data.sortOrder,
+    title: parsed.data.title,
+    body: parsed.data.body,
+  };
+  if (parsed.data.id) {
+    const { error } = await admin
+      .from("home_reasons")
+      .update(row)
+      .eq("id", parsed.data.id)
+      .eq("organization_id", g.organizationId);
+    if (error) return { ok: false, error: "Could not save reason." };
+  } else {
+    const { error } = await admin.from("home_reasons").insert(row);
+    if (error) return { ok: false, error: "Could not create reason." };
+  }
+  revalidatePath("/dashboard/home");
+  revalidatePath("/", "layout");
+  revalidateTag("home-content");
+  return { ok: true };
+}
+
+// ---- Stat (Advantage big numbers) -------------------------------
+
+const statSchema = z.object({
+  id: z.uuid().nullable(),
+  sortOrder: z.number().int().min(0).max(999),
+  value: z.string().trim().min(1).max(20),
+  suffix: z.string().trim().max(20).nullable(),
+  label: z.string().trim().min(1).max(80),
+});
+export type StatInput = z.infer<typeof statSchema>;
+
+export async function saveStat(input: StatInput): Promise<ActionResult> {
+  const parsed = statSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the stat form." };
+  const g = await gate();
+  if (!g.ok) return g;
+  const admin = createAdminClient();
+  const row = {
+    organization_id: g.organizationId,
+    sort_order: parsed.data.sortOrder,
+    value: parsed.data.value,
+    suffix: parsed.data.suffix,
+    label: parsed.data.label,
+  };
+  if (parsed.data.id) {
+    const { error } = await admin
+      .from("home_stats")
+      .update(row)
+      .eq("id", parsed.data.id)
+      .eq("organization_id", g.organizationId);
+    if (error) return { ok: false, error: "Could not save stat." };
+  } else {
+    const { error } = await admin.from("home_stats").insert(row);
+    if (error) return { ok: false, error: "Could not create stat." };
   }
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");

@@ -94,7 +94,7 @@
 /* ---- Typography utilities ---- */
 
 .editorial .serif {
-  font-family: var(--font-fraunces), "Fraunces", "Cormorant Garamond", Georgia, serif;
+  font-family: var(--font-spectral), "Spectral", "Cormorant Garamond", Georgia, serif;
   font-feature-settings: "ss01";
 }
 
@@ -141,7 +141,7 @@
 
 /* Drop-cap для редакционного body */
 .editorial .drop-cap::first-letter {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-spectral), "Spectral", Georgia, serif;
   font-size: 5.2em;
   float: left;
   line-height: 0.85;
@@ -305,7 +305,7 @@
   --ed-accent-hover: var(--accent-hover);
 }
 .editorial .ed-serif {
-  font-family: var(--font-fraunces), "Fraunces", "Cormorant Garamond", Georgia, serif;
+  font-family: var(--font-spectral), "Spectral", "Cormorant Garamond", Georgia, serif;
   font-feature-settings: "ss01";
 }
 .editorial .ed-eyebrow {

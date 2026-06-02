@@ -2051,8 +2051,13 @@ export type Database = {
       home_about: {
         Row: {
           body: string
+          body_2: string | null
+          cta_href: string
+          cta_label: string
           eyebrow_text: string
           headline: string
+          headline_accent: string | null
+          headline_suffix: string | null
           metric_1_label: string | null
           metric_1_value: string | null
           metric_2_label: string | null
@@ -2067,8 +2072,13 @@ export type Database = {
         }
         Insert: {
           body?: string
+          body_2?: string | null
+          cta_href?: string
+          cta_label?: string
           eyebrow_text?: string
           headline?: string
+          headline_accent?: string | null
+          headline_suffix?: string | null
           metric_1_label?: string | null
           metric_1_value?: string | null
           metric_2_label?: string | null
@@ -2083,8 +2093,13 @@ export type Database = {
         }
         Update: {
           body?: string
+          body_2?: string | null
+          cta_href?: string
+          cta_label?: string
           eyebrow_text?: string
           headline?: string
+          headline_accent?: string | null
+          headline_suffix?: string | null
           metric_1_label?: string | null
           metric_1_value?: string | null
           metric_2_label?: string | null
@@ -2205,6 +2220,47 @@ export type Database = {
             foreignKeyName: "home_hero_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_intent_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          href: string | null
+          id: string
+          organization_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          href?: string | null
+          id?: string
+          organization_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          href?: string | null
+          id?: string
+          organization_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_intent_options_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2335,6 +2391,129 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "home_process_steps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_reasons: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_reasons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_sections: {
+        Row: {
+          accent: string | null
+          body: string | null
+          eyebrow: string | null
+          image_url: string | null
+          lead: string | null
+          organization_id: string
+          section_key: string
+          subtitle: string | null
+          updated_at: string
+        }
+        Insert: {
+          accent?: string | null
+          body?: string | null
+          eyebrow?: string | null
+          image_url?: string | null
+          lead?: string | null
+          organization_id: string
+          section_key: string
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accent?: string | null
+          body?: string | null
+          eyebrow?: string | null
+          image_url?: string | null
+          lead?: string | null
+          organization_id?: string
+          section_key?: string
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_sections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_stats: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          organization_id: string
+          sort_order: number
+          suffix: string | null
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          organization_id: string
+          sort_order?: number
+          suffix?: string | null
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          organization_id?: string
+          sort_order?: number
+          suffix?: string | null
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_stats_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
