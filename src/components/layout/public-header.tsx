@@ -302,6 +302,7 @@ export function PublicHeader({
               {userMenuOpen ? (
                 <div
                   role="menu"
+                  className="ed-light-panel"
                   style={{
                     position: "absolute",
                     top: "calc(100% + 8px)",
@@ -384,6 +385,15 @@ export function PublicHeader({
                         cursor: "pointer",
                         fontFamily: "inherit",
                         letterSpacing: "0.01em",
+                        transition: "background 200ms, color 200ms",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "var(--bg-secondary)";
+                        e.currentTarget.style.color = "var(--text-primary)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "var(--text-secondary)";
                       }}
                     >
                       Sign out
@@ -568,6 +578,7 @@ function UserMenuItem({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
+      role="menuitem"
       style={{
         display: "block",
         padding: "10px 18px",
@@ -576,6 +587,15 @@ function UserMenuItem({ href, label }: { href: string; label: string }) {
         background: "transparent",
         textDecoration: "none",
         letterSpacing: "0.01em",
+        transition: "background 200ms, color 200ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--bg-secondary)";
+        e.currentTarget.style.color = "var(--accent)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = "var(--text-primary)";
       }}
     >
       {label}

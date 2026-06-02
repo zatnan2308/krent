@@ -91,6 +91,25 @@
   color: #F5F4EE;
 }
 
+/* Floating cream panel — сбрасывает on-dark обратно к светлой палитре.
+   Нужен для дропдаунов/поповеров, которые лежат внутри прозрачного
+   on-dark хедера поверх тёмного hero: без сброса текст становится
+   почти белым на кремовом фоне панели и не читается. */
+.editorial .ed-light-panel {
+  --text-primary: #131311;
+  --text-secondary: #4A4842;
+  --text-tertiary: #6F6C63;
+  --text-quaternary: #A19D90;
+  --accent: #8B7340;
+  --accent-hover: #6F5A2C;
+  --bg-elevated: #FAF9F4;
+  --bg-secondary: #ECEAE2;
+  --border-subtle: #DAD7CB;
+  --border-medium: #BCB8AB;
+  --border-strong: #908C7F;
+  color: var(--text-primary);
+}
+
 /* ---- Typography utilities ---- */
 
 .editorial .serif {
