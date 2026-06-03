@@ -14,15 +14,15 @@
    ============================================================ */
 
 .editorial {
-  /* ---- Light palette (editorial cream) ---- */
-  --bg-primary: #F5F4EE;
-  --bg-secondary: #ECEAE2;
-  --bg-tertiary: #E2E0D6;
-  --bg-elevated: #FAF9F4;
-  --bg-overlay-rgb: 245, 244, 238;
+  /* ---- Light palette (clean white) ---- */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F4F4F2;
+  --bg-tertiary: #ECECE8;
+  --bg-elevated: #FFFFFF;
+  --bg-overlay-rgb: 255, 255, 255;
 
-  --border-subtle: #DAD7CB;
-  --border-medium: #BCB8AB;
+  --border-subtle: #E8E7E2;
+  --border-medium: #D2D0C9;
   --border-strong: #908C7F;
 
   --text-primary: #131311;
@@ -102,10 +102,10 @@
   --text-quaternary: #A19D90;
   --accent: #8B7340;
   --accent-hover: #6F5A2C;
-  --bg-elevated: #FAF9F4;
-  --bg-secondary: #ECEAE2;
-  --border-subtle: #DAD7CB;
-  --border-medium: #BCB8AB;
+  --bg-elevated: #FFFFFF;
+  --bg-secondary: #F4F4F2;
+  --border-subtle: #E8E7E2;
+  --border-medium: #D2D0C9;
   --border-strong: #908C7F;
   color: var(--text-primary);
 }
