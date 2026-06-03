@@ -10,10 +10,10 @@ import {
   formatSize,
 } from "@/features/properties/constants";
 import { TrackPropertyView } from "@/features/analytics/track-property-view";
-import { BookingWidget } from "@/features/bookings/booking-widget";
+import { BookingWidgetEditorial } from "@/features/bookings/booking-widget-editorial";
+import { MortgageCalculator } from "@/features/properties/mortgage-calculator";
 import { PropertyHeroGallery } from "@/features/properties/property-hero-gallery";
 import { PropertyViewingForm } from "@/features/properties/property-viewing-form";
-import { getEnabledPaymentOptions } from "@/features/payments/queries";
 import { JsonLd } from "@/features/seo/json-ld";
 import {
   breadcrumbJsonLd,
@@ -298,16 +298,28 @@ export default async function PropertyDetailPage({
     view.price && view.price.displayType === "visible" && sizeForRate
       ? Math.round(view.price.amount / sizeForRate)
       : null;
-  const showInvestment =
-    property.purpose === "sale" &&
-    view.price &&
-    view.price.displayType === "visible";
-
   const isBookable =
     property.purpose === "short_term_rental" || property.purpose === "mixed";
-  const paymentOptions = isBookable
-    ? await getEnabledPaymentOptions(site.organization.id)
-    : [];
+  const showBooking =
+    isBookable && view.price !== null && view.price.displayType === "visible";
+  const saleVisible =
+    (property.purpose === "sale" || property.purpose === "mixed") &&
+    view.price !== null &&
+    view.price.displayType === "visible";
+
+  // Acquisition cost (Dubai-typical fees), выводится из цены.
+  const acqBase = view.price ? view.price.amount : 0;
+  const fmtC = (n: number): string =>
+    formatCurrency(Math.round(n), priceCurrency, locale);
+  const acquisition: [string, string, string][] = [
+    ["Purchase price", fmtC(acqBase), ""],
+    ["DLD transfer fee", fmtC(acqBase * 0.04), "4%"],
+    ["Agency fee", fmtC(acqBase * 0.02), "2%"],
+    ["Registration", fmtC(acqBase * 0.0025), "0.25%"],
+  ];
+  const acquisitionTotalText = fmtC(
+    acqBase + acqBase * 0.04 + acqBase * 0.02 + acqBase * 0.0025,
+  );
 
   const canonicalPath = `/properties/${view.localizedSlugs[locale] ?? view.baseSlug}`;
   const canonicalUrl = buildCanonicalUrl(locale, canonicalPath);
@@ -380,6 +392,18 @@ export default async function PropertyDetailPage({
             className="ed-sticky-cta"
             style={{ position: "sticky", top: 108, alignSelf: "start" }}
           >
+            {showBooking ? (
+              <BookingWidgetEditorial
+                propertyId={property.id}
+                locale={locale}
+                nightly={view.price ? view.price.amount : 0}
+                currency={priceCurrency}
+                cleaningFee={view.fees.cleaningFee}
+                minNights={1}
+                maxGuests={property.guest_capacity}
+              />
+            ) : (
+              <>
             {/* Price */}
             <div
               style={{
@@ -512,6 +536,8 @@ export default async function PropertyDetailPage({
                 })}
               </span>
             </div>
+              </>
+            )}
           </aside>
 
           {/* Body */}
@@ -647,6 +673,132 @@ export default async function PropertyDetailPage({
               </div>
             ) : null}
 
+            {/* Financing & acquisition — для sale c видимой ценой */}
+            {saleVisible ? (
+              <div
+                style={{
+                  padding: "64px 0",
+                  borderTop: "1px solid var(--border-subtle)",
+                }}
+              >
+                <span className="eyebrow gold">Financing</span>
+                <h2
+                  className="serif"
+                  style={{
+                    marginTop: 18,
+                    marginBottom: 32,
+                    fontSize: "var(--text-h3)",
+                    letterSpacing: "-0.02em",
+                    fontWeight: 400,
+                  }}
+                >
+                  Mortgage calculator
+                </h2>
+                <MortgageCalculator
+                  price={acqBase}
+                  currency={priceCurrency}
+                  locale={locale}
+                />
+
+                <h2
+                  className="serif"
+                  style={{
+                    marginTop: 56,
+                    marginBottom: 24,
+                    fontSize: "var(--text-h3)",
+                    letterSpacing: "-0.02em",
+                    fontWeight: 400,
+                  }}
+                >
+                  Total cost of acquisition
+                </h2>
+                <div
+                  style={{
+                    maxWidth: 640,
+                    borderTop: "1px solid var(--border-medium)",
+                  }}
+                >
+                  {acquisition.map(([label, val, note]) => (
+                    <div
+                      key={label}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto auto",
+                        gap: 24,
+                        alignItems: "baseline",
+                        padding: "14px 0",
+                        borderBottom: "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                        {label}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: "var(--text-tertiary)",
+                          minWidth: 70,
+                          textAlign: "right",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {note}
+                      </span>
+                      <span
+                        className="tnum"
+                        style={{
+                          fontSize: 14,
+                          color: "var(--text-secondary)",
+                          minWidth: 140,
+                          textAlign: "right",
+                        }}
+                      >
+                        {val}
+                      </span>
+                    </div>
+                  ))}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "18px 0",
+                      alignItems: "baseline",
+                    }}
+                  >
+                    <span
+                      className="serif"
+                      style={{ fontSize: "1.25rem", letterSpacing: "-0.01em" }}
+                    >
+                      Total acquisition cost
+                    </span>
+                    <span
+                      className="serif tnum"
+                      style={{
+                        fontSize: "1.5rem",
+                        color: "var(--accent)",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {acquisitionTotalText}
+                    </span>
+                  </div>
+                </div>
+                <p
+                  style={{
+                    marginTop: 16,
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                    lineHeight: 1.5,
+                    maxWidth: "60ch",
+                  }}
+                >
+                  Indicative · Dubai-typical fees (4% DLD transfer, ~2% agency,
+                  registration). I prepare an exact, itemised statement before
+                  you commit.
+                </p>
+              </div>
+            ) : null}
+
             {/* Features / Amenities */}
             {view.amenities.length > 0 ? (
               <div style={{ padding: "64px 0" }}>
@@ -748,25 +900,7 @@ export default async function PropertyDetailPage({
               </div>
             ) : null}
 
-            {/* Booking widget — для short-term/mixed */}
-            {isBookable ? (
-              <div
-                style={{
-                  padding: "48px 0",
-                  borderTop: "1px solid var(--border-subtle)",
-                }}
-              >
-                <span className="eyebrow gold">Book this stay</span>
-                <div style={{ marginTop: 24 }}>
-                  <BookingWidget
-                    propertyId={property.id}
-                    locale={locale}
-                    guestCapacity={property.guest_capacity}
-                    paymentOptions={paymentOptions}
-                  />
-                </div>
-              </div>
-            ) : null}
+            {/* Booking — теперь в sticky-панели слева (showBooking). */}
           </div>
         </div>
 
@@ -782,7 +916,7 @@ export default async function PropertyDetailPage({
       </section>
 
       {/* 3) INVESTMENT — только для sale c видимой ценой ===== */}
-      {showInvestment ? (
+      {saleVisible ? (
         <section
           style={{
             padding: "120px 0",
