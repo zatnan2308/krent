@@ -102,7 +102,7 @@ export async function signUp(
     fullName: formData.get("fullName"),
     email: formData.get("email"),
     password: formData.get("password"),
-    confirmPassword: formData.get("confirmPassword"),
+    phone: formData.get("phone") || undefined,
   });
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -114,7 +114,10 @@ export async function signUp(
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { full_name: parsed.data.fullName },
+      data: {
+        full_name: parsed.data.fullName,
+        phone: parsed.data.phone ?? null,
+      },
       emailRedirectTo: `${getOrigin()}${ROUTES.auth.signIn}?confirmed=1`,
     },
   });

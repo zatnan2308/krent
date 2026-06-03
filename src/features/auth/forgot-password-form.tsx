@@ -1,51 +1,57 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormState } from "react-dom";
 
 import { requestPasswordReset } from "@/features/auth/actions";
+import {
+  AuthField,
+  AuthNote,
+  AuthSubmit,
+} from "@/features/auth/auth-shell";
 import type { AuthFormState } from "@/features/auth/schema";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 const initialState: AuthFormState = { error: null, success: null };
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Sending..." : "Send reset link"}
-    </Button>
-  );
-}
 
 export function ForgotPasswordForm() {
   const [state, formAction] = useFormState(requestPasswordReset, initialState);
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          required
-        />
+    <form
+      action={formAction}
+      style={{ display: "flex", flexDirection: "column", gap: 18 }}
+    >
+      <div>
+        <h2
+          className="serif"
+          style={{
+            fontSize: "1.5rem",
+            letterSpacing: "-0.02em",
+            fontWeight: 400,
+          }}
+        >
+          Reset your password
+        </h2>
+        <p
+          style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 6 }}
+        >
+          Enter your email — we&apos;ll send a secure reset link.
+        </p>
       </div>
-      {state.error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+
+      <AuthField
+        label="Email"
+        name="email"
+        type="email"
+        placeholder="you@example.com"
+        autoComplete="email"
+        required
+      />
+
+      {state.error ? <AuthNote variant="error">{state.error}</AuthNote> : null}
       {state.success ? (
-        <p className="text-sm text-emerald-700" role="status">
-          {state.success}
-        </p>
+        <AuthNote variant="success">{state.success}</AuthNote>
       ) : null}
-      <SubmitButton />
+
+      <AuthSubmit label="Send reset link" pendingLabel="Sending…" />
     </form>
   );
 }

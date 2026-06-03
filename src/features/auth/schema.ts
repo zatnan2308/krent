@@ -7,18 +7,14 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-/** Схема регистрации. */
-export const signUpSchema = z
-  .object({
-    fullName: z.string().trim().min(1).max(200),
-    email: z.email(),
-    password: z.string().min(8).max(72),
-    confirmPassword: z.string().min(8).max(72),
-  })
-  .refine((value) => value.password === value.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+/** Схема регистрации (новый дизайн: телефон опционален, без подтверждения —
+ *  опечатку ловит переключатель «показать пароль»). */
+export const signUpSchema = z.object({
+  fullName: z.string().trim().min(1).max(200),
+  email: z.email(),
+  password: z.string().min(8).max(72),
+  phone: z.string().trim().max(40).optional(),
+});
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
 /** Запрос на сброс пароля. */
