@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getAboutContent } from "@/features/about/queries";
 import { getHomeContent } from "@/features/home/queries";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -112,6 +113,29 @@ export default async function AboutPage({
   const contactHref = buildLocalizedPath(locale, "/contact");
   const propertiesHref = buildLocalizedPath(locale, "/properties");
 
+  // Редактируемый контент /about (тексты + вехи) с фолбэком на дефолты.
+  const aboutContent = site
+    ? await getAboutContent(site.organization.id)
+    : { page: null, milestones: [] };
+  const timeline =
+    aboutContent.milestones.length > 0
+      ? aboutContent.milestones.map((m) => ({
+          year: m.year,
+          title: m.title,
+          body: m.body,
+        }))
+      : DEFAULT_TIMELINE;
+  const heroTitle = aboutContent.page?.hero_title ?? null;
+  const storyHeading = aboutContent.page?.story_heading ?? null;
+  const storyParas = aboutContent.page?.story_body
+    ? aboutContent.page.story_body
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+    : null;
+  const quote1 = aboutContent.page?.quote_1 ?? null;
+  const quote2 = aboutContent.page?.quote_2 ?? null;
+
   return (
     <>
       {/* ============================================================
@@ -197,15 +221,20 @@ export default async function AboutPage({
                 marginTop: 24,
                 fontWeight: 350,
                 maxWidth: "14ch",
+                whiteSpace: "pre-line",
               }}
             >
-              One person.
-              <br />
-              <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                Twelve clients.
-              </em>
-              <br />
-              One city.
+              {heroTitle ?? (
+                <>
+                  One person.
+                  <br />
+                  <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
+                    Twelve clients.
+                  </em>
+                  <br />
+                  One city.
+                </>
+              )}
             </h1>
 
             <p
@@ -306,78 +335,90 @@ export default async function AboutPage({
                 fontWeight: 400,
               }}
             >
-              How one agent ended up knowing Dubai block by block.
+              {storyHeading ??
+                "How one agent ended up knowing Dubai block by block."}
             </h2>
           </div>
 
           <div style={{ maxWidth: "66ch" }}>
-            <p
-              className="drop-cap"
-              style={{
-                fontSize: 18,
-                lineHeight: 1.7,
-                color: "var(--text-secondary)",
-              }}
-            >
-              Dubai, a few years back. The first deal closed — an apartment in
-              the Marina, sold to a family who had been waiting for the right
-              building for nine months. Four of them spent walking that family
-              through every tower in person. The commission covered the next two
-              years. The lesson stayed longer.
-            </p>
+            {storyParas ? (
+              <DynamicStory
+                paras={storyParas}
+                quote1={quote1}
+                quote2={quote2}
+              />
+            ) : (
+              <>
+                <p
+                  className="drop-cap"
+                  style={{
+                    fontSize: 18,
+                    lineHeight: 1.7,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Dubai, a few years back. The first deal closed — an apartment
+                  in the Marina, sold to a family who had been waiting for the
+                  right building for nine months. Four of them spent walking
+                  that family through every tower in person. The commission
+                  covered the next two years. The lesson stayed longer.
+                </p>
 
-            <PullQuote>
-              Most agents were closing twenty deals a year by saying yes to
-              everyone. I was closing six by saying no.
-            </PullQuote>
+                <PullQuote>
+                  Most agents were closing twenty deals a year by saying yes to
+                  everyone. I was closing six by saying no.
+                </PullQuote>
 
-            <p
-              style={{
-                fontSize: 17,
-                lineHeight: 1.7,
-                color: "var(--text-secondary)",
-                marginTop: 24,
-              }}
-            >
-              The RERA exam, then a year inside one of the city&apos;s largest
-              agencies. Left within twelve months. Volume agencies are built to
-              maximise the broker — not the client. Re-licensed independently,
-              capped the book at twelve active clients, never looked back.
-            </p>
+                <p
+                  style={{
+                    fontSize: 17,
+                    lineHeight: 1.7,
+                    color: "var(--text-secondary)",
+                    marginTop: 24,
+                  }}
+                >
+                  The RERA exam, then a year inside one of the city&apos;s
+                  largest agencies. Left within twelve months. Volume agencies
+                  are built to maximise the broker — not the client. Re-licensed
+                  independently, capped the book at twelve active clients, never
+                  looked back.
+                </p>
 
-            <p
-              style={{
-                fontSize: 17,
-                lineHeight: 1.7,
-                color: "var(--text-secondary)",
-                marginTop: 24,
-              }}
-            >
-              The depth came from staying put. One city, learned tower by tower
-              — which floors get the morning light, which buildings hold their
-              service charges, which developers actually hand over on time.
-              Downtown, the Marina, Palm Jumeirah, the Hills. Every property
-              walked personally before it is ever listed.
-            </p>
+                <p
+                  style={{
+                    fontSize: 17,
+                    lineHeight: 1.7,
+                    color: "var(--text-secondary)",
+                    marginTop: 24,
+                  }}
+                >
+                  The depth came from staying put. One city, learned tower by
+                  tower — which floors get the morning light, which buildings
+                  hold their service charges, which developers actually hand
+                  over on time. Downtown, the Marina, Palm Jumeirah, the Hills.
+                  Every property walked personally before it is ever listed.
+                </p>
 
-            <PullQuote>
-              The job isn&apos;t selling a flat. The job is making sure you
-              don&apos;t buy the wrong one.
-            </PullQuote>
+                <PullQuote>
+                  The job isn&apos;t selling a flat. The job is making sure you
+                  don&apos;t buy the wrong one.
+                </PullQuote>
 
-            <p
-              style={{
-                fontSize: 17,
-                lineHeight: 1.7,
-                color: "var(--text-secondary)",
-                marginTop: 24,
-              }}
-            >
-              What hasn&apos;t changed: every client gets a mobile number on
-              day one. Every deal gets full attention end-to-end. There is no
-              assistant, no junior, no team screen in between. That is the
-              entire model.
-            </p>
+                <p
+                  style={{
+                    fontSize: 17,
+                    lineHeight: 1.7,
+                    color: "var(--text-secondary)",
+                    marginTop: 24,
+                  }}
+                >
+                  What hasn&apos;t changed: every client gets a mobile number on
+                  day one. Every deal gets full attention end-to-end. There is
+                  no assistant, no junior, no team screen in between. That is
+                  the entire model.
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -429,7 +470,7 @@ export default async function AboutPage({
           </h2>
 
           <div>
-            {DEFAULT_TIMELINE.map((it, i) => (
+            {timeline.map((it, i) => (
               <div
                 key={it.year + it.title}
                 className="ed-timeline-row"
@@ -440,7 +481,7 @@ export default async function AboutPage({
                   padding: "36px 0",
                   borderTop: "1px solid var(--border-subtle)",
                   borderBottom:
-                    i === DEFAULT_TIMELINE.length - 1
+                    i === timeline.length - 1
                       ? "1px solid var(--border-subtle)"
                       : "none",
                   alignItems: "baseline",
@@ -859,6 +900,41 @@ export default async function AboutPage({
           </div>
         </div>
       </section>
+    </>
+  );
+}
+
+function DynamicStory({
+  paras,
+  quote1,
+  quote2,
+}: {
+  paras: string[];
+  quote1: string | null;
+  quote2: string | null;
+}) {
+  const mid = Math.ceil(paras.length / 2);
+  return (
+    <>
+      {paras.map((p, i) => (
+        <div key={i}>
+          <p
+            className={i === 0 ? "drop-cap" : ""}
+            style={{
+              fontSize: i === 0 ? 18 : 17,
+              lineHeight: 1.7,
+              color: "var(--text-secondary)",
+              marginTop: i === 0 ? 0 : 24,
+            }}
+          >
+            {p}
+          </p>
+          {i === 0 && quote1 ? <PullQuote>{quote1}</PullQuote> : null}
+          {i !== 0 && i === mid - 1 && quote2 ? (
+            <PullQuote>{quote2}</PullQuote>
+          ) : null}
+        </div>
+      ))}
     </>
   );
 }

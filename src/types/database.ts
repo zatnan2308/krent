@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_milestones: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          organization_id: string
+          sort_order: number
+          title: string
+          year: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          sort_order?: number
+          title?: string
+          year?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          sort_order?: number
+          title?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "about_milestones_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      about_page: {
+        Row: {
+          hero_title: string | null
+          organization_id: string
+          quote_1: string | null
+          quote_2: string | null
+          story_body: string | null
+          story_heading: string | null
+          updated_at: string
+        }
+        Insert: {
+          hero_title?: string | null
+          organization_id: string
+          quote_1?: string | null
+          quote_2?: string | null
+          story_body?: string | null
+          story_heading?: string | null
+          updated_at?: string
+        }
+        Update: {
+          hero_title?: string | null
+          organization_id?: string
+          quote_1?: string | null
+          quote_2?: string | null
+          story_body?: string | null
+          story_heading?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "about_page_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_campaign_reports: {
         Row: {
           clicks: number

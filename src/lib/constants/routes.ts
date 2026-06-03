@@ -28,6 +28,7 @@ export const ROUTES = {
     home: "/dashboard/home",
     pages: "/dashboard/pages",
     navigation: "/dashboard/navigation",
+    about: "/dashboard/about",
     properties: "/dashboard/properties",
     propertiesAmenities: "/dashboard/properties/amenities",
     crm: "/dashboard/crm",
