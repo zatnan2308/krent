@@ -202,6 +202,9 @@ export default async function PropertyDetailPage({
 
   const address = displayAddress(view);
   const location = view.location;
+  // Vacation/short-term — показываем stay-секции вместо buy-метаданных.
+  const isBookable =
+    property.purpose === "short_term_rental" || property.purpose === "mixed";
 
   // Spec strip — самые «крупные» 4 факта (beds / baths / size / floor or year).
   type Spec = { label: string; value: string; unit?: string | null };
@@ -263,23 +266,49 @@ export default async function PropertyDetailPage({
       formatSize(property.lot_size, property.size_unit),
     ]);
   }
-  if (view.fees.securityDeposit !== null) {
-    meta.push([
-      "Security deposit",
-      formatCurrency(view.fees.securityDeposit, priceCurrency, locale),
-    ]);
+  // Сборы: для buy — в meta-таблицу; для vacation — в секцию «Good to know».
+  if (!isBookable) {
+    if (view.fees.securityDeposit !== null) {
+      meta.push([
+        "Security deposit",
+        formatCurrency(view.fees.securityDeposit, priceCurrency, locale),
+      ]);
+    }
+    if (view.fees.cleaningFee !== null) {
+      meta.push([
+        "Cleaning fee",
+        formatCurrency(view.fees.cleaningFee, priceCurrency, locale),
+      ]);
+    }
+    if (view.fees.taxes !== null) {
+      meta.push(["Taxes", formatCurrency(view.fees.taxes, priceCurrency, locale)]);
+    }
   }
-  if (view.fees.cleaningFee !== null) {
-    meta.push([
-      "Cleaning fee",
-      formatCurrency(view.fees.cleaningFee, priceCurrency, locale),
-    ]);
-  }
-  if (view.fees.taxes !== null) {
-    meta.push([
-      "Taxes",
-      formatCurrency(view.fees.taxes, priceCurrency, locale),
-    ]);
+
+  // «Good to know» (vacation) — гости и сборы из реальных данных.
+  const stayRules: [string, string][] = [];
+  if (isBookable) {
+    if (property.guest_capacity !== null) {
+      stayRules.push(["Guests", `Up to ${property.guest_capacity}`]);
+    }
+    if (view.fees.cleaningFee !== null) {
+      stayRules.push([
+        "Cleaning fee",
+        formatCurrency(view.fees.cleaningFee, priceCurrency, locale),
+      ]);
+    }
+    if (view.fees.securityDeposit !== null) {
+      stayRules.push([
+        "Security deposit",
+        formatCurrency(view.fees.securityDeposit, priceCurrency, locale),
+      ]);
+    }
+    if (view.fees.taxes !== null) {
+      stayRules.push([
+        "Taxes & fees",
+        formatCurrency(view.fees.taxes, priceCurrency, locale),
+      ]);
+    }
   }
 
   // Описание разбиваем на параграфы по двойному \n
@@ -298,8 +327,6 @@ export default async function PropertyDetailPage({
     view.price && view.price.displayType === "visible" && sizeForRate
       ? Math.round(view.price.amount / sizeForRate)
       : null;
-  const isBookable =
-    property.purpose === "short_term_rental" || property.purpose === "mixed";
   const showBooking =
     isBookable && view.price !== null && view.price.displayType === "visible";
   const saleVisible =
@@ -875,7 +902,9 @@ export default async function PropertyDetailPage({
             {/* Features / Amenities */}
             {view.amenities.length > 0 ? (
               <div style={{ padding: "64px 0" }}>
-                <span className="eyebrow gold">Features</span>
+                <span className="eyebrow gold">
+                  {isBookable ? "What this place offers" : "Features"}
+                </span>
                 <ul
                   style={{
                     listStyle: "none",
@@ -896,8 +925,11 @@ export default async function PropertyDetailPage({
                         color: "var(--text-secondary)",
                         padding: "12px 0",
                         borderBottom: "1px solid var(--border-subtle)",
+                        display: "flex",
+                        gap: 10,
                       }}
                     >
+                      <span style={{ color: "var(--accent)" }}>—</span>
                       {a.name}
                     </li>
                   ))}
@@ -969,6 +1001,62 @@ export default async function PropertyDetailPage({
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Good to know — vacation (на реальных данных: гости + сборы) */}
+            {stayRules.length > 0 ? (
+              <div
+                style={{
+                  padding: "64px 0",
+                  borderTop: "1px solid var(--border-subtle)",
+                }}
+              >
+                <span className="eyebrow gold">Good to know</span>
+                <div
+                  className="ed-features-grid"
+                  style={{
+                    marginTop: 28,
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px 40px",
+                  }}
+                >
+                  {stayRules.map(([k, v]) => (
+                    <div
+                      key={k}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto",
+                        gap: 12,
+                        alignItems: "baseline",
+                        paddingBottom: 10,
+                        borderBottom: "1px dashed var(--border-subtle)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 11,
+                          letterSpacing: "0.16em",
+                          textTransform: "uppercase",
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        {k}
+                      </span>
+                      <span
+                        className="serif"
+                        style={{
+                          fontSize: 15,
+                          letterSpacing: "-0.01em",
+                          color: "var(--text-primary)",
+                        }}
+                      >
+                        {v}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : null}
