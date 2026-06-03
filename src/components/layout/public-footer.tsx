@@ -10,6 +10,7 @@ interface PublicFooterProps {
   dictionary: Dictionary;
   siteName: string;
   contact: SiteContactInfo;
+  footerNav: { label: string; href: string }[];
 }
 
 const DEFAULT_TAGLINE =
@@ -88,6 +89,7 @@ export function PublicFooter({
   dictionary,
   siteName,
   contact,
+  footerNav,
 }: PublicFooterProps) {
   const { email: supportEmail, phone: supportPhone } = contact;
   const colBrowse = [
@@ -126,10 +128,19 @@ export function PublicFooter({
       href: buildLocalizedPath(locale, "/properties?area=Emirates Hills"),
     },
   ];
-  const colCompany = [
-    { label: dictionary.nav.about, href: buildLocalizedPath(locale, "/about") },
-    { label: dictionary.nav.contact, href: buildLocalizedPath(locale, "/contact") },
-  ];
+  const colCompany =
+    footerNav.length > 0
+      ? footerNav
+      : [
+          {
+            label: dictionary.nav.about,
+            href: buildLocalizedPath(locale, "/about"),
+          },
+          {
+            label: dictionary.nav.contact,
+            href: buildLocalizedPath(locale, "/contact"),
+          },
+        ];
   const colLegal = [
     { label: "Privacy policy", href: buildLocalizedPath(locale, "/privacy") },
     { label: "Terms of service", href: buildLocalizedPath(locale, "/terms") },

@@ -17,6 +17,7 @@ interface PublicHeaderProps {
   siteName: string;
   logoUrl: string | null;
   supportPhone?: string | null;
+  navItems?: { label: string; href: string }[];
   currentUserName?: string | null;
   currentUserEmail?: string | null;
 }
@@ -53,6 +54,7 @@ export function PublicHeader({
   siteName,
   logoUrl,
   supportPhone,
+  navItems: navItemsProp,
   currentUserName,
   currentUserEmail,
 }: PublicHeaderProps) {
@@ -95,11 +97,13 @@ export function PublicHeader({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navItems = [
+  const defaultNav = [
     { label: "Properties", href: buildLocalizedPath(locale, "/properties") },
     { label: "About", href: buildLocalizedPath(locale, "/about") },
     { label: "Contact", href: buildLocalizedPath(locale, "/contact") },
   ];
+  const navItems =
+    navItemsProp && navItemsProp.length > 0 ? navItemsProp : defaultNav;
 
   // onDark — прозрачный с on-dark текстом — допустимо ТОЛЬКО на главной
   // в самом верху (когда под хедером ещё тёмная hero-фотография).

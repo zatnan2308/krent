@@ -14,17 +14,20 @@ export default async function NavigationPage() {
     return null;
   }
 
-  const items = await getNavigationItems(context.organization.id, "header");
+  const [header, footer] = await Promise.all([
+    getNavigationItems(context.organization.id, "header"),
+    getNavigationItems(context.organization.id, "footer"),
+  ]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Navigation</h1>
         <p className="text-sm text-muted-foreground">
-          Header menu of {context.organization.name}.
+          Header and footer menus of {context.organization.name}.
         </p>
       </div>
-      <NavigationManager items={items} />
+      <NavigationManager header={header} footer={footer} />
     </div>
   );
 }

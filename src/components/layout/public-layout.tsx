@@ -21,12 +21,20 @@ export interface SiteContactInfo {
   socials: { label: string; href: string }[];
 }
 
+/** Готовая навигационная ссылка (label + локализованный href). */
+export interface NavLink {
+  label: string;
+  href: string;
+}
+
 interface PublicLayoutProps {
   locale: Locale;
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
   contact: SiteContactInfo;
+  headerNav: NavLink[];
+  footerNav: NavLink[];
   /** Имя текущего пользователя (для приветствия в хедере). */
   currentUserName?: string | null;
   currentUserEmail?: string | null;
@@ -39,6 +47,8 @@ export function PublicLayout({
   siteName,
   logoUrl,
   contact,
+  headerNav,
+  footerNav,
   currentUserName,
   currentUserEmail,
   children,
@@ -52,6 +62,7 @@ export function PublicLayout({
         siteName={siteName}
         logoUrl={logoUrl}
         supportPhone={contact.phone}
+        navItems={headerNav}
         currentUserName={currentUserName ?? null}
         currentUserEmail={currentUserEmail ?? null}
       />
@@ -61,6 +72,7 @@ export function PublicLayout({
         dictionary={dictionary}
         siteName={siteName}
         contact={contact}
+        footerNav={footerNav}
       />
       <CookieBanner />
     </div>

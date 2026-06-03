@@ -3,14 +3,17 @@ import { notFound } from "next/navigation";
 
 import {
   PublicLayout,
+  type NavLink,
   type SiteContactInfo,
 } from "@/components/layout/public-layout";
 import { AnalyticsTracker } from "@/features/analytics/tracker";
 import { getPublicTrackingConfig } from "@/features/analytics/queries";
+import { getPublicNavigation } from "@/features/cms/navigation-queries";
 import { AttributionTracker } from "@/features/crm/attribution-tracker";
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { isLocale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildLocalizedPath } from "@/lib/seo";
 import { getCurrentUserShallow } from "@/server/auth";
 import { getPublicSiteContext } from "@/server/public-site";
 
@@ -77,6 +80,21 @@ export default async function LocaleLayout({
     ? await getPublicTrackingConfig(site.organization.id)
     : null;
 
+  // Навигация header/footer из БД (относительные URL локализуются).
+  const localizeNav = (items: { label: string; url: string }[]): NavLink[] =>
+    items.map((item) => ({
+      label: item.label,
+      href: item.url.startsWith("http")
+        ? item.url
+        : buildLocalizedPath(locale, item.url),
+    }));
+  const [headerNav, footerNav]: [NavLink[], NavLink[]] = site
+    ? await Promise.all([
+        getPublicNavigation(site.organization.id, "header").then(localizeNav),
+        getPublicNavigation(site.organization.id, "footer").then(localizeNav),
+      ])
+    : [[], []];
+
   // Имя для приветствия — из user_metadata.full_name либо часть email.
   let userName: string | null = null;
   let userEmail: string | null = null;
@@ -102,6 +120,8 @@ export default async function LocaleLayout({
         siteName={siteName}
         logoUrl={logoUrl}
         contact={contact}
+        headerNav={headerNav}
+        footerNav={footerNav}
         currentUserName={userName}
         currentUserEmail={userEmail}
       >
