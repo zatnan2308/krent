@@ -321,6 +321,48 @@ export default async function PropertyDetailPage({
     acqBase + acqBase * 0.04 + acqBase * 0.02 + acqBase * 0.0025,
   );
 
+  // Краткие детали сделки для sticky-панели (дизайн property-buy) —
+  // только реальные поля из БД, ничего не выдумываем.
+  const buyDetails: [string, string][] = [];
+  if (property.ownership) {
+    buyDetails.push(["Ownership", property.ownership]);
+  }
+  if (property.completion) {
+    buyDetails.push(["Status", property.completion]);
+  } else if (property.status !== "active") {
+    buyDetails.push(["Status", PROPERTY_STATUS_LABELS[property.status]]);
+  }
+  if (property.rental_yield !== null) {
+    buyDetails.push(["Est. net yield", `${property.rental_yield}%`]);
+  }
+
+  // Ячейки блока «Investment» — собираем только из доступных данных.
+  const investCells: { value: string; label: string; note?: string }[] = [];
+  investCells.push({
+    value: priceText ?? "—",
+    label: "Listed price",
+    note:
+      view.price?.pricePeriod === "week"
+        ? "Weekly"
+        : view.price?.pricePeriod === "night"
+          ? "Per night"
+          : "Asking",
+  });
+  if (pricePerUnit !== null) {
+    investCells.push({
+      value: `${formatCurrency(pricePerUnit, priceCurrency, locale)} / ${property.size_unit}`,
+      label: "Price per area",
+      note: `Based on ${property.size} ${property.size_unit} interior`,
+    });
+  }
+  if (property.rental_yield !== null) {
+    investCells.push({
+      value: `${property.rental_yield}%`,
+      label: "Est. net yield",
+      note: "Gross, indicative",
+    });
+  }
+
   const canonicalPath = `/properties/${view.localizedSlugs[locale] ?? view.baseSlug}`;
   const canonicalUrl = buildCanonicalUrl(locale, canonicalPath);
   const jsonLd = [
@@ -456,6 +498,37 @@ export default async function PropertyDetailPage({
                 </div>
               ) : null}
             </div>
+
+            {/* Deal details */}
+            {buyDetails.length > 0 ? (
+              <div
+                style={{
+                  padding: "20px 0",
+                  borderBottom: "1px solid var(--border-subtle)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  fontSize: 13,
+                }}
+              >
+                {buyDetails.map(([k, v]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      gap: 16,
+                    }}
+                  >
+                    <span style={{ color: "var(--text-tertiary)" }}>{k}</span>
+                    <span className="tnum" style={{ color: "var(--text-primary)" }}>
+                      {v}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
             {/* Agent block */}
             <div
@@ -977,30 +1050,20 @@ export default async function PropertyDetailPage({
               className="ed-invest-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                gridTemplateColumns: `repeat(${investCells.length}, 1fr)`,
                 gap: 0,
                 border: "1px solid var(--border-subtle)",
               }}
             >
-              <InvestCell
-                value={priceText ?? "—"}
-                label="Listed price"
-                note={
-                  view.price?.pricePeriod === "week"
-                    ? "Weekly"
-                    : view.price?.pricePeriod === "night"
-                      ? "Per night"
-                      : "Asking"
-                }
-                borderRight
-              />
-              {pricePerUnit !== null ? (
+              {investCells.map((cell, i) => (
                 <InvestCell
-                  value={`${formatCurrency(pricePerUnit, priceCurrency, locale)} / ${property.size_unit}`}
-                  label="Price per area"
-                  note={`Based on ${property.size} ${property.size_unit} interior`}
+                  key={cell.label}
+                  value={cell.value}
+                  label={cell.label}
+                  note={cell.note}
+                  borderRight={i < investCells.length - 1}
                 />
-              ) : null}
+              ))}
             </div>
 
             <p
@@ -1020,6 +1083,7 @@ export default async function PropertyDetailPage({
           <style>{`
             @media (max-width: 900px) {
               .ed-section-header { grid-template-columns: 1fr !important; gap: 24px !important; }
+              .ed-invest-grid { grid-template-columns: 1fr !important; }
             }
           `}</style>
         </section>
