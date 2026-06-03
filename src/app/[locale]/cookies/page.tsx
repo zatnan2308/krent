@@ -1,27 +1,24 @@
 import type { Metadata } from "next";
 
+import { DEFAULT_LEGAL } from "@/features/legal/defaults";
+import { LegalPageView } from "@/features/legal/legal-page";
+import { getLegalDocument } from "@/features/legal/queries";
+import { getPublicSiteContext } from "@/server/public-site";
+
 export const metadata: Metadata = { title: "Cookies" };
 export const dynamic = "force-dynamic";
 
-export default function CookiesPage() {
+export default async function CookiesPage() {
+  const site = await getPublicSiteContext();
+  const doc = site
+    ? await getLegalDocument(site.organization.id, "cookies")
+    : null;
+  const def = DEFAULT_LEGAL.cookies;
   return (
-    <article className="container max-w-3xl py-12 prose prose-sm">
-      <h1>Cookies</h1>
-      <p>
-        We use essential cookies to keep the site working and optional
-        cookies to measure traffic. Your choice is stored in
-        <code> krent_cookie_consent</code>.
-      </p>
-      <h2>Essential</h2>
-      <p>
-        Required for sign-in, session, locale and currency selection.
-        Cannot be disabled.
-      </p>
-      <h2>Analytics</h2>
-      <p>
-        Enabled only when you accept analytics. If you accept only
-        essential cookies, we do not load tracking scripts.
-      </p>
-    </article>
+    <LegalPageView
+      eyebrow="Cookies"
+      title={doc?.title || def.title}
+      body={doc?.body || def.body}
+    />
   );
 }

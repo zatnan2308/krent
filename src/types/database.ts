@@ -3170,6 +3170,38 @@ export type Database = {
           },
         ]
       }
+      legal_documents: {
+        Row: {
+          body: string | null
+          doc_key: string
+          organization_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          doc_key: string
+          organization_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          doc_key?: string
+          organization_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       licenses: {
         Row: {
           client_email: string | null

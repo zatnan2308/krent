@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { AboutEditor } from "@/features/about/about-editor";
 import { getAboutContent } from "@/features/about/queries";
+import { LegalEditor } from "@/features/legal/legal-editor";
+import { getLegalDocuments } from "@/features/legal/queries";
 import { PageIntrosEditor } from "@/features/page-intros/page-intros-editor";
 import { getPageIntros } from "@/features/page-intros/queries";
 import { ROUTES } from "@/lib/constants/routes";
@@ -23,11 +25,13 @@ export default async function AboutEditorPage() {
   if (!hasPermission(context, "organization.view")) {
     redirect(ROUTES.dashboard.root);
   }
-  const [content, intros] = await Promise.all([
+  const [content, intros, legal] = await Promise.all([
     getAboutContent(context.organization.id),
     getPageIntros(context.organization.id),
+    getLegalDocuments(context.organization.id),
   ]);
   const emptyIntro = { eyebrow: null, heading: null, subheading: null };
+  const emptyDoc = { title: null, body: null };
 
   return (
     <div className="space-y-6">
@@ -59,6 +63,25 @@ export default async function AboutEditorPage() {
             pageKey: "agents",
             label: "Agents page",
             value: intros.agents ?? emptyIntro,
+          },
+        ]}
+      />
+      <LegalEditor
+        docs={[
+          {
+            docKey: "privacy",
+            label: "Privacy policy",
+            value: legal.privacy ?? emptyDoc,
+          },
+          {
+            docKey: "terms",
+            label: "Terms of service",
+            value: legal.terms ?? emptyDoc,
+          },
+          {
+            docKey: "cookies",
+            label: "Cookies",
+            value: legal.cookies ?? emptyDoc,
           },
         ]}
       />
