@@ -12,15 +12,16 @@ interface Props {
   images: GalleryImage[];
   title: string;
   location: string;
+  /** Чипы (type · city · deal) — показываются eyebrow'ом над заголовком. */
   eyebrow: string[];
   badge?: string | null;
   backHref: string;
   backLabel: string;
 }
 
-/** Editorial property hero: 82vh full-bleed photo с навигацией, breadcrumb,
- *  заголовком и thumbnail strip снизу. Подсветка active-thumb и переключение
- *  по клавишам ← / →. */
+/** Editorial property hero (дизайн property-hero.jsx): 82vh full-bleed фото
+ *  с fade-сменой, верхним breadcrumb, eyebrow + заголовком + локацией внизу,
+ *  навигацией галереи, «View all photos» (lightbox) и thumbnail-стрипом. */
 export function PropertyHeroGallery({
   images,
   title,
@@ -31,8 +32,10 @@ export function PropertyHeroGallery({
   backLabel,
 }: Props) {
   const [idx, setIdx] = React.useState(0);
+  const [lightbox, setLightbox] = React.useState(false);
   const total = images.length;
   const cur = images[Math.min(idx, total - 1)] ?? images[0];
+  const deal = eyebrow[eyebrow.length - 1];
 
   const next = React.useCallback(() => {
     setIdx((i) => (i + 1) % Math.max(1, total));
@@ -41,15 +44,22 @@ export function PropertyHeroGallery({
     setIdx((i) => (i - 1 + Math.max(1, total)) % Math.max(1, total));
   }, [total]);
 
-  // Стрелки клавиатуры — UX-плюс к photo-gallery.
   React.useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "ArrowRight") next();
+      if (event.key === "Escape") setLightbox(false);
+      else if (event.key === "ArrowRight") next();
       else if (event.key === "ArrowLeft") prev();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
+
+  React.useEffect(() => {
+    document.body.style.overflow = lightbox ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [lightbox]);
 
   if (!cur) {
     return (
@@ -70,6 +80,9 @@ export function PropertyHeroGallery({
       </section>
     );
   }
+
+  const edge =
+    "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))";
 
   return (
     <section
@@ -109,10 +122,8 @@ export function PropertyHeroGallery({
         style={{
           position: "absolute",
           top: 32,
-          left:
-            "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-          right:
-            "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
+          left: edge,
+          right: edge,
           display: "flex",
           justifyContent: "space-between",
           gap: 16,
@@ -123,21 +134,16 @@ export function PropertyHeroGallery({
           textTransform: "uppercase",
         }}
       >
-        <div
-          style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}
-        >
-          <Link
-            href={backHref}
-            style={{ color: "inherit", textDecoration: "none" }}
-          >
+        <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
+          <Link href={backHref} style={{ color: "inherit", textDecoration: "none" }}>
             <span style={{ marginRight: 8 }}>←</span> {backLabel}
           </Link>
-          {eyebrow.map((chip, i) => (
-            <React.Fragment key={chip + i}>
+          {deal ? (
+            <>
               <span style={{ color: "var(--border-medium)" }}>·</span>
-              <span style={{ color: "var(--text-primary)" }}>{chip}</span>
-            </React.Fragment>
-          ))}
+              <span style={{ color: "var(--text-primary)" }}>{deal}</span>
+            </>
+          ) : null}
         </div>
         {badge ? (
           <span
@@ -157,11 +163,9 @@ export function PropertyHeroGallery({
       <div
         style={{
           position: "absolute",
-          left:
-            "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-          right:
-            "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-          bottom: 48,
+          left: edge,
+          right: edge,
+          bottom: 130,
           display: "flex",
           alignItems: "end",
           justifyContent: "space-between",
@@ -170,6 +174,16 @@ export function PropertyHeroGallery({
         }}
       >
         <div>
+          {eyebrow.length > 0 ? (
+            <span className="eyebrow gold">
+              {eyebrow.map((chip, i) => (
+                <React.Fragment key={chip + i}>
+                  {i > 0 ? <span className="dot" /> : null}
+                  {chip}
+                </React.Fragment>
+              ))}
+            </span>
+          ) : null}
           <h1
             className="serif"
             style={{
@@ -198,6 +212,7 @@ export function PropertyHeroGallery({
           ) : null}
         </div>
 
+        {/* Gallery nav */}
         <div
           style={{
             display: "flex",
@@ -226,18 +241,33 @@ export function PropertyHeroGallery({
             <GalleryBtn onClick={prev} label="←" ariaLabel="Previous photo" />
             <GalleryBtn onClick={next} label="→" ariaLabel="Next photo" />
           </div>
+          {total > 1 ? (
+            <button
+              type="button"
+              className="btn-text"
+              onClick={() => setLightbox(true)}
+              style={{
+                fontSize: 12,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--text-primary)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              View all photos
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {/* Thumbnail strip */}
+      {/* Thumbnail strip (inside hero) */}
       {total > 1 ? (
         <div
           className="ed-thumb-strip"
           style={{
             position: "absolute",
-            left:
-              "max(var(--edge-d), calc((100vw - var(--max-w))/2 + var(--edge-d)))",
-            bottom: -36,
+            left: edge,
+            bottom: 36,
             display: "flex",
             gap: 8,
             zIndex: 5,
@@ -250,8 +280,9 @@ export function PropertyHeroGallery({
               onClick={() => setIdx(i)}
               aria-label={`Photo ${i + 1}`}
               style={{
-                width: 72,
-                height: 72,
+                width: 64,
+                height: 64,
+                borderRadius: 6,
                 backgroundImage: `url(${img.url})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
@@ -271,10 +302,11 @@ export function PropertyHeroGallery({
             <button
               type="button"
               className="serif"
-              onClick={() => setIdx(5)}
+              onClick={() => setLightbox(true)}
               style={{
-                width: 72,
-                height: 72,
+                width: 64,
+                height: 64,
+                borderRadius: 6,
                 border: "1px solid var(--border-medium)",
                 color: "var(--text-secondary)",
                 background: "rgba(11,11,12,0.55)",
@@ -287,6 +319,67 @@ export function PropertyHeroGallery({
               +{total - 5}
             </button>
           ) : null}
+        </div>
+      ) : null}
+
+      {/* Lightbox — all photos */}
+      {lightbox ? (
+        <div
+          onClick={() => setLightbox(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1100,
+            background: "rgba(11,11,12,0.94)",
+            overflowY: "auto",
+            padding: "80px var(--edge-d)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(false)}
+            aria-label="Close gallery"
+            style={{
+              position: "fixed",
+              top: 28,
+              right: 32,
+              width: 44,
+              height: 44,
+              border: "1px solid var(--border-medium)",
+              background: "rgba(11,11,12,0.4)",
+              color: "#F5F4EE",
+              fontSize: 20,
+              cursor: "pointer",
+              zIndex: 1101,
+            }}
+          >
+            ×
+          </button>
+          <div
+            style={{
+              maxWidth: "var(--max-w)",
+              margin: "0 auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 12,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {images.map((img, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={img.url + i}
+                src={img.url}
+                alt={img.alt ?? `${title} — photo ${i + 1}`}
+                style={{
+                  width: "100%",
+                  aspectRatio: "4 / 3",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ))}
+          </div>
         </div>
       ) : null}
 
