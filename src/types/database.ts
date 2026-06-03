@@ -3863,6 +3863,41 @@ export type Database = {
         }
         Relationships: []
       }
+      page_intros: {
+        Row: {
+          eyebrow: string | null
+          heading: string | null
+          organization_id: string
+          page_key: string
+          subheading: string | null
+          updated_at: string
+        }
+        Insert: {
+          eyebrow?: string | null
+          heading?: string | null
+          organization_id: string
+          page_key: string
+          subheading?: string | null
+          updated_at?: string
+        }
+        Update: {
+          eyebrow?: string | null
+          heading?: string | null
+          organization_id?: string
+          page_key?: string
+          subheading?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_intros_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_translations: {
         Row: {
           content: Json

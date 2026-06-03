@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { AboutEditor } from "@/features/about/about-editor";
 import { getAboutContent } from "@/features/about/queries";
+import { PageIntrosEditor } from "@/features/page-intros/page-intros-editor";
+import { getPageIntros } from "@/features/page-intros/queries";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -21,7 +23,11 @@ export default async function AboutEditorPage() {
   if (!hasPermission(context, "organization.view")) {
     redirect(ROUTES.dashboard.root);
   }
-  const content = await getAboutContent(context.organization.id);
+  const [content, intros] = await Promise.all([
+    getAboutContent(context.organization.id),
+    getPageIntros(context.organization.id),
+  ]);
+  const emptyIntro = { eyebrow: null, heading: null, subheading: null };
 
   return (
     <div className="space-y-6">
@@ -41,6 +47,20 @@ export default async function AboutEditorPage() {
           quote2: content.page?.quote_2 ?? null,
         }}
         milestones={content.milestones}
+      />
+      <PageIntrosEditor
+        intros={[
+          {
+            pageKey: "sell",
+            label: "Sell page",
+            value: intros.sell ?? emptyIntro,
+          },
+          {
+            pageKey: "agents",
+            label: "Agents page",
+            value: intros.agents ?? emptyIntro,
+          },
+        ]}
       />
     </div>
   );
