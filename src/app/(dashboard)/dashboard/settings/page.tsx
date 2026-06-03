@@ -93,6 +93,22 @@ export default async function SettingsPage() {
           faviconUrl: brand.data?.favicon_url ?? null,
           customCss: brand.data?.custom_css ?? null,
         }}
+        siteContact={{
+          contactEmail: brand.data?.contact_email ?? null,
+          contactPhone: brand.data?.contact_phone ?? null,
+          contactWhatsapp: brand.data?.contact_whatsapp ?? null,
+          contactAddress: brand.data?.contact_address ?? null,
+          officeHours: brand.data?.office_hours ?? null,
+          responseTime: brand.data?.response_time ?? null,
+          footerTagline: brand.data?.footer_tagline ?? null,
+          newsletterTitle: brand.data?.newsletter_title ?? null,
+          newsletterBlurb: brand.data?.newsletter_blurb ?? null,
+          socialInstagram: brand.data?.social_instagram ?? null,
+          socialLinkedin: brand.data?.social_linkedin ?? null,
+          socialFacebook: brand.data?.social_facebook ?? null,
+          socialX: brand.data?.social_x ?? null,
+          socialYoutube: brand.data?.social_youtube ?? null,
+        }}
         localization={{
           defaultLanguage: context.organization.default_language,
           defaultCurrency: context.organization.default_currency,

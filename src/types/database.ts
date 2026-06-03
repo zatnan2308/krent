@@ -657,38 +657,80 @@ export type Database = {
       brand_settings: {
         Row: {
           accent_color: string | null
+          contact_address: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
           created_at: string
           custom_css: string | null
           favicon_url: string | null
           font_family: string | null
+          footer_tagline: string | null
           logo_url: string | null
+          newsletter_blurb: string | null
+          newsletter_title: string | null
+          office_hours: string | null
           organization_id: string
           primary_color: string | null
+          response_time: string | null
           secondary_color: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_x: string | null
+          social_youtube: string | null
           updated_at: string
         }
         Insert: {
           accent_color?: string | null
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           created_at?: string
           custom_css?: string | null
           favicon_url?: string | null
           font_family?: string | null
+          footer_tagline?: string | null
           logo_url?: string | null
+          newsletter_blurb?: string | null
+          newsletter_title?: string | null
+          office_hours?: string | null
           organization_id: string
           primary_color?: string | null
+          response_time?: string | null
           secondary_color?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_x?: string | null
+          social_youtube?: string | null
           updated_at?: string
         }
         Update: {
           accent_color?: string | null
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           created_at?: string
           custom_css?: string | null
           favicon_url?: string | null
           font_family?: string | null
+          footer_tagline?: string | null
           logo_url?: string | null
+          newsletter_blurb?: string | null
+          newsletter_title?: string | null
+          office_hours?: string | null
           organization_id?: string
           primary_color?: string | null
+          response_time?: string | null
           secondary_color?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_x?: string | null
+          social_youtube?: string | null
           updated_at?: string
         }
         Relationships: [

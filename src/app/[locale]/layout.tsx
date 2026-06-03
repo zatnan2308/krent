@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 
-import { PublicLayout } from "@/components/layout/public-layout";
+import {
+  PublicLayout,
+  type SiteContactInfo,
+} from "@/components/layout/public-layout";
 import { AnalyticsTracker } from "@/features/analytics/tracker";
 import { getPublicTrackingConfig } from "@/features/analytics/queries";
 import { AttributionTracker } from "@/features/crm/attribution-tracker";
@@ -13,6 +16,13 @@ import { getPublicSiteContext } from "@/server/public-site";
 
 // Публичный сайт зависит от домена (организация-арендатор) — рендер динамический.
 export const dynamic = "force-dynamic";
+
+/** Нормализует значение WhatsApp (номер или ссылка) в кликабельный URL. */
+function whatsappLink(value: string): string {
+  if (value.startsWith("http")) return value;
+  const digits = value.replace(/[^\d]/g, "");
+  return digits ? `https://wa.me/${digits}` : value;
+}
 
 export default async function LocaleLayout({
   children,
@@ -33,6 +43,36 @@ export default async function LocaleLayout({
   ]);
   const siteName = site?.organization.name ?? DEFAULT_BRANDING.appName;
   const logoUrl = site?.brand?.logo_url ?? null;
+
+  // Контакты, соцсети и тексты футера организации (brand_settings).
+  const brand = site?.brand ?? null;
+  const socials: { label: string; href: string }[] = [];
+  if (brand?.social_instagram)
+    socials.push({ label: "Instagram", href: brand.social_instagram });
+  if (brand?.social_linkedin)
+    socials.push({ label: "LinkedIn", href: brand.social_linkedin });
+  if (brand?.social_facebook)
+    socials.push({ label: "Facebook", href: brand.social_facebook });
+  if (brand?.social_x) socials.push({ label: "X", href: brand.social_x });
+  if (brand?.social_youtube)
+    socials.push({ label: "YouTube", href: brand.social_youtube });
+  if (brand?.contact_whatsapp)
+    socials.push({
+      label: "WhatsApp",
+      href: whatsappLink(brand.contact_whatsapp),
+    });
+  const contact: SiteContactInfo = {
+    email: brand?.contact_email ?? null,
+    phone: brand?.contact_phone ?? null,
+    whatsapp: brand?.contact_whatsapp ?? null,
+    address: brand?.contact_address ?? null,
+    hours: brand?.office_hours ?? null,
+    responseTime: brand?.response_time ?? null,
+    footerTagline: brand?.footer_tagline ?? null,
+    newsletterTitle: brand?.newsletter_title ?? null,
+    newsletterBlurb: brand?.newsletter_blurb ?? null,
+    socials,
+  };
   const trackingConfig = site
     ? await getPublicTrackingConfig(site.organization.id)
     : null;
@@ -61,8 +101,7 @@ export default async function LocaleLayout({
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}
-        supportEmail={null}
-        supportPhone={null}
+        contact={contact}
         currentUserName={userName}
         currentUserEmail={userEmail}
       >

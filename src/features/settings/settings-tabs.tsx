@@ -11,15 +11,23 @@ import {
   updateBranding,
   updateLocalization,
   updateProfile,
+  updateSiteContact,
   type BrandingInput,
   type LocalizationInput,
   type ProfileInput,
+  type SiteContactInput,
 } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type Tab = "profile" | "branding" | "localization" | "modules" | "team";
+type Tab =
+  | "profile"
+  | "branding"
+  | "contact"
+  | "localization"
+  | "modules"
+  | "team";
 
 interface MemberRow {
   userId: string;
@@ -44,6 +52,7 @@ interface RoleRow {
 interface Props {
   profile: { fullName: string; avatarUrl: string; bio: string; phone: string };
   branding: BrandingInput;
+  siteContact: SiteContactInput;
   localization: LocalizationInput;
   modules: ModuleRow[];
   members: MemberRow[];
@@ -54,6 +63,7 @@ interface Props {
 const TABS: { key: Tab; label: string }[] = [
   { key: "profile", label: "Profile" },
   { key: "branding", label: "Branding" },
+  { key: "contact", label: "Site & contact" },
   { key: "localization", label: "Localization" },
   { key: "modules", label: "Modules" },
   { key: "team", label: "Team" },
@@ -82,6 +92,9 @@ export function SettingsTabs(props: Props) {
 
       {tab === "profile" ? <ProfileSection initial={props.profile} /> : null}
       {tab === "branding" ? <BrandingSection initial={props.branding} /> : null}
+      {tab === "contact" ? (
+        <SiteContactSection initial={props.siteContact} />
+      ) : null}
       {tab === "localization" ? (
         <LocalizationSection initial={props.localization} />
       ) : null}
@@ -247,6 +260,154 @@ function BrandingSection({ initial }: { initial: BrandingInput }) {
           />
         </Field>
       </div>
+      <Submit pending={pending} msg={msg} />
+    </form>
+  );
+}
+
+function SiteContactSection({ initial }: { initial: SiteContactInput }) {
+  const router = useRouter();
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [form, setForm] = React.useState<SiteContactInput>({ ...initial });
+  const set =
+    (key: keyof SiteContactInput) => (value: string) =>
+      setForm((f) => ({ ...f, [key]: value || null }));
+
+  return (
+    <form
+      className="space-y-4 rounded-md border p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setPending(true);
+        const result = await updateSiteContact(form);
+        setPending(false);
+        setMsg(result.ok ? "Site contact saved." : result.error);
+        if (result.ok) router.refresh();
+      }}
+    >
+      <p className="text-xs text-muted-foreground">
+        Shown in the public header, footer and on the Contact page. Leave a
+        field blank to hide it.
+      </p>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Contact</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Field label="Contact email">
+            <Input
+              value={form.contactEmail ?? ""}
+              onChange={(e) => set("contactEmail")(e.target.value)}
+              placeholder="hello@example.com"
+            />
+          </Field>
+          <Field label="Phone">
+            <Input
+              value={form.contactPhone ?? ""}
+              onChange={(e) => set("contactPhone")(e.target.value)}
+              placeholder="+971 50 000 0000"
+            />
+          </Field>
+          <Field label="WhatsApp (link or number)">
+            <Input
+              value={form.contactWhatsapp ?? ""}
+              onChange={(e) => set("contactWhatsapp")(e.target.value)}
+              placeholder="https://wa.me/9715… or +971…"
+            />
+          </Field>
+          <Field label="Office address">
+            <Input
+              value={form.contactAddress ?? ""}
+              onChange={(e) => set("contactAddress")(e.target.value)}
+              placeholder="Gate Avenue, DIFC — Dubai"
+            />
+          </Field>
+          <Field label="Office hours">
+            <Input
+              value={form.officeHours ?? ""}
+              onChange={(e) => set("officeHours")(e.target.value)}
+              placeholder="Mon – Sat · 10:00 – 19:00 GST"
+            />
+          </Field>
+          <Field label="Response time">
+            <Input
+              value={form.responseTime ?? ""}
+              onChange={(e) => set("responseTime")(e.target.value)}
+              placeholder="Within 1 hour"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Footer</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Field label="Footer tagline" wide>
+            <textarea
+              className="min-h-[60px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={form.footerTagline ?? ""}
+              onChange={(e) => set("footerTagline")(e.target.value)}
+              placeholder="Independent RERA-licensed realtor. Dubai only."
+            />
+          </Field>
+          <Field label="Newsletter title">
+            <Input
+              value={form.newsletterTitle ?? ""}
+              onChange={(e) => set("newsletterTitle")(e.target.value)}
+              placeholder="Quarterly market reports"
+            />
+          </Field>
+          <Field label="Newsletter blurb">
+            <Input
+              value={form.newsletterBlurb ?? ""}
+              onChange={(e) => set("newsletterBlurb")(e.target.value)}
+              placeholder="Four issues per year, no filler."
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Social links</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Field label="Instagram URL">
+            <Input
+              value={form.socialInstagram ?? ""}
+              onChange={(e) => set("socialInstagram")(e.target.value)}
+              placeholder="https://instagram.com/…"
+            />
+          </Field>
+          <Field label="LinkedIn URL">
+            <Input
+              value={form.socialLinkedin ?? ""}
+              onChange={(e) => set("socialLinkedin")(e.target.value)}
+              placeholder="https://linkedin.com/in/…"
+            />
+          </Field>
+          <Field label="Facebook URL">
+            <Input
+              value={form.socialFacebook ?? ""}
+              onChange={(e) => set("socialFacebook")(e.target.value)}
+              placeholder="https://facebook.com/…"
+            />
+          </Field>
+          <Field label="X (Twitter) URL">
+            <Input
+              value={form.socialX ?? ""}
+              onChange={(e) => set("socialX")(e.target.value)}
+              placeholder="https://x.com/…"
+            />
+          </Field>
+          <Field label="YouTube URL">
+            <Input
+              value={form.socialYoutube ?? ""}
+              onChange={(e) => set("socialYoutube")(e.target.value)}
+              placeholder="https://youtube.com/@…"
+            />
+          </Field>
+        </div>
+      </div>
+
       <Submit pending={pending} msg={msg} />
     </form>
   );

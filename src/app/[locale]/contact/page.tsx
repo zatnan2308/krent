@@ -14,10 +14,9 @@ const C_MONO = "'Geist Mono', ui-monospace, monospace";
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80&auto=format&fit=crop";
 
-/** Контактные данные (демо-плейсхолдеры; редактируются здесь в одном месте). */
-const BROKER = {
-  rera: "Licensed Realtor · RERA #58432",
-  whatsapp: "+971 50 ••• ••••",
+/** Дефолты, если в админке (Settings → Site & contact) поля не заполнены. */
+const CONTACT_DEFAULTS = {
+  rera: "Licensed Realtor",
   phone: "+971 50 ••• ••••",
   email: "hello@krent.realty",
   office: "Gate Avenue, DIFC — Dubai",
@@ -25,6 +24,15 @@ const BROKER = {
   hours: "Mon – Sat · 10:00 – 19:00 GST",
   hoursNote: "Replies within 1 hour, any timezone",
 };
+
+function telHref(value: string): string {
+  return `tel:${value.replace(/\s+/g, "")}`;
+}
+function waHref(value: string): string {
+  if (value.startsWith("http")) return value;
+  const digits = value.replace(/[^\d]/g, "");
+  return digits ? `https://wa.me/${digits}` : "#";
+}
 
 function resolveLocale(value: string): Locale {
   return isLocale(value) ? value : "en";
@@ -65,6 +73,22 @@ export default async function ContactPage({
   const firstName = displayName.split(/\s+/).filter(Boolean)[0] ?? displayName;
   const avatar = content.about?.portrait_url || DEFAULT_AVATAR;
 
+  // Контакты организации из brand_settings (Settings → Site & contact),
+  // с дефолтами-плейсхолдерами, если поля не заполнены.
+  const brand = site?.brand ?? null;
+  const hasPhone = Boolean(brand?.contact_phone);
+  const BROKER = {
+    rera: CONTACT_DEFAULTS.rera,
+    whatsapp:
+      brand?.contact_whatsapp ?? brand?.contact_phone ?? CONTACT_DEFAULTS.phone,
+    phone: brand?.contact_phone ?? CONTACT_DEFAULTS.phone,
+    email: brand?.contact_email ?? CONTACT_DEFAULTS.email,
+    office: brand?.contact_address ?? CONTACT_DEFAULTS.office,
+    officeNote: CONTACT_DEFAULTS.officeNote,
+    hours: brand?.office_hours ?? CONTACT_DEFAULTS.hours,
+    hoursNote: brand?.response_time ?? CONTACT_DEFAULTS.hoursNote,
+  };
+
   const methods: {
     tag: string;
     label: string;
@@ -77,7 +101,11 @@ export default async function ContactPage({
       tag: "Fastest",
       label: "WhatsApp",
       value: BROKER.whatsapp,
-      href: "#",
+      href: brand?.contact_whatsapp
+        ? waHref(brand.contact_whatsapp)
+        : hasPhone
+          ? telHref(BROKER.phone)
+          : "#",
       accent: true,
       glyph: "WA",
     },
@@ -85,7 +113,7 @@ export default async function ContactPage({
       tag: "Call or text",
       label: "Direct line",
       value: BROKER.phone,
-      href: "#",
+      href: hasPhone ? telHref(BROKER.phone) : "#",
       glyph: "TEL",
     },
     {

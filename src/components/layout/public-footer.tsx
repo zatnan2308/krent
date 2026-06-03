@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import type { SiteContactInfo } from "@/components/layout/public-layout";
 import type { Locale } from "@/lib/i18n";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { buildLocalizedPath } from "@/lib/seo";
@@ -8,9 +9,14 @@ interface PublicFooterProps {
   locale: Locale;
   dictionary: Dictionary;
   siteName: string;
-  supportEmail?: string | null;
-  supportPhone?: string | null;
+  contact: SiteContactInfo;
 }
+
+const DEFAULT_TAGLINE =
+  "Independent RERA-licensed realtor. Premium residential, investment and relocation — Dubai only, known block by block.";
+const DEFAULT_NEWSLETTER_TITLE = "Quarterly market reports";
+const DEFAULT_NEWSLETTER_BLURB =
+  "Four issues per year. No filler, no unsubscribe traps.";
 
 function Monogram({ size = 56, gold = false }: { size?: number; gold?: boolean }) {
   return (
@@ -81,9 +87,9 @@ export function PublicFooter({
   locale,
   dictionary,
   siteName,
-  supportEmail,
-  supportPhone,
+  contact,
 }: PublicFooterProps) {
+  const { email: supportEmail, phone: supportPhone } = contact;
   const colBrowse = [
     {
       label: "All properties",
@@ -192,8 +198,7 @@ export function PublicFooter({
                 lineHeight: 1.55,
               }}
             >
-              Independent RERA-licensed realtor. Premium residential,
-              investment and relocation — Dubai only, known block by block.
+              {contact.footerTagline ?? DEFAULT_TAGLINE}
             </p>
             {supportEmail || supportPhone ? (
               <div
@@ -228,7 +233,9 @@ export function PublicFooter({
 
           {/* Newsletter inline */}
           <div>
-            <span className="eyebrow gold">Quarterly market reports</span>
+            <span className="eyebrow gold">
+              {contact.newsletterTitle ?? DEFAULT_NEWSLETTER_TITLE}
+            </span>
             <p
               style={{
                 marginTop: 14,
@@ -238,8 +245,7 @@ export function PublicFooter({
                 maxWidth: "38ch",
               }}
             >
-              Four issues per year. Written by Alexey, no filler, no unsubscribe
-              traps.
+              {contact.newsletterBlurb ?? DEFAULT_NEWSLETTER_BLURB}
             </p>
             <form
               action={buildLocalizedPath(locale, "/contact")}
@@ -318,15 +324,17 @@ export function PublicFooter({
             © {new Date().getFullYear()} {siteName}. {dictionary.footer.rights}
           </div>
           <div style={{ display: "flex", gap: 28, justifyContent: "center" }}>
-            <a href="#" style={{ color: "var(--text-secondary)" }}>
-              Instagram
-            </a>
-            <a href="#" style={{ color: "var(--text-secondary)" }}>
-              LinkedIn
-            </a>
-            <a href="#" style={{ color: "var(--text-secondary)" }}>
-              WhatsApp
-            </a>
+            {contact.socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {s.label}
+              </a>
+            ))}
           </div>
           <div style={{ textAlign: "right" }}>
             EN · AR · RU · USD · AED · EUR · CAD · GBP

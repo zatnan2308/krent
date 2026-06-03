@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/server";
@@ -83,6 +83,66 @@ export async function updateBranding(input: BrandingInput): Promise<ActionResult
     );
   if (error) return { ok: false, error: "Could not save branding." };
   revalidatePath("/dashboard/settings");
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
+// ---- Site contact / socials / footer -----------------------------
+
+const siteContactSchema = z.object({
+  contactEmail: z.string().trim().max(200).nullable(),
+  contactPhone: z.string().trim().max(60).nullable(),
+  contactWhatsapp: z.string().trim().max(200).nullable(),
+  contactAddress: z.string().trim().max(300).nullable(),
+  officeHours: z.string().trim().max(200).nullable(),
+  responseTime: z.string().trim().max(120).nullable(),
+  footerTagline: z.string().trim().max(500).nullable(),
+  newsletterTitle: z.string().trim().max(200).nullable(),
+  newsletterBlurb: z.string().trim().max(500).nullable(),
+  socialInstagram: z.string().trim().max(300).nullable(),
+  socialLinkedin: z.string().trim().max(300).nullable(),
+  socialFacebook: z.string().trim().max(300).nullable(),
+  socialX: z.string().trim().max(300).nullable(),
+  socialYoutube: z.string().trim().max(300).nullable(),
+});
+export type SiteContactInput = z.infer<typeof siteContactSchema>;
+
+export async function updateSiteContact(
+  input: SiteContactInput,
+): Promise<ActionResult> {
+  const parsed = siteContactSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the contact form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "branding.manage")) {
+    return { ok: false, error: "You cannot change site settings." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin.from("brand_settings").upsert(
+    {
+      organization_id: context.organization.id,
+      contact_email: parsed.data.contactEmail,
+      contact_phone: parsed.data.contactPhone,
+      contact_whatsapp: parsed.data.contactWhatsapp,
+      contact_address: parsed.data.contactAddress,
+      office_hours: parsed.data.officeHours,
+      response_time: parsed.data.responseTime,
+      footer_tagline: parsed.data.footerTagline,
+      newsletter_title: parsed.data.newsletterTitle,
+      newsletter_blurb: parsed.data.newsletterBlurb,
+      social_instagram: parsed.data.socialInstagram,
+      social_linkedin: parsed.data.socialLinkedin,
+      social_facebook: parsed.data.socialFacebook,
+      social_x: parsed.data.socialX,
+      social_youtube: parsed.data.socialYoutube,
+    },
+    { onConflict: "organization_id" },
+  );
+  if (error) return { ok: false, error: "Could not save site contact." };
+  revalidatePath("/dashboard/settings");
+  revalidateTag("public-site");
   return { ok: true };
 }
 

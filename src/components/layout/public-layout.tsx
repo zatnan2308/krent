@@ -6,13 +6,27 @@ import { PublicHeader } from "@/components/layout/public-header";
 import type { Locale } from "@/lib/i18n";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
+/** Контактные данные, соцсети и тексты футера организации (из brand_settings). */
+export interface SiteContactInfo {
+  email: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  address: string | null;
+  hours: string | null;
+  responseTime: string | null;
+  footerTagline: string | null;
+  newsletterTitle: string | null;
+  newsletterBlurb: string | null;
+  /** Готовые ссылки соцсетей (только заполненные). */
+  socials: { label: string; href: string }[];
+}
+
 interface PublicLayoutProps {
   locale: Locale;
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
-  supportEmail?: string | null;
-  supportPhone?: string | null;
+  contact: SiteContactInfo;
   /** Имя текущего пользователя (для приветствия в хедере). */
   currentUserName?: string | null;
   currentUserEmail?: string | null;
@@ -24,8 +38,7 @@ export function PublicLayout({
   dictionary,
   siteName,
   logoUrl,
-  supportEmail,
-  supportPhone,
+  contact,
   currentUserName,
   currentUserEmail,
   children,
@@ -38,7 +51,7 @@ export function PublicLayout({
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}
-        supportPhone={supportPhone ?? null}
+        supportPhone={contact.phone}
         currentUserName={currentUserName ?? null}
         currentUserEmail={currentUserEmail ?? null}
       />
@@ -47,8 +60,7 @@ export function PublicLayout({
         locale={locale}
         dictionary={dictionary}
         siteName={siteName}
-        supportEmail={supportEmail ?? null}
-        supportPhone={supportPhone ?? null}
+        contact={contact}
       />
       <CookieBanner />
     </div>
