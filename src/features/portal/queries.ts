@@ -266,6 +266,73 @@ export async function getSellerPortalData(
   };
 }
 
+// ---- Данные портала гостя -------------------------------------
+
+export interface GuestBooking {
+  id: string;
+  reference: string;
+  propertyTitle: string;
+  propertySlug: string | null;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  guests: number;
+  total: number;
+  currency: string;
+  status: string;
+  paymentStatus: string;
+}
+
+export interface GuestPortalData {
+  bookings: GuestBooking[];
+}
+
+/** Данные портала гостя: его бронирования по контакту. */
+export async function getGuestPortalData(
+  account: PortalAccount,
+): Promise<GuestPortalData> {
+  const admin = createAdminClient();
+  const { data: bookingRows } = await admin
+    .from("rental_bookings")
+    .select("*")
+    .eq("organization_id", account.organization_id)
+    .eq("guest_contact_id", account.contact_id)
+    .order("check_in", { ascending: false });
+  const bookings = bookingRows ?? [];
+
+  const propertyIds = [...new Set(bookings.map((row) => row.property_id))];
+  const properties = new Map<string, { title: string; slug: string }>();
+  if (propertyIds.length > 0) {
+    const { data: propertyRows } = await admin
+      .from("properties")
+      .select("id, title, slug")
+      .in("id", propertyIds);
+    for (const property of propertyRows ?? []) {
+      properties.set(property.id, {
+        title: property.title,
+        slug: property.slug,
+      });
+    }
+  }
+
+  return {
+    bookings: bookings.map((row) => ({
+      id: row.id,
+      reference: row.reference,
+      propertyTitle: properties.get(row.property_id)?.title ?? "Property",
+      propertySlug: properties.get(row.property_id)?.slug ?? null,
+      checkIn: row.check_in,
+      checkOut: row.check_out,
+      nights: row.nights,
+      guests: row.adults + row.children,
+      total: row.total,
+      currency: row.currency,
+      status: row.status,
+      paymentStatus: row.payment_status,
+    })),
+  };
+}
+
 // ---- Управление аккаунтами в дашборде -------------------------
 
 export interface PortalAccountListItem {
