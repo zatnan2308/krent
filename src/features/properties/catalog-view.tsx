@@ -5,7 +5,7 @@ import { PROPERTY_TYPE_OPTIONS } from "@/features/properties/constants";
 import {
   PropertiesCatalog,
   type CatalogItem,
-  type DealFilter,
+  type DealMode,
 } from "@/features/properties/properties-catalog";
 import {
   getPublicAmenities,
@@ -32,7 +32,7 @@ interface VariantConfig {
   title: string;
   description: string;
   path: string;
-  initialDeal: DealFilter;
+  initialDeal: DealMode;
 }
 
 const VARIANT_CONFIG: Record<CatalogVariant, VariantConfig> = {
@@ -40,7 +40,9 @@ const VARIANT_CONFIG: Record<CatalogVariant, VariantConfig> = {
     title: "Properties",
     description: "Apartments, villas and investments — vetted personally.",
     path: ROUTES.public.listings,
-    initialDeal: "all",
+    // Каталог всегда в контексте одного типа сделки; общий /listings
+    // открывается в режиме Buy по умолчанию (дизайн properties v2).
+    initialDeal: "sale",
   },
   buy: {
     title: "For sale",
@@ -183,6 +185,11 @@ export async function renderCatalog({
   const items: CatalogItem[] = result.items.map((card) => {
     const visiblePrice =
       card.price && card.price.displayType === "visible" ? card.price : null;
+    const sizeForRate = card.size && card.size > 0 ? card.size : null;
+    const pricePerAreaText =
+      visiblePrice && sizeForRate
+        ? `${formatPrice(Math.round(visiblePrice.amount / sizeForRate), visiblePrice.currency)} / ${card.sizeUnit}`
+        : null;
     return {
       id: card.id,
       href: buildLocalizedPath(locale, `/properties/${card.slug}`),
@@ -195,6 +202,7 @@ export async function renderCatalog({
       baths: card.bathrooms ?? 0,
       sqft: card.size,
       sizeUnit: card.sizeUnit,
+      sleeps: card.guestCapacity,
       view: card.listingView,
       furnishing: card.furnishing,
       completion: card.completion,
@@ -208,6 +216,7 @@ export async function renderCatalog({
         ? formatPrice(visiblePrice.amount, visiblePrice.currency)
         : null,
       priceCycle: visiblePrice ? priceCycle(card.purpose) : null,
+      pricePerAreaText,
       img: card.coverImageUrl,
     };
   });
@@ -216,7 +225,7 @@ export async function renderCatalog({
   const dealParam = Array.isArray(searchParams.deal)
     ? searchParams.deal[0]
     : searchParams.deal;
-  const initialDeal: DealFilter =
+  const initialDeal: DealMode =
     dealParam === "sale" || dealParam === "rent" || dealParam === "vacation"
       ? dealParam
       : config.initialDeal;
