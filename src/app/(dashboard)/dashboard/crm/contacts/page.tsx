@@ -22,7 +22,13 @@ export const metadata: Metadata = {
   title: "Contacts",
 };
 
-export default async function CrmContactsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CrmContactsPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const context = await requireOrganizationContext();
   if (!context.organization) {
     return null;
@@ -31,7 +37,10 @@ export default async function CrmContactsPage() {
     redirect(ROUTES.dashboard.root);
   }
 
-  const contacts = await listContacts(context.organization.id);
+  const q = typeof searchParams.q === "string" ? searchParams.q : "";
+  const contacts = await listContacts(context.organization.id, {
+    q: q || undefined,
+  });
 
   return (
     <div className="space-y-6">
@@ -44,6 +53,22 @@ export default async function CrmContactsPage() {
       <CrmNav />
 
       <ContactsCsvImport />
+
+      <form method="get" className="flex flex-wrap gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          placeholder="Search name, email or phone…"
+          className="h-9 w-72 rounded-md border border-input bg-background px-3 text-sm"
+        />
+        <button
+          type="submit"
+          className="h-9 rounded-md border border-input px-3 text-sm font-medium hover:bg-accent"
+        >
+          Search
+        </button>
+      </form>
 
       {contacts.length > 0 ? (
         <div className="rounded-lg border">

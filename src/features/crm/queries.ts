@@ -313,13 +313,20 @@ export async function listTasks(
 /** Список контактов организации. */
 export async function listContacts(
   organizationId: string,
+  filters: { q?: string } = {},
 ): Promise<ContactListItem[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("contacts")
     .select("*")
-    .eq("organization_id", organizationId)
-    .order("created_at", { ascending: false });
+    .eq("organization_id", organizationId);
+  if (filters.q) {
+    const term = filters.q.replace(/[,()]/g, " ");
+    query = query.or(
+      `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`,
+    );
+  }
+  const { data } = await query.order("created_at", { ascending: false });
 
   return (data ?? []).map((contact) => ({
     id: contact.id,
