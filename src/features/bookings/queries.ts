@@ -340,20 +340,58 @@ export interface BookingListItem {
   createdAt: string;
 }
 
-/** Список бронирований организации с опциональным фильтром по статусу. */
+/** Размер страницы списка бронирований в dashboard. */
+export const BOOKINGS_PAGE_SIZE = 20;
+
+/** Страница списка бронирований с общим числом для пагинации. */
+export interface BookingListResult {
+  items: BookingListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Страница бронирований организации с поиском (по коду/гостю) и фильтрами по
+ * статусу и источнику. Возвращает срез строк + общее число совпадений для
+ * пагинации (`count: exact`).
+ */
 export async function listBookings(
   organizationId: string,
-  filters: { status?: BookingStatus } = {},
-): Promise<BookingListItem[]> {
+  filters: {
+    status?: BookingStatus;
+    source?: BookingSource;
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<BookingListResult> {
   const admin = createAdminClient();
+  const pageSize = filters.pageSize ?? BOOKINGS_PAGE_SIZE;
+  const page = Math.max(1, filters.page ?? 1);
+
   let query = admin
     .from("rental_bookings")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("organization_id", organizationId);
   if (filters.status) {
     query = query.eq("status", filters.status);
   }
-  const { data } = await query.order("created_at", { ascending: false });
+  if (filters.source) {
+    query = query.eq("source", filters.source);
+  }
+  if (filters.q) {
+    // Санитизация: запятая и скобки — управляющие символы в синтаксисе `or`.
+    const term = filters.q.replace(/[,()]/g, " ");
+    query = query.or(
+      `reference.ilike.%${term}%,guest_name.ilike.%${term}%,guest_email.ilike.%${term}%,guest_phone.ilike.%${term}%`,
+    );
+  }
+
+  const from = (page - 1) * pageSize;
+  const { data, count } = await query
+    .order("created_at", { ascending: false })
+    .range(from, from + pageSize - 1);
   const bookings = data ?? [];
 
   const propertyIds = [...new Set(bookings.map((row) => row.property_id))];
@@ -368,21 +406,26 @@ export async function listBookings(
     }
   }
 
-  return bookings.map((row) => ({
-    id: row.id,
-    reference: row.reference,
-    propertyTitle: titles.get(row.property_id) ?? "Property",
-    guestName: row.guest_name ?? "Guest",
-    checkIn: row.check_in,
-    checkOut: row.check_out,
-    nights: row.nights,
-    total: row.total,
-    currency: row.currency,
-    status: row.status,
-    paymentStatus: row.payment_status,
-    source: row.source,
-    createdAt: row.created_at,
-  }));
+  return {
+    items: bookings.map((row) => ({
+      id: row.id,
+      reference: row.reference,
+      propertyTitle: titles.get(row.property_id) ?? "Property",
+      guestName: row.guest_name ?? "Guest",
+      checkIn: row.check_in,
+      checkOut: row.check_out,
+      nights: row.nights,
+      total: row.total,
+      currency: row.currency,
+      status: row.status,
+      paymentStatus: row.payment_status,
+      source: row.source,
+      createdAt: row.created_at,
+    })),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 /** Полные данные одного бронирования для страницы деталей. */
