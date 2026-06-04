@@ -9,6 +9,8 @@
   webhook'ов (зарегистрирован в `vercel.json`)
 - `/api/cron/campaigns-dispatch` — каждые 10 минут, отправка запланированных
   email-кампаний (зарегистрирован в `vercel.json`)
+- `/api/cron/task-reminders` — раз в день (09:00), напоминания агентам о
+  задачах с наступившим сроком (зарегистрирован в `vercel.json`)
 - (план) `/api/cron/integrations-sync` — раз в сутки, обновление
   отчётов Search Console / Ads (роут ещё не реализован — см. P2 в `docs/ADMIN_AUDIT.md`)
 
