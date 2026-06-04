@@ -14,6 +14,16 @@ function safeId(value: string | null): string {
   return (value ?? "").replace(/[^A-Za-z0-9\-_]/g, "");
 }
 
+/** Текущий выбор в cookie-баннере: "all" | "essential" | null. */
+function readConsent(): string | null {
+  if (typeof document === "undefined") return null;
+  const entry = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith("krent_cookie_consent="));
+  return entry ? decodeURIComponent(entry.split("=")[1] ?? "") : null;
+}
+
 /** Читает UTM/click ID из window.location.search. */
 function extractUtm(): UtmPayload | null {
   if (typeof window === "undefined") {
@@ -55,6 +65,16 @@ export function AnalyticsTracker({
   const ga4Id = safeId(config.ga4MeasurementId);
   const gtmId = safeId(config.gtmId);
   const pixelId = safeId(config.metaPixelId);
+  // Сторонние трекеры (GA4/GTM/Pixel) грузим только после согласия "all".
+  const [consent, setConsent] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const update = () => setConsent(readConsent());
+    update();
+    window.addEventListener("krent-consent", update);
+    return () => window.removeEventListener("krent-consent", update);
+  }, []);
+  const analyticsAllowed = consent === "all";
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -72,7 +92,7 @@ export function AnalyticsTracker({
 
   return (
     <>
-      {config.ga4Enabled && ga4Id ? (
+      {analyticsAllowed && config.ga4Enabled && ga4Id ? (
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}
@@ -83,19 +103,20 @@ export function AnalyticsTracker({
 function gtag(){dataLayer.push(arguments);}
 window.gtag = gtag;
 gtag('js', new Date());
-${config.consentModeEnabled ? `gtag('consent', 'default', { analytics_storage: 'granted', ad_storage: 'granted' });` : ""}
+${config.consentModeEnabled ? `gtag('consent', 'default', { ad_storage: 'denied', analytics_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+gtag('consent', 'update', { ad_storage: 'granted', analytics_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted' });` : ""}
 gtag('config', '${ga4Id}');`}
           </Script>
         </>
       ) : null}
 
-      {gtmId ? (
+      {analyticsAllowed && gtmId ? (
         <Script id="gtm-init" strategy="afterInteractive">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
         </Script>
       ) : null}
 
-      {config.metaPixelEnabled && pixelId ? (
+      {analyticsAllowed && config.metaPixelEnabled && pixelId ? (
         <Script id="meta-pixel-init" strategy="afterInteractive">
           {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '${pixelId}');

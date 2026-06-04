@@ -20,6 +20,8 @@ export function CookieBanner() {
     const value = encodeURIComponent(level);
     const oneYear = 60 * 60 * 24 * 365;
     document.cookie = `${COOKIE_NAME}=${value}; Path=/; Max-Age=${oneYear}; SameSite=Lax`;
+    // Сообщаем трекеру, чтобы он подгрузил/не подгружал сторонние скрипты.
+    window.dispatchEvent(new Event("krent-consent"));
     setVisible(false);
   }
 

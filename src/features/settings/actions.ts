@@ -98,7 +98,8 @@ export async function updateAgentProfile(
 // ---- Password ----------------------------------------------------
 
 const passwordSchema = z.object({
-  newPassword: z.string().min(8).max(200),
+  // 72 байта — предел bcrypt (Supabase молча режет длиннее), совпадает с auth.
+  newPassword: z.string().min(8).max(72),
 });
 export type PasswordInput = z.infer<typeof passwordSchema>;
 
