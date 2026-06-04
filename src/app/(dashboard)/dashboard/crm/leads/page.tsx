@@ -8,10 +8,21 @@ import {
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
 import { CrmNav } from "@/features/crm/crm-nav";
-import { listLeads, type LeadListItem } from "@/features/crm/queries";
+import {
+  getLeadSourceBreakdown,
+  listLeadSources,
+  listLeads,
+  type LeadListItem,
+} from "@/features/crm/queries";
 import type { LeadStatus } from "@/features/crm/types";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
@@ -50,7 +61,7 @@ function parseType(
 export default async function CrmLeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; type?: string };
+  searchParams: { status?: string; type?: string; source?: string };
 }) {
   const context = await requireOrganizationContext();
   if (!context.organization) {
@@ -60,12 +71,24 @@ export default async function CrmLeadsPage({
     redirect(ROUTES.dashboard.root);
   }
 
+  const orgId = context.organization.id;
   const status = parseStatus(searchParams.status);
   const type = parseType(searchParams.type);
-  const leads = await listLeads(context.organization.id, {
+  const [sources, breakdown] = await Promise.all([
+    listLeadSources(orgId),
+    getLeadSourceBreakdown(orgId),
+  ]);
+  const source =
+    searchParams.source &&
+    sources.some((item) => item.key === searchParams.source)
+      ? searchParams.source
+      : undefined;
+  const leads = await listLeads(orgId, {
     ...(status ? { status } : {}),
     ...(type ? { type } : {}),
+    ...(source ? { source } : {}),
   });
+  const totalLeads = breakdown.reduce((sum, row) => sum + row.count, 0);
 
   return (
     <div className="space-y-6">
@@ -114,10 +137,62 @@ export default async function CrmLeadsPage({
             ))}
           </select>
         </div>
+        <div className="space-y-1.5">
+          <label htmlFor="source" className="text-sm font-medium">
+            Source
+          </label>
+          <select
+            id="source"
+            name="source"
+            defaultValue={source ?? ""}
+            className={`${FIELD_CLASS} w-48`}
+          >
+            <option value="">All sources</option>
+            {sources.map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <button type="submit" className={buttonVariants({ variant: "outline" })}>
           Filter
         </button>
       </form>
+
+      {breakdown.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Leads by source</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {breakdown.map((row) => {
+                const pct =
+                  totalLeads > 0
+                    ? Math.round((row.count / totalLeads) * 100)
+                    : 0;
+                return (
+                  <li key={row.key} className="text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{row.name}</span>
+                      <span className="text-muted-foreground">
+                        {row.count} · {pct}%
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary/70"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {leads.length > 0 ? (
         <div className="rounded-lg border">
