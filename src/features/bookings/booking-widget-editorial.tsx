@@ -20,7 +20,6 @@ interface Props {
   bookedDates?: string[];
 }
 
-const SERVICE_RATE = 0.06;
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
 function isoDate(d: Date): string {
@@ -79,8 +78,9 @@ export function BookingWidgetEditorial({
   const nights = start && end ? Math.round((+end - +start) / 86400000) : 0;
   const sub = nights * nightly;
   const cleaning = cleaningFee ?? 0;
-  const service = Math.round(sub * SERVICE_RATE);
-  const estTotal = sub ? sub + cleaning + service : 0;
+  // Предварительная оценка = ночи + уборка (без выдуманного сбора). Налоги и
+  // прочее добавляет серверный quote после нажатия «Reserve».
+  const estTotal = sub ? sub + cleaning : 0;
   const cap = maxGuests ?? 12;
 
   function pick(d: Date) {
@@ -314,8 +314,8 @@ export function BookingWidgetEditorial({
             {(quote ? quote.cleaningFee : cleaning) > 0 ? (
               <BRow label="Cleaning fee" val={money(quote ? quote.cleaningFee : cleaning)} />
             ) : null}
-            {(quote ? quote.taxes : service) > 0 ? (
-              <BRow label={quote ? "Taxes" : "Service fee"} val={money(quote ? quote.taxes : service)} />
+            {quote && quote.taxes > 0 ? (
+              <BRow label="Taxes" val={money(quote.taxes)} />
             ) : null}
             <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 12, marginTop: 2 }}>
               <BRow label="Total" val={money(showTotal)} bold />

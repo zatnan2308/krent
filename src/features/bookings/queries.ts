@@ -326,6 +326,27 @@ export async function getBookedDates(propertyId: string): Promise<string[]> {
   return [...dates];
 }
 
+/**
+ * Минимальная длительность брони (ночей) из правил доступности объекта; 1 по
+ * умолчанию. Для подсказки в публичном виджете — сервер всё равно валидирует
+ * min_stay при бронировании.
+ */
+export async function getPropertyMinStay(propertyId: string): Promise<number> {
+  const admin = createAdminClient();
+  const { data: calendar } = await admin
+    .from("rental_calendars")
+    .select("id")
+    .eq("property_id", propertyId)
+    .maybeSingle();
+  if (!calendar) return 1;
+  const { data: rule } = await admin
+    .from("rental_availability_rules")
+    .select("min_stay")
+    .eq("calendar_id", calendar.id)
+    .maybeSingle();
+  return rule?.min_stay ?? 1;
+}
+
 // ---- Dashboard ------------------------------------------------
 
 /** Строка списка бронирований в dashboard. */

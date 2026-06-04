@@ -11,7 +11,10 @@ import {
 } from "@/features/properties/constants";
 import { TrackPropertyView } from "@/features/analytics/track-property-view";
 import { BookingWidgetEditorial } from "@/features/bookings/booking-widget-editorial";
-import { getBookedDates } from "@/features/bookings/queries";
+import {
+  getBookedDates,
+  getPropertyMinStay,
+} from "@/features/bookings/queries";
 import { MortgageCalculator } from "@/features/properties/mortgage-calculator";
 import { PropertyHeroGallery } from "@/features/properties/property-hero-gallery";
 import { PropertyViewingForm } from "@/features/properties/property-viewing-form";
@@ -348,8 +351,13 @@ export default async function PropertyDetailPage({
     (property.purpose === "sale" || property.purpose === "mixed") &&
     view.price !== null &&
     view.price.displayType === "visible";
-  // Занятые даты для дизейбла в календаре бронирования.
-  const bookedDates = showBooking ? await getBookedDates(property.id) : [];
+  // Занятые даты + минимальная длительность брони для публичного виджета.
+  const [bookedDates, minStay]: [string[], number] = showBooking
+    ? await Promise.all([
+        getBookedDates(property.id),
+        getPropertyMinStay(property.id),
+      ])
+    : [[], 1];
 
   // Acquisition cost — ставки настраиваются в brand_settings (white-label);
   // дефолты совпадают с прежними значениями (Дубай).
@@ -494,7 +502,7 @@ export default async function PropertyDetailPage({
                 nightly={view.price ? view.price.amount : 0}
                 currency={priceCurrency}
                 cleaningFee={view.fees.cleaningFee}
-                minNights={1}
+                minNights={minStay}
                 maxGuests={property.guest_capacity}
                 bookedDates={bookedDates}
               />

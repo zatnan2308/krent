@@ -303,8 +303,9 @@ export default async function RentalsPage() {
         <CardContent>
           <p className="text-sm text-muted-foreground">
             Latest iCal imports from booking.com, Airbnb and other channels.
-            Automatic sync runs hourly; you can also sync manually from each
-            property&apos;s calendar.
+            Scheduled sync runs when the cron job is configured (see deploy
+            docs); you can always sync manually from each property&apos;s
+            calendar.
           </p>
           {syncLogs.length === 0 ? (
             <p className="mt-3 text-xs text-muted-foreground">
