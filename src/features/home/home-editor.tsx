@@ -68,16 +68,17 @@ export function HomeEditor({ content }: { content: HomeContent }) {
   const [tab, setTab] = React.useState<Tab>("hero");
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 border-b pb-2">
+      <div className="flex flex-wrap items-center gap-x-1 border-b">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            aria-current={tab === t.key ? "true" : undefined}
+            className={`relative px-3 py-2.5 text-sm font-medium transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:transition-all after:content-[''] ${
               tab === t.key
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:bg-accent"
+                ? "text-foreground after:bg-primary"
+                : "text-muted-foreground hover:text-foreground after:bg-transparent"
             }`}
           >
             {t.label}

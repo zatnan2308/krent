@@ -85,16 +85,17 @@ export function SettingsTabs(props: Props) {
   const [tab, setTab] = React.useState<Tab>("profile");
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 border-b pb-2">
+      <div className="flex flex-wrap items-center gap-x-1 border-b">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            aria-current={tab === t.key ? "true" : undefined}
+            className={`relative px-3 py-2.5 text-sm font-medium transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:transition-all after:content-[''] ${
               tab === t.key
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:bg-accent"
+                ? "text-foreground after:bg-primary"
+                : "text-muted-foreground hover:text-foreground after:bg-transparent"
             }`}
           >
             {t.label}
@@ -158,7 +159,7 @@ function ProfileSection({
   const [form, setForm] = React.useState({ ...initial });
   return (
     <form
-      className="space-y-3 rounded-md border p-4"
+      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
@@ -218,7 +219,7 @@ function AgentProfileSection({ initial }: { initial: AgentProfileInput }) {
 
   return (
     <form
-      className="space-y-3 rounded-md border p-4"
+      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
@@ -290,7 +291,7 @@ function BrandingSection({ initial }: { initial: BrandingInput }) {
   const [form, setForm] = React.useState<BrandingInput>({ ...initial });
   return (
     <form
-      className="space-y-3 rounded-md border p-4"
+      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
@@ -377,7 +378,7 @@ function SiteContactSection({ initial }: { initial: SiteContactInput }) {
 
   return (
     <form
-      className="space-y-4 rounded-md border p-4"
+      className="space-y-4 rounded-md border bg-card p-4 shadow-sm"
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
@@ -587,7 +588,7 @@ function PasswordSection() {
   const [confirm, setConfirm] = React.useState("");
   return (
     <form
-      className="space-y-3 rounded-md border p-4"
+      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
       onSubmit={async (event) => {
         event.preventDefault();
         if (password !== confirm) {
@@ -635,7 +636,7 @@ function LocalizationSection({ initial }: { initial: LocalizationInput }) {
   const [form, setForm] = React.useState<LocalizationInput>({ ...initial });
   return (
     <form
-      className="space-y-3 rounded-md border p-4"
+      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
@@ -730,7 +731,7 @@ function ModulesSection({ modules }: { modules: ModuleRow[] }) {
   const { msg, setMsg } = useToast();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   return (
-    <div className="rounded-md border p-4">
+    <div className="rounded-md border bg-card p-4 shadow-sm">
       <ul className="space-y-2">
         {modules.map((m) => (
           <li
@@ -802,7 +803,7 @@ function TeamSection({
   }
 
   return (
-    <div className="space-y-4 rounded-md border p-4">
+    <div className="space-y-4 rounded-md border bg-card p-4 shadow-sm">
       <div>
         <p className="text-sm font-semibold">Members</p>
         <ul className="mt-2 space-y-2">

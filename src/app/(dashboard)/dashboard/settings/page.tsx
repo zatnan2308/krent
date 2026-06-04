@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { SettingsTabs } from "@/features/settings/settings-tabs";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -97,13 +98,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Profile, branding, localization, modules and team for{" "}
-          <strong>{context.organization.name}</strong>.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description={`Profile, branding, localization, modules and team for ${context.organization.name}.`}
+      />
 
       <SettingsTabs
         profile={profile}

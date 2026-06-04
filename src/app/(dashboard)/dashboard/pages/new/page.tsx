@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { EMPTY_PAGE_CONTENT } from "@/features/cms/content";
 import { PageEditor } from "@/features/cms/page-editor";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 
@@ -18,7 +19,13 @@ export default async function NewPagePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">New page</h1>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Pages", href: ROUTES.dashboard.pages },
+          { label: "New page" },
+        ]}
+        title="New page"
+      />
       <PageEditor
         initial={{
           slug: "",

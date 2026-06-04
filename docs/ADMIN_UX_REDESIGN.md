@@ -48,8 +48,8 @@ portal не затрагиваем. Шрифт Inter подключён глоб
 - [x] 5. Rentals / Bookings / Calendar / Client portals ✅ — PageHeader везде, Rentals KPI → StatCard, Bookings фильтр-тулбар + таблица на bg-card + detail-крошки, Calendar nav в actions
 - [x] 6. Communication ✅ — Email + template editor → PageHeader (крошки); Messages-движок не трогаем (наследует токены)
 - [x] 7. Growth ✅ — Marketing(+nav→underline, segments/contacts/campaign), SEO/Analytics/Search Console → StatCard, Reports/Integrations/Agent Sync → PageHeader; Google/Meta Ads метрики на bg-card
-- [ ] 8. Website (Home: 12 табов → перекомпоновка; Pages / Navigation / About)
-- [ ] 9. Settings (7 табов)
+- [x] 8. Website ✅ — Home/Pages/Navigation/About → PageHeader (+actions «View page»); Home 12-табовый бар → подчёркнутый стиль; Pages-таблица на bg-card
+- [x] 9. Settings ✅ — заголовок → PageHeader; 7-табовый бар → подчёркнутый; формы-секции на белый bg-card
 - [ ] 10. Финальный проход: анимации / пустые / загрузки / адаптив + QA
 
 ## Где что лежит (для следующих стадий)

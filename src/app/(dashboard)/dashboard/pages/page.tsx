@@ -6,6 +6,7 @@ import { listPages } from "@/features/cms/dashboard-queries";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -35,20 +36,21 @@ export default async function PagesListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pages</h1>
-          <p className="text-sm text-muted-foreground">
-            Public website pages of {context.organization.name}.
-          </p>
-        </div>
-        <Link href={`${ROUTES.dashboard.pages}/new`} className={buttonVariants()}>
-          New page
-        </Link>
-      </div>
+      <PageHeader
+        title="Pages"
+        description={`Public website pages of ${context.organization.name}.`}
+        actions={
+          <Link
+            href={`${ROUTES.dashboard.pages}/new`}
+            className={buttonVariants()}
+          >
+            New page
+          </Link>
+        }
+      />
 
       {pages.length > 0 ? (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

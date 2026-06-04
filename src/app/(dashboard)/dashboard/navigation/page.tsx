@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { listPages } from "@/features/cms/dashboard-queries";
 import { NavigationManager } from "@/features/cms/navigation-manager";
 import { getNavigationItems } from "@/features/cms/navigation-queries";
+import { PageHeader } from "@/components/ui/page-header";
 import { requireOrganizationContext } from "@/server/organization-context";
 
 export const metadata: Metadata = {
@@ -31,12 +32,10 @@ export default async function NavigationPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Navigation</h1>
-        <p className="text-sm text-muted-foreground">
-          Header and footer menus of {context.organization.name}.
-        </p>
-      </div>
+      <PageHeader
+        title="Navigation"
+        description={`Header and footer menus of ${context.organization.name}.`}
+      />
       <NavigationManager
         header={header}
         footer={footer}
