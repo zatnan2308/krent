@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { dispatchWebhookEvent } from "@/features/agency-api/webhooks";
+import { ensurePortalInvite } from "@/features/portal/invite-email";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -211,6 +212,7 @@ export async function requestBooking(
   const guestName = data.guestName.trim();
   const host =
     (headers().get("host") ?? "").split(":")[0]?.toLowerCase() ?? "";
+  const requestHost = headers().get("host") ?? "";
 
   // ---- Контакт: найти по email либо создать ------------------
   let contactId: string;
@@ -363,6 +365,18 @@ export async function requestBooking(
     phone: data.guestPhone,
     is_primary: true,
     guest_category: "adult",
+  });
+
+  // ---- Автоприглашение гостя в клиентский портал ------------
+  // Гость сможет активировать кабинет: следить за бронью, платить, писать.
+  await ensurePortalInvite(admin, {
+    organizationId: organization.id,
+    contactId,
+    email,
+    name: guestName,
+    portalType: "guest",
+    invitedBy: null,
+    baseUrl: requestHost || process.env.NEXT_PUBLIC_SITE_URL || "",
   });
 
   await notifyBookingEvent({
