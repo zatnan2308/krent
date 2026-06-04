@@ -92,6 +92,15 @@ interface FormState {
   securityDeposit: string;
   cleaningFee: string;
   taxes: string;
+  rentEnabled: boolean;
+  rentAmount: string;
+  rentCurrency: CurrencyCode;
+  rentPricePeriod: PricePeriod;
+  rentDisplayType: PriceDisplayType;
+  rentOldAmount: string;
+  rentSecurityDeposit: string;
+  rentCleaningFee: string;
+  rentTaxes: string;
   country: string;
   city: string;
   area: string;
@@ -232,6 +241,15 @@ export function PropertyForm({
     securityDeposit: numToStr(initial.price?.security_deposit ?? null),
     cleaningFee: numToStr(initial.price?.cleaning_fee ?? null),
     taxes: numToStr(initial.price?.taxes ?? null),
+    rentEnabled: initial.rentPrice !== null,
+    rentAmount: numToStr(initial.rentPrice?.amount ?? null),
+    rentCurrency: resolveCurrency(initial.rentPrice?.currency),
+    rentPricePeriod: initial.rentPrice?.price_period ?? "month",
+    rentDisplayType: initial.rentPrice?.display_type ?? "visible",
+    rentOldAmount: numToStr(initial.rentPrice?.old_amount ?? null),
+    rentSecurityDeposit: numToStr(initial.rentPrice?.security_deposit ?? null),
+    rentCleaningFee: numToStr(initial.rentPrice?.cleaning_fee ?? null),
+    rentTaxes: numToStr(initial.rentPrice?.taxes ?? null),
     country: initial.location?.country ?? "",
     city: initial.location?.city ?? "",
     area: initial.location?.area ?? "",
@@ -311,7 +329,10 @@ export function PropertyForm({
         ? {
             amount: toNum(form.amount) ?? 0,
             currency: form.currency,
-            pricePeriod: form.pricePeriod,
+            // У mixed-объекта основная цена — продажа (sale); вторую цену
+            // (аренду) несёт rentPrice ниже.
+            pricePeriod:
+              form.purpose === "mixed" ? "sale" : form.pricePeriod,
             displayType: form.displayType,
             oldAmount: toNum(form.oldAmount),
             securityDeposit: toNum(form.securityDeposit),
@@ -319,6 +340,19 @@ export function PropertyForm({
             taxes: toNum(form.taxes),
           }
         : null,
+      rentPrice:
+        form.purpose === "mixed" && form.rentEnabled
+          ? {
+              amount: toNum(form.rentAmount) ?? 0,
+              currency: form.rentCurrency,
+              pricePeriod: form.rentPricePeriod,
+              displayType: form.rentDisplayType,
+              oldAmount: toNum(form.rentOldAmount),
+              securityDeposit: toNum(form.rentSecurityDeposit),
+              cleaningFee: toNum(form.rentCleaningFee),
+              taxes: toNum(form.rentTaxes),
+            }
+          : null,
       location: {
         country: form.country.trim() || null,
         city: form.city.trim() || null,
@@ -742,14 +776,22 @@ export function PropertyForm({
                       ))}
                     </select>
                   </Field>
-                  <Field label="Price period" htmlFor="pricePeriod">
-                    <NativeSelect
-                      id="pricePeriod"
-                      value={form.pricePeriod}
-                      options={PRICE_PERIOD_OPTIONS}
-                      onChange={(value) => update("pricePeriod", value)}
-                    />
-                  </Field>
+                  {form.purpose === "mixed" ? (
+                    <Field label="Price period">
+                      <p className="flex h-10 items-center text-sm text-muted-foreground">
+                        Sale price (set rent below)
+                      </p>
+                    </Field>
+                  ) : (
+                    <Field label="Price period" htmlFor="pricePeriod">
+                      <NativeSelect
+                        id="pricePeriod"
+                        value={form.pricePeriod}
+                        options={PRICE_PERIOD_OPTIONS}
+                        onChange={(value) => update("pricePeriod", value)}
+                      />
+                    </Field>
+                  )}
                   <Field label="Price display" htmlFor="displayType">
                     <NativeSelect
                       id="displayType"
@@ -816,6 +858,143 @@ export function PropertyForm({
                   Enable the checkbox above to set a price for this property.
                 </p>
               )}
+
+              {form.purpose === "mixed" ? (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="rentEnabled"
+                      checked={form.rentEnabled}
+                      onCheckedChange={(checked) =>
+                        update("rentEnabled", checked === true)
+                      }
+                    />
+                    <label
+                      htmlFor="rentEnabled"
+                      className="text-sm font-medium"
+                    >
+                      Add a separate rent price
+                    </label>
+                  </div>
+                  {form.rentEnabled ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Rent amount" htmlFor="rentAmount">
+                        <Input
+                          id="rentAmount"
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={form.rentAmount}
+                          onChange={(event) =>
+                            update("rentAmount", event.target.value)
+                          }
+                        />
+                      </Field>
+                      <Field label="Currency" htmlFor="rentCurrency">
+                        <select
+                          id="rentCurrency"
+                          className={FIELD_CLASS}
+                          value={form.rentCurrency}
+                          onChange={(event) =>
+                            update(
+                              "rentCurrency",
+                              event.target.value as CurrencyCode,
+                            )
+                          }
+                        >
+                          {CURRENCIES.map((code) => (
+                            <option key={code} value={code}>
+                              {code}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label="Rent period" htmlFor="rentPricePeriod">
+                        <NativeSelect
+                          id="rentPricePeriod"
+                          value={form.rentPricePeriod}
+                          options={PRICE_PERIOD_OPTIONS.filter(
+                            (option) => option.value !== "sale",
+                          )}
+                          onChange={(value) =>
+                            update("rentPricePeriod", value)
+                          }
+                        />
+                      </Field>
+                      <Field label="Price display" htmlFor="rentDisplayType">
+                        <NativeSelect
+                          id="rentDisplayType"
+                          value={form.rentDisplayType}
+                          options={PRICE_DISPLAY_OPTIONS}
+                          onChange={(value) =>
+                            update("rentDisplayType", value)
+                          }
+                        />
+                      </Field>
+                      <Field
+                        label="Old amount"
+                        htmlFor="rentOldAmount"
+                        hint="Shown as a crossed-out price."
+                      >
+                        <Input
+                          id="rentOldAmount"
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={form.rentOldAmount}
+                          onChange={(event) =>
+                            update("rentOldAmount", event.target.value)
+                          }
+                        />
+                      </Field>
+                      <Field
+                        label="Security deposit"
+                        htmlFor="rentSecurityDeposit"
+                      >
+                        <Input
+                          id="rentSecurityDeposit"
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={form.rentSecurityDeposit}
+                          onChange={(event) =>
+                            update("rentSecurityDeposit", event.target.value)
+                          }
+                        />
+                      </Field>
+                      <Field label="Cleaning fee" htmlFor="rentCleaningFee">
+                        <Input
+                          id="rentCleaningFee"
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={form.rentCleaningFee}
+                          onChange={(event) =>
+                            update("rentCleaningFee", event.target.value)
+                          }
+                        />
+                      </Field>
+                      <Field label="Taxes" htmlFor="rentTaxes">
+                        <Input
+                          id="rentTaxes"
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={form.rentTaxes}
+                          onChange={(event) =>
+                            update("rentTaxes", event.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Show a monthly/weekly/nightly rent price alongside the
+                      sale price above.
+                    </p>
+                  )}
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </TabsContent>

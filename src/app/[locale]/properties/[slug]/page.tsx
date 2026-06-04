@@ -200,6 +200,20 @@ export default async function PropertyDetailPage({
         )
       : null;
   const priceLabel = priceText ?? "Price on request";
+  // Вторая цена (аренда) для mixed-объектов.
+  const rentPriceCurrency: CurrencyCode =
+    view.rentPrice && isCurrencyCode(view.rentPrice.currency)
+      ? view.rentPrice.currency
+      : DEFAULT_CURRENCY;
+  const rentPriceText =
+    view.rentPrice && view.rentPrice.displayType === "visible"
+      ? formatPrice(
+          view.rentPrice.amount,
+          rentPriceCurrency,
+          locale,
+          view.rentPrice.pricePeriod,
+        )
+      : null;
 
   const address = displayAddress(view);
   const location = view.location;
@@ -521,6 +535,29 @@ export default async function PropertyDetailPage({
                   }}
                 >
                   {oldPriceText}
+                </div>
+              ) : null}
+              {rentPriceText ? (
+                <div
+                  className="tnum"
+                  style={{
+                    marginTop: 8,
+                    fontSize: 16,
+                    color: "var(--text-secondary)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {rentPriceText}
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      fontSize: 12,
+                      color: "var(--text-tertiary)",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    to rent
+                  </span>
                 </div>
               ) : null}
               {pricePerUnit !== null ? (

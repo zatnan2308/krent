@@ -93,9 +93,7 @@ export async function loadBookingContext(
       .from("property_prices")
       .select("amount, currency, price_period, cleaning_fee, security_deposit, taxes")
       .eq("property_id", propertyId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
+      .order("created_at", { ascending: true }),
     admin
       .from("rental_calendars")
       .select("id")
@@ -103,7 +101,14 @@ export async function loadBookingContext(
       .maybeSingle(),
   ]);
 
-  const price = priceResult.data;
+  // Для брони берём посуточную цену; иначе любую аренду; иначе первую
+  // (у mixed-объекта sale-строка для брони неинтересна).
+  const priceRows = priceResult.data ?? [];
+  const price =
+    priceRows.find((row) => row.price_period === "night") ??
+    priceRows.find((row) => row.price_period !== "sale") ??
+    priceRows[0] ??
+    null;
   const calendarId = calendarResult.data?.id ?? null;
 
   let availabilityRule: {

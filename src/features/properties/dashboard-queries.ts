@@ -58,6 +58,8 @@ export interface PropertyEditData {
   property: Property;
   translation: PropertyTranslation | null;
   price: PropertyPrice | null;
+  /** Вторая цена (аренда) для mixed-объектов; иначе null. */
+  rentPrice: PropertyPrice | null;
   location: PropertyLocation | null;
   media: PropertyMedia[];
   amenityIds: string[];
@@ -92,9 +94,7 @@ export async function getPropertyForEdit(
       .from("property_prices")
       .select("*")
       .eq("property_id", propertyId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
+      .order("created_at", { ascending: true }),
     supabase
       .from("property_locations")
       .select("*")
@@ -111,10 +111,19 @@ export async function getPropertyForEdit(
       .eq("property_id", propertyId),
   ]);
 
+  // price = sale-строка (период 'sale') либо единственная цена;
+  // rentPrice — rent-строка, выдаём только когда есть обе (mixed).
+  const allPrices = price.data ?? [];
+  const saleRow =
+    allPrices.find((row) => row.price_period === "sale") ?? null;
+  const rentRow =
+    allPrices.find((row) => row.price_period !== "sale") ?? null;
+
   return {
     property,
     translation: translation.data,
-    price: price.data,
+    price: saleRow ?? rentRow,
+    rentPrice: saleRow && rentRow ? rentRow : null,
     location: location.data,
     media: media.data ?? [],
     amenityIds: (amenities.data ?? []).map((row) => row.amenity_id),

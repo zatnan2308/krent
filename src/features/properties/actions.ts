@@ -207,41 +207,34 @@ export async function updateProperty(
     return { ok: false, error: "Could not save property content." };
   }
 
-  // ---- property_prices (одна цена на объект) -----------------
-  const { data: existingPrice } = await supabase
-    .from("property_prices")
-    .select("id")
-    .eq("property_id", data.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  // ---- property_prices (1 цена; для mixed — sale + rent) -----
+  // Sale-строка несёт price_period='sale', rent-строка — month/week/night;
+  // по периоду их и различаем при показе и в брони. Реконсиляция —
+  // delete-all + insert (чистая замена для 1 или 2 строк).
+  const toPriceRow = (p: NonNullable<typeof data.price>) => ({
+    property_id: data.id,
+    organization_id: organizationId,
+    amount: p.amount,
+    currency: p.currency,
+    price_period: p.pricePeriod,
+    display_type: p.displayType,
+    old_amount: p.oldAmount,
+    security_deposit: p.securityDeposit,
+    cleaning_fee: p.cleaningFee,
+    taxes: p.taxes,
+  });
+  const priceRows = [data.price, data.rentPrice]
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+    .map(toPriceRow);
 
-  if (data.price) {
-    const priceRow = {
-      amount: data.price.amount,
-      currency: data.price.currency,
-      price_period: data.price.pricePeriod,
-      display_type: data.price.displayType,
-      old_amount: data.price.oldAmount,
-      security_deposit: data.price.securityDeposit,
-      cleaning_fee: data.price.cleaningFee,
-      taxes: data.price.taxes,
-    };
-    const { error: priceError } = existingPrice
-      ? await supabase
-          .from("property_prices")
-          .update(priceRow)
-          .eq("id", existingPrice.id)
-      : await supabase.from("property_prices").insert({
-          property_id: data.id,
-          organization_id: organizationId,
-          ...priceRow,
-        });
+  await supabase.from("property_prices").delete().eq("property_id", data.id);
+  if (priceRows.length > 0) {
+    const { error: priceError } = await supabase
+      .from("property_prices")
+      .insert(priceRows);
     if (priceError) {
       return { ok: false, error: "Could not save the price." };
     }
-  } else if (existingPrice) {
-    await supabase.from("property_prices").delete().eq("id", existingPrice.id);
   }
 
   // ---- property_locations (1:1) ------------------------------

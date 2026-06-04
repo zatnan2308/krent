@@ -108,6 +108,8 @@ export const updatePropertySchema = z.object({
   lifestyleTags: z.array(z.string().trim().min(1).max(40)).max(12),
   badge: z.string().max(40).nullable(),
   price: priceSchema.nullable(),
+  /** Вторая цена — аренда для объектов «Sale & rent» (mixed). */
+  rentPrice: priceSchema.nullable().default(null),
   location: locationSchema,
   amenityIds: z.array(z.uuid()),
 });

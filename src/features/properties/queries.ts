@@ -105,6 +105,8 @@ export interface PublicPropertyView {
   /** Переведённые слаги по локалям — для hreflang и canonical. */
   localizedSlugs: LocalizedSlugs;
   price: PublicPropertyPrice | null;
+  /** Вторая цена (аренда) для mixed-объектов; иначе null. */
+  rentPrice: PublicPropertyPrice | null;
   fees: {
     securityDeposit: number | null;
     cleaningFee: number | null;
@@ -257,7 +259,13 @@ async function composeCards(
     );
     const localized = propTranslations.find((t) => t.locale === locale);
     const fallback = propTranslations.find((t) => t.locale === defaultLocale);
-    const price = priceRows.find((p) => p.property_id === row.id) ?? null;
+    // У mixed-объекта две цены — на карточке детерминированно показываем
+    // sale (или единственную) цену.
+    const propPrices = priceRows.filter((p) => p.property_id === row.id);
+    const price =
+      propPrices.find((p) => p.price_period === "sale") ??
+      propPrices[0] ??
+      null;
     const location = locationRows.find((l) => l.property_id === row.id);
 
     const propMedia = mediaRows.filter((m) => m.property_id === row.id);
@@ -535,9 +543,7 @@ export const getPublicProperty = cache(async function getPublicProperty(
         .from("property_prices")
         .select("*")
         .eq("property_id", propertyId)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle(),
+        .order("created_at", { ascending: true }),
       supabase
         .from("property_locations")
         .select("*")
@@ -588,7 +594,15 @@ export const getPublicProperty = cache(async function getPublicProperty(
 
   const agentId = property.assigned_agent_id;
   const agentNames = await resolveAgentNames(agentId ? [agentId] : []);
-  const priceRow = price.data;
+  // price = sale-строка (или единственная); rentPrice — rent-строка,
+  // показываем только когда есть обе (mixed).
+  const allPrices = price.data ?? [];
+  const saleRow =
+    allPrices.find((row) => row.price_period === "sale") ?? null;
+  const rentRow =
+    allPrices.find((row) => row.price_period !== "sale") ?? null;
+  const priceRow = saleRow ?? rentRow;
+  const rentPriceRow = saleRow && rentRow ? rentRow : null;
 
   return {
     property,
@@ -600,6 +614,7 @@ export const getPublicProperty = cache(async function getPublicProperty(
     baseSlug: property.slug,
     localizedSlugs,
     price: priceRow ? toPublicPrice(priceRow) : null,
+    rentPrice: rentPriceRow ? toPublicPrice(rentPriceRow) : null,
     fees: {
       securityDeposit: priceRow?.security_deposit ?? null,
       cleaningFee: priceRow?.cleaning_fee ?? null,
