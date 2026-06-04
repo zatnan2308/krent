@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import type { NavLinkNode } from "@/components/layout/public-layout";
 import { CurrencySwitcher } from "@/components/shared/currency-switcher";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ROUTES } from "@/lib/constants/routes";
@@ -19,7 +20,7 @@ interface PublicHeaderProps {
   /** Подзаголовок под названием бренда; null/пусто → «Licensed Realtor». */
   tagline?: string | null;
   supportPhone?: string | null;
-  navItems?: { label: string; href: string }[];
+  navItems?: NavLinkNode[];
   currentUserName?: string | null;
   currentUserEmail?: string | null;
 }
@@ -121,11 +122,19 @@ export function PublicHeader({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const defaultNav = [
-    { label: "Home", href: buildLocalizedPath(locale, "/") },
-    { label: "Properties", href: buildLocalizedPath(locale, "/properties") },
-    { label: "About", href: buildLocalizedPath(locale, "/about") },
-    { label: "Contact", href: buildLocalizedPath(locale, "/contact") },
+  const defaultNav: NavLinkNode[] = [
+    { label: "Home", href: buildLocalizedPath(locale, "/"), children: [] },
+    {
+      label: "Properties",
+      href: buildLocalizedPath(locale, "/properties"),
+      children: [],
+    },
+    { label: "About", href: buildLocalizedPath(locale, "/about"), children: [] },
+    {
+      label: "Contact",
+      href: buildLocalizedPath(locale, "/contact"),
+      children: [],
+    },
   ];
   const navItems =
     navItemsProp && navItemsProp.length > 0 ? navItemsProp : defaultNav;
@@ -212,27 +221,58 @@ export function PublicHeader({
             gap: 36,
           }}
         >
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                fontSize: 13,
-                color: "var(--text-secondary)",
-                letterSpacing: "0.01em",
-                transition: "color 400ms var(--ease-out-expo)",
-                paddingBottom: 2,
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = "var(--text-primary)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "var(--text-secondary)")
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.children.length > 0 ? (
+              <div
+                key={item.label}
+                className="ed-nav-group"
+                style={{ position: "relative" }}
+              >
+                <span className="ed-nav-trigger">
+                  {item.label}
+                  <span style={{ fontSize: 8, opacity: 0.65 }}>▾</span>
+                </span>
+                <div className="ed-nav-panel">
+                  <div className="ed-light-panel ed-nav-panel-inner">
+                    {item.href ? (
+                      <Link href={item.href} className="ed-nav-panel-link">
+                        {item.label}
+                      </Link>
+                    ) : null}
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className="ed-nav-panel-link"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : item.href ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-secondary)",
+                  letterSpacing: "0.01em",
+                  transition: "color 400ms var(--ease-out-expo)",
+                  paddingBottom: 2,
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = "var(--text-primary)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "var(--text-secondary)")
+                }
+              >
+                {item.label}
+              </Link>
+            ) : null,
+          )}
         </nav>
 
         {/* Right utilities (desktop) */}
@@ -504,26 +544,66 @@ export function PublicHeader({
         }}
       >
         <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {navItems.map((item, i) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className="serif"
-              style={{
-                fontSize: "clamp(2rem, 8vw, 3.5rem)",
-                color: "var(--text-primary)",
-                letterSpacing: "-0.03em",
-                padding: "8px 0",
-                borderBottom: "1px solid var(--border-subtle)",
-                transform: menuOpen ? "translateY(0)" : "translateY(20px)",
-                opacity: menuOpen ? 1 : 0,
-                transition: `all 700ms var(--ease-out-expo) ${i * 60 + 100}ms`,
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item, i) => {
+            const headingStyle = {
+              display: "block",
+              fontSize: "clamp(2rem, 8vw, 3.5rem)",
+              color: "var(--text-primary)",
+              letterSpacing: "-0.03em",
+              padding: "8px 0",
+            } as const;
+            return (
+              <div
+                key={item.href ?? item.label}
+                style={{
+                  borderBottom: "1px solid var(--border-subtle)",
+                  transform: menuOpen ? "translateY(0)" : "translateY(20px)",
+                  opacity: menuOpen ? 1 : 0,
+                  transition: `all 700ms var(--ease-out-expo) ${i * 60 + 100}ms`,
+                }}
+              >
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="serif"
+                    style={headingStyle}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className="serif" style={headingStyle}>
+                    {item.label}
+                  </span>
+                )}
+                {item.children.length > 0 ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      padding: "0 0 14px 6px",
+                    }}
+                  >
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={() => setMenuOpen(false)}
+                        style={{
+                          fontSize: 16,
+                          color: "var(--text-secondary)",
+                          padding: "6px 0",
+                        }}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </nav>
         <div
           style={{
@@ -585,6 +665,57 @@ export function PublicHeader({
       </div>
 
       <style>{`
+        .ed-nav-trigger {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 13px;
+          color: var(--text-secondary);
+          letter-spacing: 0.01em;
+          padding-bottom: 2px;
+          cursor: default;
+          transition: color 400ms var(--ease-out-expo);
+        }
+        .ed-nav-group:hover .ed-nav-trigger { color: var(--text-primary); }
+        .ed-nav-panel {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          padding-top: 14px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(6px);
+          transition: opacity 240ms var(--ease-out-expo),
+            transform 240ms var(--ease-out-expo), visibility 240ms;
+          z-index: 50;
+        }
+        .ed-nav-group:hover .ed-nav-panel {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+        .ed-nav-panel-inner {
+          min-width: 210px;
+          padding: 8px 0;
+          background: var(--bg-elevated);
+          border: 1px solid var(--border-subtle);
+          box-shadow: 0 16px 36px -12px rgba(11, 11, 12, 0.18);
+          overflow: hidden;
+        }
+        .ed-nav-panel-link {
+          display: block;
+          padding: 10px 18px;
+          font-size: 13px;
+          color: var(--text-primary);
+          text-decoration: none;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+          transition: background 200ms, color 200ms;
+        }
+        .ed-nav-panel-link:hover {
+          background: var(--bg-secondary);
+          color: var(--accent);
+        }
         @media (max-width: 900px) {
           .ed-nav-desktop, .ed-utils-desktop { display: none !important; }
           .ed-burger { display: inline-block !important; }

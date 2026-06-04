@@ -21,12 +21,19 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import type { Tables } from "@/types/database";
 
+interface NavOption {
+  id: string;
+  label: string;
+}
+
 interface NavigationManagerProps {
   header: Tables<"navigation_items">[];
   footer: Tables<"navigation_items">[];
   footerBrowse: Tables<"navigation_items">[];
   footerAreas: Tables<"navigation_items">[];
   footerLegal: Tables<"navigation_items">[];
+  /** Опубликованные страницы для привязки пункта (page_id). */
+  pages: NavOption[];
 }
 
 export function NavigationManager({
@@ -35,14 +42,21 @@ export function NavigationManager({
   footerBrowse,
   footerAreas,
   footerLegal,
+  pages,
 }: NavigationManagerProps) {
+  // Родители для дропдаунов — верхнеуровневые пункты хедера.
+  const parentOptions = header
+    .filter((item) => !item.parent_id)
+    .map((item) => ({ id: item.id, label: item.label }));
   return (
     <div className="space-y-10">
       <MenuEditor
         menuKey="header"
         title="Header menu"
-        hint="Links shown in the public site header navigation."
+        hint="Links in the public header. Pick a parent to nest an item as a dropdown, or link it to a page."
         items={header}
+        parentOptions={parentOptions}
+        pageOptions={pages}
       />
 
       <div className="space-y-6">
@@ -87,26 +101,40 @@ function MenuEditor({
   title,
   hint,
   items,
+  parentOptions,
+  pageOptions,
 }: {
   menuKey: string;
   title: string;
   hint: string;
   items: Tables<"navigation_items">[];
+  parentOptions?: { id: string; label: string }[];
+  pageOptions?: { id: string; label: string }[];
 }) {
   const router = useRouter();
   const [label, setLabel] = React.useState("");
   const [url, setUrl] = React.useState("");
+  const [parentId, setParentId] = React.useState("");
+  const [pageId, setPageId] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
 
   async function handleAdd() {
     setPending(true);
     setError(null);
-    const result = await addMenuItem(menuKey, label, url);
+    const result = await addMenuItem(
+      menuKey,
+      label,
+      url,
+      parentId || null,
+      pageId || null,
+    );
     setPending(false);
     if (result.ok) {
       setLabel("");
       setUrl("");
+      setParentId("");
+      setPageId("");
       router.refresh();
     } else {
       setError(result.error);
@@ -189,9 +217,56 @@ function MenuEditor({
                 id={`${menuKey}-url`}
                 value={url}
                 placeholder="/about"
+                disabled={pageId !== ""}
                 onChange={(event) => setUrl(event.target.value)}
               />
             </div>
+            {pageOptions ? (
+              <div className="space-y-2">
+                <label
+                  htmlFor={`${menuKey}-page`}
+                  className="text-sm font-medium"
+                >
+                  Link to page
+                </label>
+                <select
+                  id={`${menuKey}-page`}
+                  value={pageId}
+                  onChange={(event) => setPageId(event.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">— Use URL above —</option>
+                  {pageOptions.map((page) => (
+                    <option key={page.id} value={page.id}>
+                      {page.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            {parentOptions ? (
+              <div className="space-y-2">
+                <label
+                  htmlFor={`${menuKey}-parent`}
+                  className="text-sm font-medium"
+                >
+                  Parent (for dropdowns)
+                </label>
+                <select
+                  id={`${menuKey}-parent`}
+                  value={parentId}
+                  onChange={(event) => setParentId(event.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">— Top level —</option>
+                  {parentOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
           </div>
           {error ? (
             <p className="text-sm text-destructive" role="alert">
@@ -262,9 +337,16 @@ function NavItemRow({
 
   return (
     <li className="flex items-center justify-between gap-3 py-2">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{item.label}</p>
-        <p className="truncate text-xs text-muted-foreground">{item.url}</p>
+      <div className={`min-w-0 ${item.parent_id ? "pl-5" : ""}`}>
+        <p className="truncate text-sm font-medium">
+          {item.parent_id ? (
+            <span className="text-muted-foreground">&#8627; </span>
+          ) : null}
+          {item.label}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          {item.url ?? (item.page_id ? "Linked page" : "—")}
+        </p>
       </div>
       <div className="flex shrink-0 gap-0.5">
         <Button

@@ -48,13 +48,15 @@ export async function addMenuItem(
   menuKey: string,
   label: string,
   url: string,
+  parentId?: string | null,
+  pageId?: string | null,
 ): Promise<ActionResult> {
   const context = await requireOrganizationContext();
   if (!context.organization || !hasPermission(context, "navigation.manage")) {
     return { ok: false, error: "You cannot manage navigation." };
   }
-  if (!label.trim() || !url.trim()) {
-    return { ok: false, error: "Label and URL are required." };
+  if (!label.trim()) {
+    return { ok: false, error: "Label is required." };
   }
 
   const menuId = await ensureMenu(context.organization.id, menuKey);
@@ -71,8 +73,10 @@ export async function addMenuItem(
   const { error } = await supabase.from("navigation_items").insert({
     menu_id: menuId,
     organization_id: context.organization.id,
+    parent_id: parentId || null,
+    page_id: pageId || null,
     label: label.trim(),
-    url: url.trim(),
+    url: url.trim() || null,
     position: count ?? 0,
   });
   if (error) {
@@ -161,13 +165,13 @@ export async function updateMenuItem(
   if (!context.organization || !hasPermission(context, "navigation.manage")) {
     return { ok: false, error: "You cannot manage navigation." };
   }
-  if (!label.trim() || !url.trim()) {
-    return { ok: false, error: "Label and URL are required." };
+  if (!label.trim()) {
+    return { ok: false, error: "Label is required." };
   }
   const supabase = createClient();
   const { error } = await supabase
     .from("navigation_items")
-    .update({ label: label.trim(), url: url.trim() })
+    .update({ label: label.trim(), url: url.trim() || null })
     .eq("id", itemId)
     .eq("organization_id", context.organization.id);
   if (error) {

@@ -32,6 +32,14 @@ export interface NavLink {
   href: string;
 }
 
+/** Пункт меню хедера с одним уровнем вложенности (дропдаун). */
+export interface NavLinkNode {
+  label: string;
+  /** null — чистый родитель-дропдаун без собственной ссылки. */
+  href: string | null;
+  children: NavLink[];
+}
+
 interface PublicLayoutProps {
   locale: Locale;
   dictionary: Dictionary;
@@ -40,7 +48,7 @@ interface PublicLayoutProps {
   /** Подзаголовок под брендом в хедере (white-label); null → дефолт. */
   headerTagline?: string | null;
   contact: SiteContactInfo;
-  headerNav: NavLink[];
+  headerNav: NavLinkNode[];
   footerNav: NavLink[];
   /** Колонки футера (Browse/Areas/Legal); пустые → дефолты в футере. */
   footerBrowseNav?: NavLink[];

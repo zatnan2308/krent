@@ -4,11 +4,16 @@ import { notFound } from "next/navigation";
 import {
   PublicLayout,
   type NavLink,
+  type NavLinkNode,
   type SiteContactInfo,
 } from "@/components/layout/public-layout";
 import { AnalyticsTracker } from "@/features/analytics/tracker";
 import { getPublicTrackingConfig } from "@/features/analytics/queries";
-import { getPublicNavigation } from "@/features/cms/navigation-queries";
+import {
+  getPublicNavigation,
+  getPublicNavigationTree,
+  type PublicNavTreeItem,
+} from "@/features/cms/navigation-queries";
 import { AttributionTracker } from "@/features/crm/attribution-tracker";
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { isLocale } from "@/lib/i18n";
@@ -82,22 +87,31 @@ export default async function LocaleLayout({
     : null;
 
   // Навигация header/footer из БД (относительные URL локализуются).
+  const localizeHref = (url: string): string =>
+    url.startsWith("http") ? url : buildLocalizedPath(locale, url);
   const localizeNav = (items: { label: string; url: string }[]): NavLink[] =>
+    items.map((item) => ({ label: item.label, href: localizeHref(item.url) }));
+  // Хедер — дерево с дропдаунами (один уровень вложенности).
+  const localizeNavTree = (items: PublicNavTreeItem[]): NavLinkNode[] =>
     items.map((item) => ({
       label: item.label,
-      href: item.url.startsWith("http")
-        ? item.url
-        : buildLocalizedPath(locale, item.url),
+      href: item.url ? localizeHref(item.url) : null,
+      children: item.children.map((child) => ({
+        label: child.label,
+        href: localizeHref(child.url),
+      })),
     }));
   const [headerNav, footerNav, browseNav, areasNav, legalNav]: [
-    NavLink[],
+    NavLinkNode[],
     NavLink[],
     NavLink[],
     NavLink[],
     NavLink[],
   ] = site
     ? await Promise.all([
-        getPublicNavigation(site.organization.id, "header").then(localizeNav),
+        getPublicNavigationTree(site.organization.id, "header").then(
+          localizeNavTree,
+        ),
         getPublicNavigation(site.organization.id, "footer").then(localizeNav),
         getPublicNavigation(site.organization.id, "footer_browse").then(
           localizeNav,
