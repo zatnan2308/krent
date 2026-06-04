@@ -66,7 +66,7 @@ async function upsertIntegration(
       .update({
         display_name: displayName,
         scopes,
-        status: "connected",
+        status: "pending",
         error_message: null,
       })
       .eq("id", existing.id);

@@ -286,8 +286,10 @@ export function ConnectionCard({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Real OAuth flow is wired separately — saving stores the account
-        reference; tokens remain blank until OAuth is enabled.
+        Saving stores the account reference and marks the connection
+        <span className="font-medium"> Pending</span>. It becomes
+        <span className="font-medium"> Connected</span> only after the OAuth
+        flow completes and access tokens are stored.
       </p>
     </div>
   );
