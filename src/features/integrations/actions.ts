@@ -83,7 +83,10 @@ async function upsertIntegration(
       account_id: accountId,
       display_name: displayName,
       scopes,
-      status: "connected",
+      // Ручное подключение хранит только метаданные аккаунта; реального токена
+      // ещё нет → статус pending. "connected" выставляется лишь после OAuth,
+      // когда сохранены integration_tokens (см. карточку подключения).
+      status: "pending",
       created_by: userId,
     })
     .select("id")

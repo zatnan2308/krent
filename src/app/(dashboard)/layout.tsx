@@ -73,7 +73,7 @@ export default async function DashboardGroupLayout({
   const publicSiteUrl = primary?.domain ? `https://${primary.domain}` : null;
 
   const [notifications, unreadMessages] = await Promise.all([
-    listRecentNotificationsForBell(context.organization.id),
+    listRecentNotificationsForBell(context.organization.id, context.user.id),
     getUnreadMessagesCount(context.organization.id, context.user.id),
   ]);
   const sidebarBadges: Record<string, number> = {};
