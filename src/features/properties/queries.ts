@@ -116,6 +116,7 @@ export interface PublicPropertyView {
   amenities: { id: string; name: string }[];
   nearbyPlaces: NearbyPlace[];
   agentName: string | null;
+  agentId: string | null;
 }
 
 // ---- Вспомогательные функции ----------------------------------
@@ -610,6 +611,7 @@ export const getPublicProperty = cache(async function getPublicProperty(
     amenities,
     nearbyPlaces: nearby.data ?? [],
     agentName: agentId ? (agentNames.get(agentId) ?? null) : null,
+    agentId,
   };
 });
 

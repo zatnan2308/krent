@@ -588,7 +588,16 @@ export default async function PropertyDetailPage({
                   fontWeight: 400,
                 }}
               >
-                {view.agentName ?? site.organization.name}
+                {view.agentId && view.agentName ? (
+                  <Link
+                    href={`/${locale}/agents/${view.agentId}`}
+                    style={{ color: "inherit", textDecoration: "none" }}
+                  >
+                    {view.agentName}
+                  </Link>
+                ) : (
+                  (view.agentName ?? site.organization.name)
+                )}
               </div>
               <div
                 style={{
