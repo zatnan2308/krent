@@ -2,10 +2,11 @@ import { cache } from "react";
 
 import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/lib/constants/routes";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/server/auth";
 import type { Tables } from "@/types/database";
 
@@ -38,42 +39,38 @@ export interface OrganizationContext {
   isSuperAdmin: boolean;
 }
 
+/** Тег кэша контекста — сбрасывается при смене ролей/модулей/членства. */
+export const ORG_CONTEXT_TAG = "org-context";
+
+/** Тяжёлая часть контекста без user (organizations/role/permissions/modules). */
+type OrgData = Omit<OrganizationContext, "user">;
+
 /**
- * Собирает контекст организации: список организаций пользователя, активную
- * организацию (из cookie, с проверкой членства), роль, права и модули.
- * Возвращает null, если пользователь не аутентифицирован.
- *
- * Обёрнут в React cache() — за один запрос (layout + page) выполняется один
- * раз, а не дублируется. Независимые запросы идут параллельно (Promise.all),
- * чтобы не платить латентностью за каждый round-trip последовательно.
+ * Грузит данные организации по доверенному userId (admin-клиент, мимо RLS) и
+ * кэширует на 30с по (userId, activeOrgId). Это убирает ~6 round-trip к БД с
+ * КАЖДОЙ навигации по дашборду — пересчёт только раз в 30с или при сбросе тега.
+ * Внутри независимые запросы идут параллельно.
  */
-export const getOrganizationContext = cache(
-  async function getOrganizationContextImpl(): Promise<OrganizationContext | null> {
-    const user = await getCurrentUser();
-    if (!user) {
-      return null;
-    }
+const loadOrgData = unstable_cache(
+  async (userId: string, cookieOrgId: string | null): Promise<OrgData> => {
+    const admin = createAdminClient();
 
-    const supabase = createClient();
-
-    // Членства + статус супер-админа — параллельно.
     const [membershipsRes, adminRes] = await Promise.all([
-      supabase
+      admin
         .from("organization_members")
         .select("organization_id, role_id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("status", "active"),
-      supabase
+      admin
         .from("platform_admins")
         .select("user_id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle(),
     ]);
     const membershipList = membershipsRes.data ?? [];
     const isSuperAdmin = adminRes.data !== null;
 
-    const emptyContext: OrganizationContext = {
-      user,
+    const empty: OrgData = {
       organizations: [],
       organization: null,
       role: null,
@@ -81,14 +78,12 @@ export const getOrganizationContext = cache(
       modules: [],
       isSuperAdmin,
     };
-
     if (membershipList.length === 0) {
-      return emptyContext;
+      return empty;
     }
 
-    // Организации пользователя.
     const organizationIds = membershipList.map((m) => m.organization_id);
-    const { data: orgRows } = await supabase
+    const { data: orgRows } = await admin
       .from("organizations")
       .select("id, name, slug")
       .in("id", organizationIds)
@@ -97,11 +92,9 @@ export const getOrganizationContext = cache(
 
     const fallbackOrganization = organizations[0];
     if (!fallbackOrganization) {
-      return emptyContext;
+      return empty;
     }
 
-    // Активная организация: из cookie (если пользователь в ней член), иначе первая.
-    const cookieOrgId = cookies().get(ACTIVE_ORG_COOKIE)?.value;
     const activeOrganization =
       organizations.find((org) => org.id === cookieOrgId) ??
       fallbackOrganization;
@@ -109,26 +102,24 @@ export const getOrganizationContext = cache(
       (m) => m.organization_id === activeOrganization.id,
     );
 
-    // Полная запись организации, роль+права и модули — параллельно.
     const [organizationRes, roleBundle, orgModulesRes] = await Promise.all([
-      supabase
+      admin
         .from("organizations")
         .select("*")
         .eq("id", activeOrganization.id)
         .single(),
-      // Роль и права (внутренняя цепочка roles → role_permissions → permissions).
       (async (): Promise<{
         role: OrganizationRole | null;
         permissions: string[];
       }> => {
         if (!activeMembership) return { role: null, permissions: [] };
-        const { data: roleRow } = await supabase
+        const { data: roleRow } = await admin
           .from("roles")
           .select("id, key, name")
           .eq("id", activeMembership.role_id)
           .single();
         if (!roleRow) return { role: null, permissions: [] };
-        const { data: rolePermissionRows } = await supabase
+        const { data: rolePermissionRows } = await admin
           .from("role_permissions")
           .select("permission_id")
           .eq("role_id", roleRow.id);
@@ -138,7 +129,7 @@ export const getOrganizationContext = cache(
         if (permissionIds.length === 0) {
           return { role: roleRow, permissions: [] };
         }
-        const { data: permissionRows } = await supabase
+        const { data: permissionRows } = await admin
           .from("permissions")
           .select("key")
           .in("id", permissionIds);
@@ -147,18 +138,17 @@ export const getOrganizationContext = cache(
           permissions: (permissionRows ?? []).map((p) => p.key),
         };
       })(),
-      supabase
+      admin
         .from("organization_modules")
         .select("module_id")
         .eq("organization_id", activeOrganization.id)
         .eq("enabled", true),
     ]);
 
-    // Ключи включённых модулей.
     const moduleIds = (orgModulesRes.data ?? []).map((om) => om.module_id);
     let modules: string[] = [];
     if (moduleIds.length > 0) {
-      const { data: moduleRows } = await supabase
+      const { data: moduleRows } = await admin
         .from("modules")
         .select("key")
         .in("id", moduleIds);
@@ -166,7 +156,6 @@ export const getOrganizationContext = cache(
     }
 
     return {
-      user,
       organizations,
       organization: organizationRes.data,
       role: roleBundle.role,
@@ -174,6 +163,25 @@ export const getOrganizationContext = cache(
       modules,
       isSuperAdmin,
     };
+  },
+  ["org-context-data"],
+  { revalidate: 30, tags: [ORG_CONTEXT_TAG] },
+);
+
+/**
+ * Контекст организации текущего запроса: верифицирует пользователя (getUser),
+ * затем берёт закэшированные данные организации. Обёрнут в React cache() —
+ * один проход на запрос (layout + page).
+ */
+export const getOrganizationContext = cache(
+  async function getOrganizationContextImpl(): Promise<OrganizationContext | null> {
+    const user = await getCurrentUser();
+    if (!user) {
+      return null;
+    }
+    const cookieOrgId = cookies().get(ACTIVE_ORG_COOKIE)?.value ?? null;
+    const data = await loadOrgData(user.id, cookieOrgId);
+    return { user, ...data };
   },
 );
 

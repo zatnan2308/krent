@@ -5,7 +5,10 @@ import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
-import { requireOrganizationContext } from "@/server/organization-context";
+import {
+  ORG_CONTEXT_TAG,
+  requireOrganizationContext,
+} from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -186,6 +189,7 @@ export async function updateLocalization(
     .eq("id", context.organization.id);
   if (error) return { ok: false, error: "Could not save localization." };
   revalidatePath("/dashboard/settings");
+  revalidateTag(ORG_CONTEXT_TAG);
   return { ok: true };
 }
 
@@ -225,6 +229,7 @@ export async function toggleModule(
     metadata: { enabled: parsed.data.enabled },
   });
   revalidatePath("/dashboard/settings");
+  revalidateTag(ORG_CONTEXT_TAG);
   return { ok: true };
 }
 
@@ -284,6 +289,7 @@ export async function inviteMember(
     metadata: { email: parsed.data.email, roleId: parsed.data.roleId },
   });
   revalidatePath("/dashboard/settings");
+  revalidateTag(ORG_CONTEXT_TAG);
   return { ok: true };
 }
 
@@ -316,6 +322,7 @@ export async function removeMember(
     entityId: parsed.data.userId,
   });
   revalidatePath("/dashboard/settings");
+  revalidateTag(ORG_CONTEXT_TAG);
   return { ok: true };
 }
 
@@ -349,5 +356,6 @@ export async function changeMemberRole(
     metadata: { roleId: parsed.data.roleId },
   });
   revalidatePath("/dashboard/settings");
+  revalidateTag(ORG_CONTEXT_TAG);
   return { ok: true };
 }
