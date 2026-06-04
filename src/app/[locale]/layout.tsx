@@ -135,6 +135,7 @@ export default async function LocaleLayout({
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}
+        headerTagline={brand?.header_tagline ?? null}
         contact={contact}
         headerNav={headerNav}
         footerNav={footerNav}

@@ -746,6 +746,7 @@ export type Database = {
           favicon_url: string | null
           font_family: string | null
           footer_tagline: string | null
+          header_tagline: string | null
           logo_url: string | null
           newsletter_blurb: string | null
           newsletter_title: string | null
@@ -776,6 +777,7 @@ export type Database = {
           favicon_url?: string | null
           font_family?: string | null
           footer_tagline?: string | null
+          header_tagline?: string | null
           logo_url?: string | null
           newsletter_blurb?: string | null
           newsletter_title?: string | null
@@ -806,6 +808,7 @@ export type Database = {
           favicon_url?: string | null
           font_family?: string | null
           footer_tagline?: string | null
+          header_tagline?: string | null
           logo_url?: string | null
           newsletter_blurb?: string | null
           newsletter_title?: string | null

@@ -16,6 +16,8 @@ interface PublicHeaderProps {
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
+  /** Подзаголовок под названием бренда; null/пусто → «Licensed Realtor». */
+  tagline?: string | null;
   supportPhone?: string | null;
   navItems?: { label: string; href: string }[];
   currentUserName?: string | null;
@@ -74,6 +76,7 @@ export function PublicHeader({
   dictionary,
   siteName,
   logoUrl,
+  tagline,
   supportPhone,
   navItems: navItemsProp,
   currentUserName,
@@ -196,7 +199,7 @@ export function PublicHeader({
                 fontWeight: 500,
               }}
             >
-              Licensed Realtor
+              {tagline?.trim() || "Licensed Realtor"}
             </span>
           </span>
         </Link>

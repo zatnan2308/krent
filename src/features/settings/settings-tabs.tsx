@@ -368,6 +368,19 @@ function SiteContactSection({ initial }: { initial: SiteContactInput }) {
       </div>
 
       <div>
+        <p className="mb-2 text-sm font-semibold">Header</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Field label="Header tagline">
+            <Input
+              value={form.headerTagline ?? ""}
+              onChange={(e) => set("headerTagline")(e.target.value)}
+              placeholder="Licensed Realtor"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div>
         <p className="mb-2 text-sm font-semibold">Footer</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <Field label="Footer tagline" wide>

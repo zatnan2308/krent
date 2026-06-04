@@ -37,6 +37,8 @@ interface PublicLayoutProps {
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
+  /** Подзаголовок под брендом в хедере (white-label); null → дефолт. */
+  headerTagline?: string | null;
   contact: SiteContactInfo;
   headerNav: NavLink[];
   footerNav: NavLink[];
@@ -55,6 +57,7 @@ export function PublicLayout({
   dictionary,
   siteName,
   logoUrl,
+  headerTagline,
   contact,
   headerNav,
   footerNav,
@@ -73,6 +76,7 @@ export function PublicLayout({
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}
+        tagline={headerTagline}
         supportPhone={contact.phone}
         navItems={headerNav}
         currentUserName={currentUserName ?? null}

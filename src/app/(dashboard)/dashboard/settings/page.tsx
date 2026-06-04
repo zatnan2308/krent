@@ -109,6 +109,7 @@ export default async function SettingsPage() {
           contactAddress: brand.data?.contact_address ?? null,
           officeHours: brand.data?.office_hours ?? null,
           responseTime: brand.data?.response_time ?? null,
+          headerTagline: brand.data?.header_tagline ?? null,
           footerTagline: brand.data?.footer_tagline ?? null,
           newsletterTitle: brand.data?.newsletter_title ?? null,
           newsletterBlurb: brand.data?.newsletter_blurb ?? null,
