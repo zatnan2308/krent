@@ -6,6 +6,8 @@ import {
   type DuplicateEntry,
   type SeoAuditEntry,
 } from "@/features/seo/queries";
+import { SeoSettingsForm } from "@/features/seo/seo-settings-form";
+import { createAdminClient } from "@/lib/supabase/server";
 import {
   Card,
   CardContent,
@@ -77,6 +79,21 @@ export default async function SeoPage() {
 
   const audit = await getSeoAudit(context.organization.id);
 
+  const admin = createAdminClient();
+  const { data: seo } = await admin
+    .from("seo_settings")
+    .select("*")
+    .eq("organization_id", context.organization.id)
+    .maybeSingle();
+  const seoInitial = {
+    defaultTitle: seo?.default_title ?? "",
+    titleSuffix: seo?.title_suffix ?? "",
+    defaultDescription: seo?.default_description ?? "",
+    defaultOgImageUrl: seo?.default_og_image_url ?? "",
+    robotsTxt: seo?.robots_txt ?? "",
+    googleSiteVerification: seo?.google_site_verification ?? "",
+  };
+
   const summary = [
     { label: "Published pages", value: audit.publishedPages },
     { label: "Active properties", value: audit.activeProperties },
@@ -105,6 +122,15 @@ export default async function SeoPage() {
           </div>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Site SEO defaults</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SeoSettingsForm initial={seoInitial} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
