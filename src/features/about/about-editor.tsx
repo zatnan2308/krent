@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
   addMilestone,
   deleteMilestone,
+  moveMilestone,
   updateAboutPage,
+  updateMilestone,
   type AboutPageInput,
 } from "@/features/about/actions";
 import { Button } from "@/components/ui/button";
@@ -138,6 +140,135 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
   );
 }
 
+function MilestoneRow({
+  milestone,
+  index,
+  total,
+  pending,
+  onMove,
+  onDelete,
+}: {
+  milestone: Tables<"about_milestones">;
+  index: number;
+  total: number;
+  pending: boolean;
+  onMove: (id: string, direction: "up" | "down") => void;
+  onDelete: (id: string) => void;
+}) {
+  const router = useRouter();
+  const [editing, setEditing] = React.useState(false);
+  const [year, setYear] = React.useState(milestone.year);
+  const [title, setTitle] = React.useState(milestone.title);
+  const [body, setBody] = React.useState(milestone.body ?? "");
+  const [busy, setBusy] = React.useState(false);
+
+  async function save() {
+    setBusy(true);
+    const result = await updateMilestone(milestone.id, { year, title, body });
+    setBusy(false);
+    if (result.ok) {
+      setEditing(false);
+      router.refresh();
+    }
+  }
+
+  if (editing) {
+    return (
+      <li className="space-y-2 py-2">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Input
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            placeholder="Year"
+          />
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title"
+          />
+        </div>
+        <Input
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Body"
+        />
+        <div className="flex gap-1">
+          <Button type="button" size="sm" onClick={save} disabled={busy}>
+            Save
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setEditing(false)}
+          >
+            Cancel
+          </Button>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-start justify-between gap-3 py-2">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">
+          <span className="text-muted-foreground">{milestone.year}</span> ·{" "}
+          {milestone.title}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          {milestone.body}
+        </p>
+      </div>
+      <div className="flex shrink-0 gap-0.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          disabled={pending || index === 0}
+          aria-label="Move up"
+          onClick={() => onMove(milestone.id, "up")}
+        >
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          disabled={pending || index === total - 1}
+          aria-label="Move down"
+          onClick={() => onMove(milestone.id, "down")}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Edit milestone"
+          onClick={() => setEditing(true)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive"
+          onClick={() => onDelete(milestone.id)}
+          disabled={pending}
+          aria-label="Remove milestone"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </li>
+  );
+}
+
 function MilestonesSection({
   milestones,
 }: {
@@ -172,6 +303,13 @@ function MilestonesSection({
     router.refresh();
   }
 
+  async function handleMove(id: string, direction: "up" | "down") {
+    setPending(true);
+    await moveMilestone(id, direction);
+    setPending(false);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -189,29 +327,16 @@ function MilestonesSection({
         <CardContent>
           {milestones.length > 0 ? (
             <ul className="divide-y">
-              {milestones.map((m) => (
-                <li key={m.id} className="flex items-start justify-between gap-3 py-2">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">
-                      <span className="text-muted-foreground">{m.year}</span>{" "}
-                      · {m.title}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {m.body}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => handleDelete(m.id)}
-                    disabled={pending}
-                    aria-label="Remove milestone"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </li>
+              {milestones.map((m, index) => (
+                <MilestoneRow
+                  key={m.id}
+                  milestone={m}
+                  index={index}
+                  total={milestones.length}
+                  pending={pending}
+                  onMove={handleMove}
+                  onDelete={handleDelete}
+                />
               ))}
             </ul>
           ) : (

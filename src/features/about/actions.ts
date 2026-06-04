@@ -105,3 +105,66 @@ export async function deleteMilestone(id: string): Promise<void> {
   revalidatePath("/dashboard/about");
   revalidateTag("about-content");
 }
+
+export async function updateMilestone(
+  id: string,
+  input: MilestoneInput,
+): Promise<ActionResult> {
+  const parsed = milestoneSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Year and title are required." };
+  }
+  const context = await guardAbout();
+  if (!context?.organization) {
+    return { ok: false, error: "You cannot edit this page." };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("about_milestones")
+    .update({
+      year: parsed.data.year,
+      title: parsed.data.title,
+      body: parsed.data.body,
+    })
+    .eq("id", id)
+    .eq("organization_id", context.organization.id);
+  if (error) return { ok: false, error: "Could not update the milestone." };
+  revalidatePath("/dashboard/about");
+  revalidateTag("about-content");
+  return { ok: true };
+}
+
+export async function moveMilestone(
+  id: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  const context = await guardAbout();
+  if (!context?.organization) {
+    return { ok: false, error: "You cannot edit this page." };
+  }
+  const admin = createAdminClient();
+  const { data: list } = await admin
+    .from("about_milestones")
+    .select("id, sort_order")
+    .eq("organization_id", context.organization.id)
+    .order("sort_order", { ascending: true });
+  const items = list ?? [];
+  const index = items.findIndex((item) => item.id === id);
+  if (index < 0) return { ok: false, error: "Milestone not found." };
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= items.length) return { ok: true };
+  const a = items[index];
+  const b = items[swapIndex];
+  if (!a || !b) return { ok: true };
+  await admin
+    .from("about_milestones")
+    .update({ sort_order: b.sort_order })
+    .eq("id", a.id);
+  await admin
+    .from("about_milestones")
+    .update({ sort_order: a.sort_order })
+    .eq("id", b.id);
+  revalidatePath("/dashboard/about");
+  revalidateTag("about-content");
+  return { ok: true };
+}
