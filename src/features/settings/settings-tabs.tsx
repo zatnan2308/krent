@@ -437,6 +437,14 @@ function LocalizationSection({ initial }: { initial: LocalizationInput }) {
         if (result.ok) router.refresh();
       }}
     >
+      <Field label="Organization name">
+        <Input
+          value={form.organizationName}
+          onChange={(e) =>
+            setForm({ ...form, organizationName: e.target.value })
+          }
+        />
+      </Field>
       <div className="grid gap-2 sm:grid-cols-2">
         <Field label="Default language">
           <Input

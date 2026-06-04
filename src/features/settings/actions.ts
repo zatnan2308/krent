@@ -154,6 +154,7 @@ export async function updateSiteContact(
 // ---- Localization ------------------------------------------------
 
 const localizationSchema = z.object({
+  organizationName: z.string().trim().min(1).max(120),
   defaultLanguage: z.string().trim().min(2).max(10),
   defaultCurrency: z.string().trim().min(3).max(10),
   enabledLanguages: z.array(z.string().trim().min(2).max(10)).min(1),
@@ -179,6 +180,7 @@ export async function updateLocalization(
   const { error } = await admin
     .from("organizations")
     .update({
+      name: parsed.data.organizationName,
       default_language: parsed.data.defaultLanguage,
       default_currency: parsed.data.defaultCurrency,
       enabled_languages: parsed.data.enabledLanguages,
@@ -190,6 +192,8 @@ export async function updateLocalization(
   if (error) return { ok: false, error: "Could not save localization." };
   revalidatePath("/dashboard/settings");
   revalidateTag(ORG_CONTEXT_TAG);
+  // Имя организации = публичное имя сайта (header/footer/SEO).
+  revalidateTag("public-site");
   return { ok: true };
 }
 

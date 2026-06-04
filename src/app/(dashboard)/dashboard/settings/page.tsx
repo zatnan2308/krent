@@ -113,6 +113,7 @@ export default async function SettingsPage() {
           socialYoutube: brand.data?.social_youtube ?? null,
         }}
         localization={{
+          organizationName: context.organization.name,
           defaultLanguage: context.organization.default_language,
           defaultCurrency: context.organization.default_currency,
           enabledLanguages: context.organization.enabled_languages,
