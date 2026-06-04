@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 
 import {
+  addNearbyPlace,
   addPropertyDocument,
   addPropertyVideo,
+  deleteNearbyPlace,
   deletePropertyDocument,
   deletePropertyVideo,
 } from "@/features/properties/extras-actions";
@@ -191,6 +193,118 @@ export function DocumentsManager({
         </select>
         <Button size="sm" type="button" onClick={handleAdd} disabled={pending}>
           Add document
+        </Button>
+      </div>
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+interface NearbyPlaceRow {
+  id: string;
+  name: string;
+  category: string | null;
+  distance: number | null;
+  distanceUnit: string | null;
+}
+
+export function NearbyPlacesManager({
+  propertyId,
+  places,
+}: {
+  propertyId: string;
+  places: NearbyPlaceRow[];
+}) {
+  const router = useRouter();
+  const [name, setName] = React.useState("");
+  const [category, setCategory] = React.useState("");
+  const [distance, setDistance] = React.useState("");
+  const [pending, setPending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function handleAdd() {
+    if (!name.trim()) return;
+    setPending(true);
+    setError(null);
+    const result = await addNearbyPlace({
+      propertyId,
+      name: name.trim(),
+      category: category.trim() || null,
+      distance: distance ? Number(distance) : null,
+      distanceUnit: distance ? "km" : null,
+    });
+    setPending(false);
+    if (result.ok) {
+      setName("");
+      setCategory("");
+      setDistance("");
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    await deleteNearbyPlace(id);
+    router.refresh();
+  }
+
+  return (
+    <div className="space-y-3 rounded-md border p-3">
+      <p className="text-sm font-semibold">Nearby places</p>
+      {places.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No nearby places yet.</p>
+      ) : (
+        <ul className="space-y-1 text-sm">
+          {places.map((place) => (
+            <li
+              key={place.id}
+              className="flex items-center justify-between gap-2 rounded-md border p-2"
+            >
+              <span className="truncate">
+                {place.name}
+                {place.category ? (
+                  <span className="text-muted-foreground"> · {place.category}</span>
+                ) : null}
+                {place.distance !== null ? (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {place.distance} {place.distanceUnit ?? "km"}
+                  </span>
+                ) : null}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive"
+                onClick={() => handleDelete(place.id)}
+                aria-label="Delete place"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Place name"
+        />
+        <Input
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="Category (school, metro…)"
+        />
+        <Input
+          value={distance}
+          onChange={(e) => setDistance(e.target.value)}
+          placeholder="Distance (km)"
+          type="number"
+        />
+        <Button size="sm" type="button" onClick={handleAdd} disabled={pending}>
+          Add place
         </Button>
       </div>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}

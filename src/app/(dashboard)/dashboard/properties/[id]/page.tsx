@@ -8,6 +8,7 @@ import {
 } from "@/features/properties/dashboard-queries";
 import {
   DocumentsManager,
+  NearbyPlacesManager,
   VideosManager,
 } from "@/features/properties/extras-manager";
 import { PropertyForm } from "@/features/properties/property-form";
@@ -84,22 +85,38 @@ export default async function EditPropertyPage({
 
 async function PropertyExtras({ propertyId }: { propertyId: string }) {
   const admin = createAdminClient();
-  const [{ data: videos }, { data: docs }] = await Promise.all([
-    admin
-      .from("property_videos")
-      .select("id, url, title, type")
-      .eq("property_id", propertyId)
-      .order("sort_order"),
-    admin
-      .from("property_documents")
-      .select("id, name, url, type")
-      .eq("property_id", propertyId)
-      .order("sort_order"),
-  ]);
+  const [{ data: videos }, { data: docs }, { data: places }] =
+    await Promise.all([
+      admin
+        .from("property_videos")
+        .select("id, url, title, type")
+        .eq("property_id", propertyId)
+        .order("sort_order"),
+      admin
+        .from("property_documents")
+        .select("id, name, url, type")
+        .eq("property_id", propertyId)
+        .order("sort_order"),
+      admin
+        .from("nearby_places")
+        .select("id, name, category, distance, distance_unit")
+        .eq("property_id", propertyId)
+        .order("sort_order"),
+    ]);
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <VideosManager propertyId={propertyId} videos={videos ?? []} />
       <DocumentsManager propertyId={propertyId} documents={docs ?? []} />
+      <NearbyPlacesManager
+        propertyId={propertyId}
+        places={(places ?? []).map((place) => ({
+          id: place.id,
+          name: place.name,
+          category: place.category,
+          distance: place.distance,
+          distanceUnit: place.distance_unit,
+        }))}
+      />
     </div>
   );
 }

@@ -145,3 +145,67 @@ export async function deletePropertyDocument(id: string): Promise<ActionResult> 
   revalidatePath(editPath(doc.property_id));
   return { ok: true };
 }
+
+// ---- Nearby places ----------------------------------------------
+
+const nearbyPlaceSchema = z.object({
+  propertyId: z.uuid(),
+  name: z.string().trim().min(1).max(200),
+  category: z.string().trim().max(100).nullable(),
+  distance: z.coerce.number().min(0).nullable(),
+  distanceUnit: z.string().trim().max(20).nullable(),
+});
+export type AddNearbyPlaceInput = z.infer<typeof nearbyPlaceSchema>;
+
+export async function addNearbyPlace(
+  input: AddNearbyPlaceInput,
+): Promise<ActionResult> {
+  const parsed = nearbyPlaceSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid place." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: property } = await supabase
+    .from("properties")
+    .select("id, assigned_agent_id, co_agent_ids")
+    .eq("organization_id", context.organization.id)
+    .eq("id", parsed.data.propertyId)
+    .maybeSingle();
+  if (!property || !canEditProperty(context, property)) {
+    return { ok: false, error: "You cannot edit this property." };
+  }
+  const { count } = await supabase
+    .from("nearby_places")
+    .select("*", { count: "exact", head: true })
+    .eq("property_id", parsed.data.propertyId);
+  const { error } = await supabase.from("nearby_places").insert({
+    organization_id: context.organization.id,
+    property_id: parsed.data.propertyId,
+    name: parsed.data.name,
+    category: parsed.data.category,
+    distance: parsed.data.distance,
+    distance_unit: parsed.data.distanceUnit,
+    sort_order: count ?? 0,
+  });
+  if (error) return { ok: false, error: "Could not add place." };
+  revalidatePath(editPath(parsed.data.propertyId));
+  return { ok: true };
+}
+
+export async function deleteNearbyPlace(id: string): Promise<ActionResult> {
+  if (!z.uuid().safeParse(id).success) return { ok: false, error: "Invalid id." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: place } = await supabase
+    .from("nearby_places")
+    .select("id, property_id")
+    .eq("organization_id", context.organization.id)
+    .eq("id", id)
+    .maybeSingle();
+  if (!place) return { ok: false, error: "Place not found." };
+  const { error } = await supabase.from("nearby_places").delete().eq("id", id);
+  if (error) return { ok: false, error: "Could not delete place." };
+  revalidatePath(editPath(place.property_id));
+  return { ok: true };
+}
