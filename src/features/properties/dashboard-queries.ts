@@ -27,13 +27,20 @@ export interface PropertyListItem {
  */
 export async function listProperties(
   organizationId: string,
+  filters: { q?: string; status?: Property["status"] } = {},
 ): Promise<PropertyListItem[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("properties")
     .select("id, title, slug, property_type, purpose, status, updated_at")
-    .eq("organization_id", organizationId)
-    .order("updated_at", { ascending: false });
+    .eq("organization_id", organizationId);
+  if (filters.q) {
+    query = query.ilike("title", `%${filters.q}%`);
+  }
+  if (filters.status) {
+    query = query.eq("status", filters.status);
+  }
+  const { data } = await query.order("updated_at", { ascending: false });
 
   return (data ?? []).map((property) => ({
     id: property.id,

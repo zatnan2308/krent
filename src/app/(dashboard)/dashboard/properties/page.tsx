@@ -27,6 +27,8 @@ export const metadata: Metadata = {
   title: "Properties",
 };
 
+export const dynamic = "force-dynamic";
+
 /** Вариант бейджа для статуса объекта. */
 function statusVariant(
   status: PropertyStatus,
@@ -47,13 +49,23 @@ function statusVariant(
   }
 }
 
-export default async function PropertiesListPage() {
+export default async function PropertiesListPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const context = await requireOrganizationContext();
   if (!context.organization) {
     return null;
   }
 
-  const properties = await listProperties(context.organization.id);
+  const q = typeof searchParams.q === "string" ? searchParams.q : "";
+  const status =
+    typeof searchParams.status === "string" ? searchParams.status : "";
+  const properties = await listProperties(context.organization.id, {
+    q: q || undefined,
+    status: (status || undefined) as PropertyStatus | undefined,
+  });
   const canCreate = hasPermission(context, "properties.create");
   const canManageAmenities = hasPermission(context, "properties.manage_all");
 
@@ -85,6 +97,35 @@ export default async function PropertiesListPage() {
           ) : null}
         </div>
       </div>
+
+      <form method="get" className="flex flex-wrap gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          placeholder="Search by title…"
+          className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm"
+        />
+        <select
+          name="status"
+          defaultValue={status}
+          aria-label="Status filter"
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="">All statuses</option>
+          {Object.entries(PROPERTY_STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Filter
+        </button>
+      </form>
 
       {properties.length > 0 ? (
         <div className="rounded-lg border">
