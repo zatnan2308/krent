@@ -203,6 +203,7 @@ export default async function LeadDetailPage({
               status={lead.status}
               assigned={lead.assigned_agent_id !== null}
               canManage={canManage}
+              canManageAll={hasPermission(context, "crm.manage_all")}
             />
           </CardContent>
         </Card>

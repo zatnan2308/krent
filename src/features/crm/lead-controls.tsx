@@ -22,6 +22,8 @@ interface LeadControlsProps {
   status: LeadStatus;
   assigned: boolean;
   canManage: boolean;
+  /** crm.manage_all — нужно, чтобы снять назначение (см. RLS). */
+  canManageAll: boolean;
 }
 
 /** Управление лидом: статус, назначение, конвертация в сделку. */
@@ -30,6 +32,7 @@ export function LeadControls({
   status,
   assigned,
   canManage,
+  canManageAll,
 }: LeadControlsProps) {
   const router = useRouter();
   const [pending, setPending] = React.useState(false);
@@ -80,15 +83,17 @@ export function LeadControls({
 
       <div className="flex flex-wrap gap-2">
         {assigned ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() => run(() => unassignLead(leadId))}
-          >
-            Unassign
-          </Button>
+          canManageAll ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              onClick={() => run(() => unassignLead(leadId))}
+            >
+              Unassign
+            </Button>
+          ) : null
         ) : (
           <Button
             type="button"
@@ -100,14 +105,20 @@ export function LeadControls({
             Assign to me
           </Button>
         )}
-        <Button
-          type="button"
-          size="sm"
-          disabled={pending}
-          onClick={() => run(() => convertLeadToDeal(leadId))}
-        >
-          Convert to deal
-        </Button>
+        {status === "converted" ? (
+          <span className="inline-flex items-center text-sm text-muted-foreground">
+            Converted to a deal
+          </span>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            disabled={pending}
+            onClick={() => run(() => convertLeadToDeal(leadId))}
+          >
+            Convert to deal
+          </Button>
+        )}
       </div>
 
       {error ? (

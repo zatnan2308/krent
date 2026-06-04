@@ -133,8 +133,11 @@ export async function unassignLead(leadId: string): Promise<ActionResult> {
   if (!context.organization) {
     return { ok: false, error: "No active organization." };
   }
-  if (!hasPermission(context, "crm.manage")) {
-    return { ok: false, error: "You do not have permission to manage leads." };
+  // Снять назначение может только обладатель crm.manage_all: RLS WITH CHECK на
+  // leads разрешает писать assigned_agent_id лишь = себе или с manage_all, так
+  // что установка null обычным агентом всё равно не пройдёт (0 строк).
+  if (!hasPermission(context, "crm.manage_all")) {
+    return { ok: false, error: "Only managers can unassign leads." };
   }
 
   const supabase = createClient();
@@ -187,6 +190,13 @@ export async function convertLeadToDeal(
     .maybeSingle();
   if (!lead) {
     return { ok: false, error: "Lead not found." };
+  }
+  // Идемпотентность: не создаём второй deal при повторном клике «Convert».
+  if (lead.status === "converted") {
+    return {
+      ok: false,
+      error: "This lead has already been converted to a deal.",
+    };
   }
 
   const [contactResult, stageResult] = await Promise.all([
@@ -454,13 +464,19 @@ export async function deleteNote(noteId: string): Promise<ActionResult> {
     .eq("organization_id", context.organization.id)
     .maybeSingle();
 
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from("notes")
     .delete()
     .eq("id", noteId)
-    .eq("organization_id", context.organization.id);
+    .eq("organization_id", context.organization.id)
+    .select("id");
   if (error) {
     return { ok: false, error: "Could not delete the note." };
+  }
+  // RLS разрешает удалять только свою заметку (или с manage_all): при блоке
+  // delete не ошибается, но затрагивает 0 строк — сообщаем явно.
+  if (!deleted || deleted.length === 0) {
+    return { ok: false, error: "You can only delete your own notes." };
   }
 
   if (note) {
