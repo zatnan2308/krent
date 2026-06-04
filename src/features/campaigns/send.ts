@@ -11,6 +11,7 @@ import {
 import { type BlockType, type CampaignBlockData, isBlockType } from "./blocks";
 import { loadUnsubscribedEmails, loadWithdrawnContactIds } from "./consent";
 import { getEmailPropertyData } from "./queries";
+import { materializeSegment } from "./segments";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -159,6 +160,18 @@ export async function sendCampaign(
     const properties = indexProperties(
       await getEmailPropertyData(admin, organizationId),
     );
+
+    // Авто-рефреш состава сегмента перед отправкой — чтобы захватить
+    // контакты, появившиеся после последней ручной пересборки.
+    const { data: segment } = await admin
+      .from("contact_segments")
+      .select("id, organization_id, definition")
+      .eq("id", campaign.segment_id)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (segment) {
+      await materializeSegment(admin, segment);
+    }
 
     const { data: members } = await admin
       .from("contact_segment_members")
