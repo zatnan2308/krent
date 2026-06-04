@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
@@ -28,12 +29,10 @@ export default async function PlatformUsersPage() {
   const users = await listPlatformUsers(100);
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-        <p className="text-sm text-muted-foreground">
-          Platform-wide user directory (first 100 accounts).
-        </p>
-      </div>
+      <PageHeader
+        title="Users"
+        description="Platform-wide user directory (first 100 accounts)."
+      />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">All users</CardTitle>

@@ -17,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
@@ -44,24 +46,19 @@ export default async function SuperAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Super Admin</h1>
-        <p className="text-sm text-muted-foreground">
-          Platform-wide management of organizations.
-        </p>
-      </div>
+      <PageHeader
+        title="Super Admin"
+        description="Platform-wide management of organizations."
+      />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Organizations", value: totals.orgs },
           { label: "Suspended", value: totals.suspended },
           { label: "Members", value: totals.members },
           { label: "Properties", value: totals.properties },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-lg font-semibold">{stat.value}</p>
-          </div>
+          <StatCard key={stat.label} label={stat.label} value={stat.value} />
         ))}
       </div>
 

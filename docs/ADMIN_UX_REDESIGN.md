@@ -57,12 +57,14 @@ Overview · CRM · Properties · Rentals/Bookings/Calendar/Clients · Communicat
 Growth · Website · Settings — каждая страница и вкладка на единых `PageHeader` /
 `StatCard` / тулбар-cards / подчёркнутые под-навигации, с моторикой из фундамента.
 
-### Опциональный остаток (вне scope «админки администратора»)
-- **Super-admin** (`/super-admin/*`) — это панель ВЛАДЕЛЬЦА платформы, не организации;
-  использует тот же AppShell (уже получила новую палитру/шрифт/каркас), но per-page
-  заголовки там пока ad-hoc. Можно за один проход раскатать `PageHeader`, если нужно.
-- Возможные доработки: tabs/группировка для очень длинной `agent-sync`; fade при
-  переключении вкладок внутри Home/Settings; карточные section-обёртки в Home-секциях.
+### Super-admin (панель платформы) ✅
+- Все 6 страниц (`/super-admin/*`: overview, organizations, organizations/[id],
+  users, health, licenses) переведены на `PageHeader` (+крошки/статус-бейдж на
+  detail), Overview KPI → `StatCard`. Палитра/шрифт/каркас уже были общими.
+
+### Возможные доработки (по желанию)
+- tabs/группировка для очень длинной `agent-sync`; fade при переключении вкладок
+  внутри Home/Settings; карточные section-обёртки в Home-секциях.
 
 ## Где что лежит (для следующих стадий)
 - Каркас: `src/components/layout/{app-shell,app-sidebar,app-topbar,nav-config}.tsx`

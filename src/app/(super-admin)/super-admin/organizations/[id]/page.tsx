@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getOrganizationDetail } from "@/features/super-admin/queries";
@@ -10,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveUserNames } from "@/server/user-directory";
 
@@ -54,26 +54,28 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.superAdmin.organizations}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; Organizations
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {detail.organization.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Slug: <code>{detail.organization.slug}</code> · Status:{" "}
-          <Badge variant={detail.organization.status === "active" ? "default" : "secondary"}>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Organizations", href: ROUTES.superAdmin.organizations },
+          { label: detail.organization.name },
+        ]}
+        title={detail.organization.name}
+        actions={
+          <Badge
+            variant={
+              detail.organization.status === "active" ? "default" : "secondary"
+            }
+          >
             {detail.organization.status}
-          </Badge>{" "}
-          · Type: <span className="capitalize">{detail.organization.type}</span> ·
-          Timezone: {detail.organization.timezone} · Created{" "}
-          {new Date(detail.organization.created_at).toLocaleDateString()}
-        </p>
-      </div>
+          </Badge>
+        }
+      />
+      <p className="-mt-3 text-sm text-muted-foreground">
+        Slug: <code>{detail.organization.slug}</code> · Type:{" "}
+        <span className="capitalize">{detail.organization.type}</span> ·
+        Timezone: {detail.organization.timezone} · Created{" "}
+        {new Date(detail.organization.created_at).toLocaleDateString()}
+      </p>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 3. Licenses */}

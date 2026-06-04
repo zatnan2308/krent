@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
@@ -29,12 +30,10 @@ export default async function OrganizationsListPage() {
   const organizations = await listOrganizationOverviews();
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Organizations</h1>
-        <p className="text-sm text-muted-foreground">
-          All tenants on this Krent deployment.
-        </p>
-      </div>
+      <PageHeader
+        title="Organizations"
+        description="All tenants on this Krent deployment."
+      />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">All organizations</CardTitle>

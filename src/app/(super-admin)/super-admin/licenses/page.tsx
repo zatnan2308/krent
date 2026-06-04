@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { createAdminClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/constants/routes";
 
@@ -34,15 +35,10 @@ export default async function LicensesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Licenses</h1>
-        <p className="text-sm text-muted-foreground">
-          Issue and manage installation licenses. A license identifies which
-          client received a copy of the platform — it does not gate individual
-          features. To enable or disable modules technically, use
-          <code> organization → modules</code>.
-        </p>
-      </div>
+      <PageHeader
+        title="Licenses"
+        description="Issue and manage installation licenses. A license identifies which client received a copy of the platform — it does not gate individual features. To enable or disable modules, use organization → modules."
+      />
 
       <Card>
         <CardHeader>

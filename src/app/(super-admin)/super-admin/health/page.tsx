@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "System health · Super Admin",
@@ -68,13 +69,10 @@ export default async function SystemHealthPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">System health</h1>
-        <p className="text-sm text-muted-foreground">
-          Platform-wide signals. Use to spot stuck queues, failed integrations
-          and global traffic anomalies.
-        </p>
-      </div>
+      <PageHeader
+        title="System health"
+        description="Platform-wide signals. Use to spot stuck queues, failed integrations and global traffic anomalies."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sections.map((section) => (
