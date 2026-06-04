@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { DealEditor } from "@/features/crm/deal-editor";
 import { NotesPanel } from "@/features/crm/notes-panel";
 import {
   getDeal,
   getDealStages,
+  getEntityActivity,
   listNotes,
   listTasks,
 } from "@/features/crm/queries";
@@ -45,10 +47,11 @@ export default async function DealDetailPage({
     notFound();
   }
 
-  const [stages, notes, tasks] = await Promise.all([
+  const [stages, notes, tasks, activity] = await Promise.all([
     getDealStages(context.organization.id),
     listNotes(context.organization.id, { dealId: params.id }),
     listTasks(context.organization.id, { dealId: params.id }),
+    getEntityActivity(context.organization.id, [params.id]),
   ]);
   const canManage = hasPermission(context, "crm.manage");
 
@@ -122,6 +125,15 @@ export default async function DealDetailPage({
         </CardHeader>
         <CardContent>
           <TaskManager tasks={tasks} canManage={canManage} dealId={deal.id} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityTimeline items={activity} />
         </CardContent>
       </Card>
     </div>

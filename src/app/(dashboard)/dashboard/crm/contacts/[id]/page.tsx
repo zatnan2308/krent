@@ -7,10 +7,15 @@ import {
   LEAD_STATUS_LABELS,
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
+import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
-import { getContact, listNotes } from "@/features/crm/queries";
+import {
+  getContact,
+  getEntityActivity,
+  listNotes,
+} from "@/features/crm/queries";
 import {
   Card,
   CardContent,
@@ -61,6 +66,11 @@ export default async function ContactDetailPage({
   }));
   const canManage = hasPermission(context, "crm.manage");
   const { contact, leads, deals } = detail;
+  const activity = await getEntityActivity(context.organization.id, [
+    contact.id,
+    ...leads.map((lead) => lead.id),
+    ...deals.map((deal) => deal.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -178,6 +188,15 @@ export default async function ContactDetailPage({
             canManage={canManage}
             contactId={contact.id}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityTimeline items={activity} />
         </CardContent>
       </Card>
     </div>

@@ -6,10 +6,16 @@ import {
   LEAD_STATUS_LABELS,
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
+import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { LeadControls } from "@/features/crm/lead-controls";
 import { NotesPanel } from "@/features/crm/notes-panel";
-import { getLead, listNotes, listTasks } from "@/features/crm/queries";
+import {
+  getEntityActivity,
+  getLead,
+  listNotes,
+  listTasks,
+} from "@/features/crm/queries";
 import { TaskManager } from "@/features/crm/task-manager";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,9 +50,10 @@ export default async function LeadDetailPage({
     notFound();
   }
 
-  const [notes, tasks] = await Promise.all([
+  const [notes, tasks, activity] = await Promise.all([
     listNotes(context.organization.id, { leadId: params.id }),
     listTasks(context.organization.id, { leadId: params.id }),
+    getEntityActivity(context.organization.id, [params.id]),
   ]);
   const canManage = hasPermission(context, "crm.manage");
   const { lead, contact, attribution } = detail;
@@ -247,6 +254,15 @@ export default async function LeadDetailPage({
         </CardHeader>
         <CardContent>
           <TaskManager tasks={tasks} canManage={canManage} leadId={lead.id} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityTimeline items={activity} />
         </CardContent>
       </Card>
     </div>

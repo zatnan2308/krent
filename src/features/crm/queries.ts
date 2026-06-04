@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { resolveUserNames } from "@/server/user-directory";
 
 import type {
@@ -581,4 +581,58 @@ export async function getCrmOverview(
     openTasks: openTasks.count ?? 0,
     recentLeads,
   };
+}
+
+// ---- Activity timeline ----------------------------------------
+
+/** Одна запись ленты активности (из audit_logs). */
+export interface ActivityItem {
+  id: string;
+  action: string;
+  actorName: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+/**
+ * Лента активности по сущностям CRM из audit_logs. Фильтр строго по
+ * `entity_id` (UUID глобально уникален, так что чужие/чувствительные
+ * записи аудита не зацепятся) — поэтому читаем сервис-клиентом и показываем
+ * владельцам `crm.view`, не требуя отдельного `audit.view`.
+ *
+ * Для лида/сделки передаётся один id; для контакта — id контакта вместе
+ * с id его лидов и сделок (агрегированная лента).
+ */
+export async function getEntityActivity(
+  organizationId: string,
+  entityIds: string[],
+  limit = 50,
+): Promise<ActivityItem[]> {
+  const ids = [...new Set(entityIds.filter(Boolean))];
+  if (ids.length === 0) {
+    return [];
+  }
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("audit_logs")
+    .select("id, action, user_id, metadata, created_at")
+    .eq("organization_id", organizationId)
+    .in("entity_id", ids)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const rows = data ?? [];
+
+  const names = await resolveUserNames(
+    rows
+      .map((row) => row.user_id)
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    action: row.action,
+    actorName: row.user_id ? (names.get(row.user_id) ?? null) : null,
+    metadata: (row.metadata ?? {}) as Record<string, unknown>,
+    createdAt: row.created_at,
+  }));
 }

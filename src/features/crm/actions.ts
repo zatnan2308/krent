@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -73,6 +74,15 @@ export async function setLeadStatus(
     return { ok: false, error: "Lead not found or not editable." };
   }
 
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "lead.status_changed",
+    entityType: "lead",
+    entityId: leadId,
+    metadata: { status: parsedStatus.data },
+  });
+
   revalidatePath(CRM_LEADS);
   revalidatePath(`${CRM_LEADS}/${leadId}`);
   revalidatePath(CRM_ROOT);
@@ -103,6 +113,15 @@ export async function assignLeadToSelf(leadId: string): Promise<ActionResult> {
     return { ok: false, error: "You cannot assign this lead." };
   }
 
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "lead.assigned",
+    entityType: "lead",
+    entityId: leadId,
+    metadata: { agentId: context.user.id },
+  });
+
   revalidatePath(CRM_LEADS);
   revalidatePath(`${CRM_LEADS}/${leadId}`);
   return { ok: true };
@@ -131,6 +150,14 @@ export async function unassignLead(leadId: string): Promise<ActionResult> {
   if (!data || data.length === 0) {
     return { ok: false, error: "You cannot unassign this lead." };
   }
+
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "lead.unassigned",
+    entityType: "lead",
+    entityId: leadId,
+  });
 
   revalidatePath(CRM_LEADS);
   revalidatePath(`${CRM_LEADS}/${leadId}`);
@@ -217,6 +244,23 @@ export async function convertLeadToDeal(
     .eq("id", leadId)
     .eq("organization_id", organizationId);
 
+  await logAudit({
+    organizationId,
+    userId: context.user.id,
+    action: "lead.converted",
+    entityType: "lead",
+    entityId: leadId,
+    metadata: { dealId: deal.id },
+  });
+  await logAudit({
+    organizationId,
+    userId: context.user.id,
+    action: "deal.created",
+    entityType: "deal",
+    entityId: deal.id,
+    metadata: { leadId, title },
+  });
+
   revalidatePath(CRM_LEADS);
   revalidatePath(`${CRM_LEADS}/${leadId}`);
   revalidatePath(CRM_DEALS);
@@ -239,7 +283,7 @@ export async function moveDeal(
   const supabase = createClient();
   const { data: stage } = await supabase
     .from("deal_stages")
-    .select("is_won, is_lost")
+    .select("name, is_won, is_lost")
     .eq("id", stageId)
     .maybeSingle();
   if (!stage) {
@@ -260,7 +304,17 @@ export async function moveDeal(
     return { ok: false, error: "You cannot edit this deal." };
   }
 
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "deal.stage_changed",
+    entityType: "deal",
+    entityId: dealId,
+    metadata: { stage: stage.name, status },
+  });
+
   revalidatePath(CRM_DEALS);
+  revalidatePath(`${CRM_DEALS}/${dealId}`);
   return { ok: true };
 }
 
@@ -333,6 +387,15 @@ export async function updateDeal(
   if (!data || data.length === 0) {
     return { ok: false, error: "You cannot edit this deal." };
   }
+
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "deal.updated",
+    entityType: "deal",
+    entityId: d.dealId,
+    metadata: { title: d.title },
+  });
 
   revalidatePath(CRM_DEALS);
   revalidatePath(`${CRM_DEALS}/${d.dealId}`);
