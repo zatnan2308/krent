@@ -7,6 +7,8 @@
 - `/api/cron/calendar-sync` — раз в час, импорт iCal-фидов (зарегистрирован в `vercel.json`)
 - `/api/cron/webhooks-retry` — каждые 5 минут, повторная доставка
   webhook'ов (зарегистрирован в `vercel.json`)
+- `/api/cron/campaigns-dispatch` — каждые 10 минут, отправка запланированных
+  email-кампаний (зарегистрирован в `vercel.json`)
 - (план) `/api/cron/integrations-sync` — раз в сутки, обновление
   отчётов Search Console / Ads (роут ещё не реализован — см. P2 в `docs/ADMIN_AUDIT.md`)
 

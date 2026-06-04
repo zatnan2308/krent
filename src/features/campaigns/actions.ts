@@ -244,7 +244,10 @@ export async function sendCampaignNow(
   return { ok: true };
 }
 
-/** Планирует кампанию (placeholder — без автоматической отправки). */
+/**
+ * Планирует кампанию: ставит status='scheduled' и scheduled_at. Cron-эндпоинт
+ * /api/cron/campaigns-dispatch отправляет такие кампании по наступлении времени.
+ */
 export async function scheduleCampaign(
   input: ScheduleCampaignInput,
 ): Promise<ActionResult> {

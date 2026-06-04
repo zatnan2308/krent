@@ -496,9 +496,10 @@ export function CampaignEditor({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Scheduling stores the date — automatic delivery is a placeholder;
-          use Send now to deliver. Marketing emails skip unsubscribed
-          contacts and always include an unsubscribe link.
+          Scheduled campaigns are delivered automatically at the chosen time
+          (checked every few minutes); use Send now for immediate delivery.
+          Marketing emails skip unsubscribed contacts and always include an
+          unsubscribe link.
         </p>
       </div>
     </div>
