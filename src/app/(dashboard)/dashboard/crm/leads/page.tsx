@@ -8,7 +8,7 @@ import {
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
 import { CrmNav } from "@/features/crm/crm-nav";
-import { listLeads } from "@/features/crm/queries";
+import { listLeads, type LeadListItem } from "@/features/crm/queries";
 import type { LeadStatus } from "@/features/crm/types";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,10 +38,19 @@ function parseStatus(value: string | undefined): LeadStatus | undefined {
     : undefined;
 }
 
+function parseType(
+  value: string | undefined,
+): LeadListItem["type"] | undefined {
+  if (value && Object.prototype.hasOwnProperty.call(LEAD_TYPE_LABELS, value)) {
+    return value as LeadListItem["type"];
+  }
+  return undefined;
+}
+
 export default async function CrmLeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; type?: string };
 }) {
   const context = await requireOrganizationContext();
   if (!context.organization) {
@@ -52,10 +61,11 @@ export default async function CrmLeadsPage({
   }
 
   const status = parseStatus(searchParams.status);
-  const leads = await listLeads(
-    context.organization.id,
-    status ? { status } : {},
-  );
+  const type = parseType(searchParams.type);
+  const leads = await listLeads(context.organization.id, {
+    ...(status ? { status } : {}),
+    ...(type ? { type } : {}),
+  });
 
   return (
     <div className="space-y-6">
@@ -82,6 +92,24 @@ export default async function CrmLeadsPage({
             {LEAD_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="type" className="text-sm font-medium">
+            Type
+          </label>
+          <select
+            id="type"
+            name="type"
+            defaultValue={type ?? ""}
+            className={`${FIELD_CLASS} w-48`}
+          >
+            <option value="">All types</option>
+            {Object.entries(LEAD_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>

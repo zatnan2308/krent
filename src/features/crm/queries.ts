@@ -103,7 +103,12 @@ function notNull(value: string | null): value is string {
 /** Список лидов организации. RLS ограничивает выборку правами агента. */
 export async function listLeads(
   organizationId: string,
-  options: { status?: LeadStatus; contactId?: string; limit?: number } = {},
+  options: {
+    status?: LeadStatus;
+    type?: LeadListItem["type"];
+    contactId?: string;
+    limit?: number;
+  } = {},
 ): Promise<LeadListItem[]> {
   const supabase = createClient();
   let query = supabase
@@ -112,6 +117,9 @@ export async function listLeads(
     .eq("organization_id", organizationId);
   if (options.status) {
     query = query.eq("status", options.status);
+  }
+  if (options.type) {
+    query = query.eq("type", options.type);
   }
   if (options.contactId) {
     query = query.eq("contact_id", options.contactId);
