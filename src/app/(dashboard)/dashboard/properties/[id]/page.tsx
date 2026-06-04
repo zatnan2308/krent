@@ -54,12 +54,22 @@ export default async function EditPropertyPage({
             Edit listing details, pricing, media and location.
           </p>
         </div>
-        <Link
-          href={`${ROUTES.dashboard.properties}/${params.id}/calendar`}
-          className={buttonVariants({ variant: "outline" })}
-        >
-          Rental calendar
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/${context.organization.default_language}/properties/${property.property.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            View public page
+          </Link>
+          <Link
+            href={`${ROUTES.dashboard.properties}/${params.id}/calendar`}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Rental calendar
+          </Link>
+        </div>
       </div>
       <PropertyForm
         initial={property}

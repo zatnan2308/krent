@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 
 import {
   PROPERTY_PURPOSE_LABELS,
@@ -68,6 +69,7 @@ export default async function PropertiesListPage({
   });
   const canCreate = hasPermission(context, "properties.create");
   const canManageAmenities = hasPermission(context, "properties.manage_all");
+  const defaultLocale = context.organization.default_language;
 
   return (
     <div className="space-y-6">
@@ -148,6 +150,15 @@ export default async function PropertiesListPage({
                     >
                       {property.title}
                     </Link>
+                    <a
+                      href={`/${defaultLocale}/properties/${property.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 inline-flex text-muted-foreground hover:text-foreground"
+                      aria-label="View public page"
+                    >
+                      <ExternalLink className="inline h-3.5 w-3.5" />
+                    </a>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {PROPERTY_TYPE_LABELS[property.propertyType]}
