@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 
 import { requestAccountDeletion } from "@/features/account/actions";
+import { AccountMessageButton } from "@/features/account/account-message-button";
 import type {
   AccountData,
   AccountPayment,
@@ -476,13 +477,11 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
                 >
                   View property
                 </Link>
-                <Link
-                  href="/portal/messages"
+                <AccountMessageButton
+                  label="Message host"
                   className="btn btn-primary"
                   style={{ padding: "11px 18px", borderRadius: 10 }}
-                >
-                  Message host
-                </Link>
+                />
               </div>
             </div>
           </div>
@@ -678,7 +677,14 @@ function MessagesView({
     <div>
       <SectionLabel>Messages</SectionLabel>
       {conversations.length === 0 ? (
-        <Empty label="No conversations yet." />
+        <div style={{ display: "grid", gap: 16, justifyItems: "start" }}>
+          <Empty label="No conversations yet." />
+          <AccountMessageButton
+            label="Message your agent"
+            className="btn btn-primary"
+            style={{ padding: "11px 18px", borderRadius: 10 }}
+          />
+        </div>
       ) : (
         <div
           style={{
@@ -691,7 +697,7 @@ function MessagesView({
           {conversations.map((c, i) => (
             <Link
               key={c.id}
-              href="/portal/messages"
+              href={`/portal/messages?c=${c.id}`}
               style={{
                 display: "flex",
                 alignItems: "center",

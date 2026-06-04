@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChatThread } from "@/features/chat/chat-thread";
+import { ClientStartConversation } from "@/features/chat/client-start-conversation";
 import { CONVERSATION_TYPE_LABELS } from "@/features/chat/constants";
 import { NewConversationForm } from "@/features/chat/new-conversation-form";
 import {
@@ -18,6 +19,8 @@ interface RenderChatScreenArgs {
     portalAccounts: { id: string; label: string }[];
     properties: { id: string; title: string }[];
   } | null;
+  /** Показать клиенту кнопку «написать агенту» (сторона портала/кабинета). */
+  clientStart?: boolean;
 }
 
 /**
@@ -28,6 +31,7 @@ export async function renderChatScreen({
   basePath,
   activeConversationId,
   newConversation,
+  clientStart = false,
 }: RenderChatScreenArgs) {
   const conversations = await listMyConversations();
   const active = activeConversationId
@@ -53,6 +57,10 @@ export async function renderChatScreen({
               properties={newConversation.properties}
               basePath={basePath}
             />
+          ) : null}
+
+          {clientStart ? (
+            <ClientStartConversation basePath={basePath} />
           ) : null}
 
           <div className="rounded-lg border">

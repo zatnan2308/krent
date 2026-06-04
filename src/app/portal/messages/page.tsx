@@ -17,5 +17,6 @@ export default async function PortalMessagesPage({
     activeConversationId:
       typeof searchParams.c === "string" ? searchParams.c : null,
     newConversation: null,
+    clientStart: true,
   });
 }

@@ -158,6 +158,117 @@ export async function startConversation(
   return { ok: true, conversationId: conversation.id };
 }
 
+/**
+ * Клиент инициирует диалог со своим агентом/менеджером из портала или кабинета.
+ * Переиспользует существующий диалог клиента, если он уже есть, иначе создаёт
+ * новый и добавляет участников (клиент + пригласивший агент либо любой активный
+ * сотрудник организации).
+ */
+export async function startConversationWithAgent(input?: {
+  propertyId?: string | null;
+}): Promise<StartConversationResult> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  const admin = createAdminClient();
+
+  const { data: account } = await admin
+    .from("portal_accounts")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!account) {
+    return { ok: false, error: "Your client portal is not active yet." };
+  }
+  const organizationId = account.organization_id;
+
+  // Переиспользуем уже существующий диалог клиента, чтобы не плодить дубли.
+  const { data: existingParts } = await admin
+    .from("chat_participants")
+    .select("conversation_id")
+    .eq("user_id", user.id)
+    .eq("organization_id", organizationId)
+    .limit(1);
+  if (existingParts && existingParts.length > 0 && existingParts[0]) {
+    return { ok: true, conversationId: existingParts[0].conversation_id };
+  }
+
+  // Получатель: пригласивший агент, иначе любой активный сотрудник организации.
+  let agentId: string | null = account.invited_by;
+  if (!agentId) {
+    const { data: member } = await admin
+      .from("organization_members")
+      .select("user_id")
+      .eq("organization_id", organizationId)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    agentId = member?.user_id ?? null;
+  }
+  if (!agentId) {
+    return { ok: false, error: "No agent is available to chat right now." };
+  }
+
+  let propertyId: string | null = null;
+  if (input?.propertyId) {
+    const { data: property } = await admin
+      .from("properties")
+      .select("id")
+      .eq("id", input.propertyId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    propertyId = property?.id ?? null;
+  }
+
+  const conversationType =
+    account.portal_type === "seller"
+      ? "seller_agent"
+      : account.portal_type === "guest"
+        ? "guest_manager"
+        : "buyer_agent";
+
+  const { data: conversation, error } = await admin
+    .from("chat_conversations")
+    .insert({
+      organization_id: organizationId,
+      property_id: propertyId,
+      type: conversationType,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (error || !conversation) {
+    return { ok: false, error: "Could not start the conversation." };
+  }
+
+  const { error: participantsError } = await admin
+    .from("chat_participants")
+    .insert([
+      {
+        conversation_id: conversation.id,
+        organization_id: organizationId,
+        user_id: user.id,
+      },
+      {
+        conversation_id: conversation.id,
+        organization_id: organizationId,
+        user_id: agentId,
+      },
+    ]);
+  if (participantsError) {
+    return { ok: false, error: "Could not add conversation participants." };
+  }
+
+  revalidatePath(PORTAL_MESSAGES);
+  revalidatePath(DASHBOARD_MESSAGES);
+  return { ok: true, conversationId: conversation.id };
+}
+
 /** Отправляет текстовое сообщение в диалог. */
 export async function sendTextMessage(
   input: SendMessageInput,
