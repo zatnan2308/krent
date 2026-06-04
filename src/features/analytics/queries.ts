@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 import { createAdminClient } from "@/lib/supabase/server";
 
 import type { TrackingSettings } from "./types";
@@ -26,38 +28,46 @@ const EMPTY_CONFIG: PublicTrackingConfig = {
   consentModeEnabled: false,
 };
 
-/** Конфиг tracking-интеграций для публичного клиентского трекера. */
+/** Конфиг tracking-интеграций для публичного клиентского трекера (кэш 60s). */
+const getPublicTrackingConfigCached = unstable_cache(
+  async (organizationId: string): Promise<PublicTrackingConfig> => {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("tracking_settings")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (!data) {
+      return EMPTY_CONFIG;
+    }
+    const rawLabels = data.google_ads_labels as Record<string, unknown> | null;
+    const labels: Record<string, string> = {};
+    if (rawLabels && typeof rawLabels === "object") {
+      for (const [key, value] of Object.entries(rawLabels)) {
+        if (typeof value === "string") {
+          labels[key] = value;
+        }
+      }
+    }
+    return {
+      ga4MeasurementId: data.ga4_measurement_id,
+      gtmId: data.gtm_id,
+      ga4Enabled: data.ga4_enabled,
+      metaPixelId: data.meta_pixel_id,
+      metaPixelEnabled: data.meta_pixel_enabled,
+      googleAdsConversionId: data.google_ads_conversion_id,
+      googleAdsLabels: labels,
+      consentModeEnabled: data.consent_mode_enabled,
+    };
+  },
+  ["public-tracking-config"],
+  { revalidate: 60, tags: ["public-site"] },
+);
+
 export async function getPublicTrackingConfig(
   organizationId: string,
 ): Promise<PublicTrackingConfig> {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("tracking_settings")
-    .select("*")
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-  if (!data) {
-    return EMPTY_CONFIG;
-  }
-  const rawLabels = data.google_ads_labels as Record<string, unknown> | null;
-  const labels: Record<string, string> = {};
-  if (rawLabels && typeof rawLabels === "object") {
-    for (const [key, value] of Object.entries(rawLabels)) {
-      if (typeof value === "string") {
-        labels[key] = value;
-      }
-    }
-  }
-  return {
-    ga4MeasurementId: data.ga4_measurement_id,
-    gtmId: data.gtm_id,
-    ga4Enabled: data.ga4_enabled,
-    metaPixelId: data.meta_pixel_id,
-    metaPixelEnabled: data.meta_pixel_enabled,
-    googleAdsConversionId: data.google_ads_conversion_id,
-    googleAdsLabels: labels,
-    consentModeEnabled: data.consent_mode_enabled,
-  };
+  return getPublicTrackingConfigCached(organizationId);
 }
 
 /** Полные настройки tracking организации (включая CAPI токен) для формы. */

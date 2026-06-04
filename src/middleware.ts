@@ -10,12 +10,18 @@ import {
 import { updateSession } from "@/lib/supabase/middleware";
 
 /** Префиксы маршрутов, требующих аутентификации. */
-const PROTECTED_PREFIXES = ["/dashboard", "/super-admin", "/portal"];
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/super-admin",
+  "/portal",
+  "/account",
+];
 
 /** Префиксы маршрутов без locale в URL (внутреннее приложение и API). */
 const NON_LOCALIZED_PREFIXES = [
   "/dashboard",
   "/super-admin",
+  "/account",
   "/login",
   "/api",
   "/portal",
@@ -28,11 +34,39 @@ function hasPrefix(pathname: string, prefixes: string[]): boolean {
   );
 }
 
+/** Locale-редирект для публичных маршрутов без префикса локали. */
+function localeRedirect(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  const isLocalized = !hasPrefix(pathname, NON_LOCALIZED_PREFIXES);
+  if (!isLocalized || getLocaleFromPathname(pathname)) {
+    return null;
+  }
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  const locale =
+    cookieLocale && isLocale(cookieLocale)
+      ? cookieLocale
+      : matchLocale(request.headers.get("accept-language"));
+  const url = request.nextUrl.clone();
+  url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+  return NextResponse.redirect(url);
+}
+
 export async function middleware(request: NextRequest) {
-  const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  // --- Защита внутренних маршрутов ---------------------------
+  // Сетевой Supabase Auth (getUser) нужен только защищённым маршрутам и
+  // странице входа. Для публичных страниц, навигаций и prefetch его НЕ делаем —
+  // иначе КАЖДЫЙ запрос ждёт round-trip к Supabase Auth (главная причина лагов).
+  const needsAuth =
+    hasPrefix(pathname, PROTECTED_PREFIXES) || pathname === ROUTES.auth.signIn;
+
+  if (!needsAuth) {
+    return localeRedirect(request) ?? NextResponse.next();
+  }
+
+  // --- Защищённые маршруты / вход: рефреш сессии + проверка пользователя ---
+  const { response, user } = await updateSession(request);
+
   if (hasPrefix(pathname, PROTECTED_PREFIXES) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = ROUTES.auth.signIn;
@@ -43,20 +77,6 @@ export async function middleware(request: NextRequest) {
   if (user && pathname === ROUTES.auth.signIn) {
     const url = request.nextUrl.clone();
     url.pathname = ROUTES.dashboard.root;
-    return NextResponse.redirect(url);
-  }
-
-  // --- Locale routing для публичных маршрутов ----------------
-  const isLocalized = !hasPrefix(pathname, NON_LOCALIZED_PREFIXES);
-  if (isLocalized && !getLocaleFromPathname(pathname)) {
-    const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
-    const locale =
-      cookieLocale && isLocale(cookieLocale)
-        ? cookieLocale
-        : matchLocale(request.headers.get("accept-language"));
-
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
     return NextResponse.redirect(url);
   }
 

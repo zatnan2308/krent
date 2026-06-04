@@ -42,17 +42,19 @@ export default async function SettingsPage() {
     admin.from("roles").select("id, key, name").order("name"),
   ]);
 
-  // Email пользователей через auth admin.
+  // Email пользователей через auth admin — параллельно (а не N последовательных).
   const memberRows = members.data ?? [];
   const memberEmails = new Map<string, string>();
-  for (const m of memberRows) {
-    try {
-      const { data } = await admin.auth.admin.getUserById(m.user_id);
-      if (data.user?.email) memberEmails.set(m.user_id, data.user.email);
-    } catch {
-      // ignore
-    }
-  }
+  await Promise.all(
+    memberRows.map(async (m) => {
+      try {
+        const { data } = await admin.auth.admin.getUserById(m.user_id);
+        if (data.user?.email) memberEmails.set(m.user_id, data.user.email);
+      } catch {
+        // ignore
+      }
+    }),
+  );
 
   const enabledById = new Map(
     (orgModules.data ?? []).map((row) => [row.module_id, row.enabled]),
