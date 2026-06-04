@@ -98,3 +98,80 @@ export async function deleteMenuItem(itemId: string): Promise<void> {
   revalidatePath("/dashboard/navigation");
   revalidateTag("public-site");
 }
+
+/** Двигает пункт меню вверх/вниз по position через swap с соседом. */
+export async function moveMenuItem(
+  itemId: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization || !hasPermission(context, "navigation.manage")) {
+    return { ok: false, error: "You cannot manage navigation." };
+  }
+  const supabase = createClient();
+  const { data: current } = await supabase
+    .from("navigation_items")
+    .select("id, menu_id, position")
+    .eq("id", itemId)
+    .eq("organization_id", context.organization.id)
+    .maybeSingle();
+  if (!current) {
+    return { ok: false, error: "Item not found." };
+  }
+  const { data: list } = await supabase
+    .from("navigation_items")
+    .select("id, position")
+    .eq("menu_id", current.menu_id)
+    .order("position", { ascending: true });
+  const items = list ?? [];
+  const index = items.findIndex((item) => item.id === itemId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= items.length) {
+    return { ok: true };
+  }
+  const a = items[index];
+  const b = items[swapIndex];
+  if (!a || !b) {
+    return { ok: true };
+  }
+  await supabase
+    .from("navigation_items")
+    .update({ position: b.position })
+    .eq("id", a.id);
+  await supabase
+    .from("navigation_items")
+    .update({ position: a.position })
+    .eq("id", b.id);
+
+  revalidatePath("/dashboard/navigation");
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
+/** Обновляет label/url существующего пункта меню. */
+export async function updateMenuItem(
+  itemId: string,
+  label: string,
+  url: string,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization || !hasPermission(context, "navigation.manage")) {
+    return { ok: false, error: "You cannot manage navigation." };
+  }
+  if (!label.trim() || !url.trim()) {
+    return { ok: false, error: "Label and URL are required." };
+  }
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("navigation_items")
+    .update({ label: label.trim(), url: url.trim() })
+    .eq("id", itemId)
+    .eq("organization_id", context.organization.id);
+  if (error) {
+    return { ok: false, error: "Could not update the item." };
+  }
+
+  revalidatePath("/dashboard/navigation");
+  revalidateTag("public-site");
+  return { ok: true };
+}
