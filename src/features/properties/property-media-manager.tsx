@@ -3,11 +3,13 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Star, Trash2, Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, Star, Trash2, Upload } from "lucide-react";
 
 import {
   deletePropertyMedia,
+  reorderPropertyMedia,
   setPropertyMediaCover,
+  updatePropertyMediaAlt,
   uploadPropertyMedia,
 } from "@/features/properties/media-actions";
 import { MEDIA_CATEGORY_OPTIONS } from "@/features/properties/constants";
@@ -82,6 +84,24 @@ export function PropertyMediaManager({
     router.refresh();
   }
 
+  async function handleReorder(mediaId: string, direction: "up" | "down") {
+    setPending(true);
+    setError(null);
+    const result = await reorderPropertyMedia(mediaId, direction);
+    setPending(false);
+    if (!result.ok) {
+      setError(result.error);
+    }
+    router.refresh();
+  }
+
+  async function handleAlt(mediaId: string, alt: string) {
+    const result = await updatePropertyMediaAlt(mediaId, alt);
+    if (!result.ok) {
+      setError(result.error);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
@@ -154,7 +174,7 @@ export function PropertyMediaManager({
 
       {media.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {media.map((item) => (
+          {media.map((item, index) => (
             <div key={item.id} className="space-y-2">
               <div className="relative aspect-[4/3] overflow-hidden rounded-md border bg-muted">
                 <Image
@@ -170,7 +190,39 @@ export function PropertyMediaManager({
                   </span>
                 ) : null}
               </div>
+              <input
+                type="text"
+                defaultValue={item.alt ?? ""}
+                placeholder="Alt text (SEO)"
+                aria-label="Alt text"
+                className={cn(FIELD_CLASS, "h-8 text-xs")}
+                onBlur={(event) => void handleAlt(item.id, event.target.value)}
+              />
               <div className="flex items-center justify-between gap-1">
+                <div className="flex gap-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={pending || index === 0}
+                    aria-label="Move image up"
+                    onClick={() => handleReorder(item.id, "up")}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={pending || index === media.length - 1}
+                    aria-label="Move image down"
+                    onClick={() => handleReorder(item.id, "down")}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button
                   type="button"
                   variant="ghost"
