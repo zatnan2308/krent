@@ -163,6 +163,8 @@ export interface StayRulesConfig {
   maxStay: number | null;
   checkInDays: number[];
   checkOutDays: number[];
+  /** Буфер (дней) до/после занятых дат, в которые бронировать нельзя. */
+  bufferDays: number;
 }
 
 /**

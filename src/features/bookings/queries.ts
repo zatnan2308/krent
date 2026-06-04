@@ -1,4 +1,5 @@
 import { findConflicts } from "@/features/rental-calendar/availability";
+import { addDays, todayIso } from "@/features/rental-calendar/date-utils";
 import { generateFeedToken } from "@/features/rental-calendar/queries";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -113,6 +114,7 @@ export async function loadBookingContext(
     max_stay: number | null;
     check_in_days: number[];
     check_out_days: number[];
+    buffer_days: number;
   } | null = null;
   let seasonalRates: SeasonalRate[] = [];
   let events: BookingPricingContext["events"] = [];
@@ -122,7 +124,7 @@ export async function loadBookingContext(
       admin
         .from("rental_availability_rules")
         .select(
-          "default_price, weekend_price, currency, min_stay, max_stay, check_in_days, check_out_days",
+          "default_price, weekend_price, currency, min_stay, max_stay, check_in_days, check_out_days, buffer_days",
         )
         .eq("calendar_id", calendarId)
         .maybeSingle(),
@@ -180,6 +182,7 @@ export async function loadBookingContext(
       maxStay: availabilityRule?.max_stay ?? null,
       checkInDays: availabilityRule?.check_in_days ?? DEFAULT_CHECK_DAYS,
       checkOutDays: availabilityRule?.check_out_days ?? DEFAULT_CHECK_DAYS,
+      bufferDays: availabilityRule?.buffer_days ?? 0,
     },
     events,
     pricingConfigured: defaultPrice !== null && defaultPrice > 0,
@@ -217,7 +220,12 @@ export function evaluateBooking(
   });
 
   const issues = validateStayRules(checkIn, checkOut, context.stayRules);
-  const conflicts = findConflicts(context.events, checkIn, checkOut);
+  // Буфер между бронями: расширяем проверяемый диапазон на bufferDays с обеих
+  // сторон, чтобы рядом с занятыми датами нельзя было забронировать.
+  const buffer = context.stayRules.bufferDays;
+  const conflictStart = buffer > 0 ? addDays(checkIn, -buffer) : checkIn;
+  const conflictEnd = buffer > 0 ? addDays(checkOut, buffer) : checkOut;
+  const conflicts = findConflicts(context.events, conflictStart, conflictEnd);
   const available = conflicts.length === 0;
   if (!available) {
     issues.push("These dates are not available.");
@@ -274,6 +282,43 @@ export async function findOrCreateCalendarAdmin(
     token: generateFeedToken(),
   });
   return created.id;
+}
+
+/** Статусы, занимающие даты (дублирует набор из availability). */
+const OCCUPYING_STATUSES = new Set([
+  "booked",
+  "blocked",
+  "pending",
+  "maintenance",
+  "cleaning",
+]);
+
+/**
+ * Занятые даты объекта начиная с сегодняшнего дня — для дизейбла в публичном
+ * календаре бронирования. Разворачивает занимающие интервалы [start, end) в
+ * отдельные ISO-даты.
+ */
+export async function getBookedDates(propertyId: string): Promise<string[]> {
+  const admin = createAdminClient();
+  const today = todayIso();
+  const { data } = await admin
+    .from("rental_calendar_events")
+    .select("status, start_date, end_date")
+    .eq("property_id", propertyId)
+    .gte("end_date", today);
+  const dates = new Set<string>();
+  for (const event of data ?? []) {
+    if (!OCCUPYING_STATUSES.has(event.status)) {
+      continue;
+    }
+    let cursor =
+      event.start_date < today ? today : event.start_date;
+    while (cursor < event.end_date) {
+      dates.add(cursor);
+      cursor = addDays(cursor, 1);
+    }
+  }
+  return [...dates];
 }
 
 // ---- Dashboard ------------------------------------------------

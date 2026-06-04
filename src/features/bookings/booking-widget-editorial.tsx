@@ -16,6 +16,8 @@ interface Props {
   maxGuests: number | null;
   rating?: number | null;
   reviews?: number | null;
+  /** Занятые ISO-даты — дизейблятся в календаре. */
+  bookedDates?: string[];
 }
 
 const SERVICE_RATE = 0.06;
@@ -44,6 +46,7 @@ export function BookingWidgetEditorial({
   maxGuests,
   rating,
   reviews,
+  bookedDates = [],
 }: Props) {
   const [start, setStart] = React.useState<Date | null>(null);
   const [end, setEnd] = React.useState<Date | null>(null);
@@ -239,7 +242,12 @@ export function BookingWidgetEditorial({
           </button>
           {open ? (
             <div style={{ padding: 14, borderTop: "1px solid var(--border-medium)" }}>
-              <Calendar start={start} end={end} onPick={pick} />
+              <Calendar
+                start={start}
+                end={end}
+                onPick={pick}
+                bookedDates={bookedDates}
+              />
               <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
                 Minimum stay {minNights} night{minNights > 1 ? "s" : ""}
               </div>
@@ -376,11 +384,14 @@ function Calendar({
   start,
   end,
   onPick,
+  bookedDates,
 }: {
   start: Date | null;
   end: Date | null;
   onPick: (d: Date) => void;
+  bookedDates: string[];
 }) {
+  const bookedSet = React.useMemo(() => new Set(bookedDates), [bookedDates]);
   const today = React.useMemo(() => {
     const t = new Date();
     t.setHours(0, 0, 0, 0);
@@ -441,23 +452,26 @@ function Calendar({
         {cells.map((d, i) => {
           if (!d) return <div key={i} />;
           const past = d < today;
+          const booked = bookedSet.has(isoDate(d));
+          const disabled = past || booked;
           const selected = sameDay(d, start) || sameDay(d, end);
           const mid = inRange(d);
           return (
             <button
               key={i}
               type="button"
-              disabled={past}
+              disabled={disabled}
               onClick={() => onPick(d)}
               className="tnum"
+              title={booked ? "Unavailable" : undefined}
               style={{
                 aspectRatio: "1 / 1",
                 fontSize: 12.5,
                 border: "none",
-                cursor: past ? "default" : "pointer",
-                color: past ? "var(--text-quaternary)" : selected ? "var(--bg-primary)" : "var(--text-primary)",
+                cursor: disabled ? "default" : "pointer",
+                color: disabled ? "var(--text-quaternary)" : selected ? "var(--bg-primary)" : "var(--text-primary)",
                 background: selected ? "var(--accent)" : mid ? "var(--accent-muted)" : "transparent",
-                textDecoration: past ? "line-through" : "none",
+                textDecoration: disabled ? "line-through" : "none",
                 fontVariantNumeric: "tabular-nums",
               }}
             >

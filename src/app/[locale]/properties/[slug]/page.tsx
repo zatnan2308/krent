@@ -11,6 +11,7 @@ import {
 } from "@/features/properties/constants";
 import { TrackPropertyView } from "@/features/analytics/track-property-view";
 import { BookingWidgetEditorial } from "@/features/bookings/booking-widget-editorial";
+import { getBookedDates } from "@/features/bookings/queries";
 import { MortgageCalculator } from "@/features/properties/mortgage-calculator";
 import { PropertyHeroGallery } from "@/features/properties/property-hero-gallery";
 import { PropertyViewingForm } from "@/features/properties/property-viewing-form";
@@ -333,6 +334,8 @@ export default async function PropertyDetailPage({
     (property.purpose === "sale" || property.purpose === "mixed") &&
     view.price !== null &&
     view.price.displayType === "visible";
+  // Занятые даты для дизейбла в календаре бронирования.
+  const bookedDates = showBooking ? await getBookedDates(property.id) : [];
 
   // Acquisition cost (Dubai-typical fees), выводится из цены.
   const acqBase = view.price ? view.price.amount : 0;
@@ -470,6 +473,7 @@ export default async function PropertyDetailPage({
                 cleaningFee={view.fees.cleaningFee}
                 minNights={1}
                 maxGuests={property.guest_capacity}
+                bookedDates={bookedDates}
               />
             ) : (
               <>
