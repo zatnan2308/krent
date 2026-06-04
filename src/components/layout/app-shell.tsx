@@ -18,6 +18,8 @@ interface AppShellProps {
   notifications?: NotificationItem[];
   publicSiteUrl?: string | null;
   sidebarBadges?: Record<string, number>;
+  permissions?: string[];
+  isSuperAdmin?: boolean;
   children: React.ReactNode;
 }
 
@@ -35,6 +37,8 @@ export function AppShell({
   notifications,
   publicSiteUrl,
   sidebarBadges,
+  permissions,
+  isSuperAdmin,
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -43,7 +47,12 @@ export function AppShell({
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
       <aside className="hidden border-r bg-background lg:block">
         <div className="sticky top-0 h-screen">
-          <AppSidebar variant={variant} badges={sidebarBadges} />
+          <AppSidebar
+            variant={variant}
+            badges={sidebarBadges}
+            permissions={permissions}
+            isSuperAdmin={isSuperAdmin}
+          />
         </div>
       </aside>
 
@@ -61,6 +70,8 @@ export function AppShell({
               variant={variant}
               onNavigate={() => setMobileOpen(false)}
               badges={sidebarBadges}
+              permissions={permissions}
+              isSuperAdmin={isSuperAdmin}
             />
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>

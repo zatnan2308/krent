@@ -13,6 +13,8 @@ interface DashboardLayoutProps {
   notifications?: NotificationItem[];
   publicSiteUrl?: string | null;
   sidebarBadges?: Record<string, number>;
+  permissions?: string[];
+  isSuperAdmin?: boolean;
   children: ReactNode;
 }
 
@@ -25,6 +27,8 @@ export function DashboardLayout({
   notifications,
   publicSiteUrl,
   sidebarBadges,
+  permissions,
+  isSuperAdmin,
   children,
 }: DashboardLayoutProps) {
   return (
@@ -38,6 +42,8 @@ export function DashboardLayout({
       notifications={notifications}
       publicSiteUrl={publicSiteUrl}
       sidebarBadges={sidebarBadges}
+      permissions={permissions}
+      isSuperAdmin={isSuperAdmin}
     >
       {children}
     </AppShell>
