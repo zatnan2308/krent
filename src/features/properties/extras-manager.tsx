@@ -11,6 +11,7 @@ import {
   deleteNearbyPlace,
   deletePropertyDocument,
   deletePropertyVideo,
+  uploadPropertyDocument,
 } from "@/features/properties/extras-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +128,8 @@ export function DocumentsManager({
   const [name, setName] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [type, setType] = React.useState<"brochure" | "other">("brochure");
+  const [file, setFile] = React.useState<File | null>(null);
+  const [uploading, setUploading] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -144,6 +147,26 @@ export function DocumentsManager({
     if (result.ok) {
       setName("");
       setUrl("");
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleUpload() {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const formData = new FormData();
+    formData.set("propertyId", propertyId);
+    formData.set("file", file);
+    if (name.trim()) formData.set("name", name.trim());
+    formData.set("type", type);
+    const result = await uploadPropertyDocument(formData);
+    setUploading(false);
+    if (result.ok) {
+      setFile(null);
+      setName("");
       router.refresh();
     } else {
       setError(result.error);
@@ -180,6 +203,31 @@ export function DocumentsManager({
           ))}
         </ul>
       )}
+      <div className="space-y-2 border-t pt-3">
+        <p className="text-xs font-medium text-muted-foreground">
+          Upload a file (PDF, image or Word, up to 10MB) — uses the document
+          name below, or the file name if left empty.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx,image/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="text-sm"
+          />
+          <Button
+            size="sm"
+            type="button"
+            onClick={handleUpload}
+            disabled={uploading || !file}
+          >
+            {uploading ? "Uploading…" : "Upload"}
+          </Button>
+        </div>
+      </div>
+      <p className="text-xs font-medium text-muted-foreground">
+        Or add by URL
+      </p>
       <div className="grid gap-2 sm:grid-cols-2">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Document name" />
         <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />

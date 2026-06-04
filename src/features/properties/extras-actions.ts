@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import type { Enums } from "@/types/database";
 
@@ -12,6 +12,111 @@ import type { ActionResult } from "./schema";
 
 function editPath(propertyId: string): string {
   return `/dashboard/properties/${propertyId}`;
+}
+
+// ---- Document upload (Supabase Storage) -------------------------
+
+const DOCUMENT_BUCKET = "property-media";
+const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
+const ALLOWED_DOCUMENT_MIME = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+/**
+ * Загружает файл документа объекта в Supabase Storage и создаёт запись
+ * property_documents. Файл кладётся сервис-клиентом (как и медиа), строка —
+ * anon-клиентом под RLS. Зеркалит uploadPropertyMedia.
+ */
+export async function uploadPropertyDocument(
+  formData: FormData,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+
+  const propertyId = formData.get("propertyId");
+  const file = formData.get("file");
+  const nameValue = formData.get("name");
+  const typeValue = formData.get("type");
+  if (typeof propertyId !== "string" || !(file instanceof File)) {
+    return { ok: false, error: "Invalid upload." };
+  }
+  const type: Enums<"document_type"> =
+    typeValue === "other" ? "other" : "brochure";
+  const name =
+    typeof nameValue === "string" && nameValue.trim()
+      ? nameValue.trim()
+      : file.name;
+
+  if (file.size === 0 || file.size > MAX_DOCUMENT_SIZE) {
+    return { ok: false, error: "File must be between 1 byte and 10MB." };
+  }
+  if (!ALLOWED_DOCUMENT_MIME.has(file.type)) {
+    return {
+      ok: false,
+      error: "Only PDF, image or Word documents are allowed.",
+    };
+  }
+
+  const supabase = createClient();
+  const { data: property } = await supabase
+    .from("properties")
+    .select("id, assigned_agent_id, co_agent_ids")
+    .eq("organization_id", context.organization.id)
+    .eq("id", propertyId)
+    .maybeSingle();
+  if (!property || !canEditProperty(context, property)) {
+    return { ok: false, error: "You cannot edit this property." };
+  }
+
+  const extension =
+    file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+    "pdf";
+  const storagePath = `${context.organization.id}/${propertyId}/documents/${crypto.randomUUID()}.${extension}`;
+
+  const admin = createAdminClient();
+  const { error: uploadError } = await admin.storage
+    .from(DOCUMENT_BUCKET)
+    .upload(storagePath, await file.arrayBuffer(), {
+      contentType: file.type,
+      upsert: false,
+    });
+  if (uploadError) {
+    return { ok: false, error: "Could not upload the file." };
+  }
+
+  const { data: publicUrl } = admin.storage
+    .from(DOCUMENT_BUCKET)
+    .getPublicUrl(storagePath);
+
+  const { count } = await supabase
+    .from("property_documents")
+    .select("*", { count: "exact", head: true })
+    .eq("property_id", propertyId);
+
+  const { error: insertError } = await supabase
+    .from("property_documents")
+    .insert({
+      organization_id: context.organization.id,
+      property_id: propertyId,
+      name,
+      url: publicUrl.publicUrl,
+      storage_path: storagePath,
+      type,
+      sort_order: count ?? 0,
+    });
+  if (insertError) {
+    // Запись не создалась — убираем осиротевший файл из Storage.
+    await admin.storage.from(DOCUMENT_BUCKET).remove([storagePath]);
+    return { ok: false, error: "Could not save the document." };
+  }
+
+  revalidatePath(editPath(propertyId));
+  return { ok: true };
 }
 
 // ---- Videos -----------------------------------------------------
@@ -132,7 +237,7 @@ export async function deletePropertyDocument(id: string): Promise<ActionResult> 
   const supabase = createClient();
   const { data: doc } = await supabase
     .from("property_documents")
-    .select("id, property_id")
+    .select("id, property_id, storage_path")
     .eq("organization_id", context.organization.id)
     .eq("id", id)
     .maybeSingle();
@@ -142,6 +247,11 @@ export async function deletePropertyDocument(id: string): Promise<ActionResult> 
     .delete()
     .eq("id", id);
   if (error) return { ok: false, error: "Could not delete document." };
+  // Загруженный файл (если был) убираем из Storage.
+  if (doc.storage_path) {
+    const admin = createAdminClient();
+    await admin.storage.from(DOCUMENT_BUCKET).remove([doc.storage_path]);
+  }
   revalidatePath(editPath(doc.property_id));
   return { ok: true };
 }
