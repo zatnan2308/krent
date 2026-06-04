@@ -39,7 +39,14 @@
 - ⬜ P1-13 мультиязычный редактор объекта (`property_translations`/`slug_localized`) — крупный
 - ⬜ P1-14 (хвост) вложенность/дропдауны навигации (`parent_id`), выбор `page_id`, остальные колонки футера
 
-**Осталось (P2):** весь раздел 4 ниже (open/click email-трекинг, карта в локации, множественные цены, профиль агента, превью в редакторах, колокол read/unread, syncReports для GSC/Ads, и т.д.).
+**P2 — закрыто частично:**
+- ✅ «View public page» на объектах (`41e4dd7`)
+- ✅ менеджер `nearby_places` на объекте (`a0bd3f4`)
+- ✅ edit/reorder About-milestones (`aaa5391`)
+
+**Осталось (P2):** остальное из раздела 4 ниже (open/click email-трекинг, карта в
+локации объекта, множественные цены, профиль агента, превью в редакторах, колокол
+read/unread, `syncReports` для GSC/Ads, и т.д.).
 
 > Системный helper писем-приглашений: `src/features/portal/invite-email.ts`
 > (`ensurePortalInvite`/`sendPortalInviteEmail`) + системный шаблон `portal.invited`
