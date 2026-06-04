@@ -197,7 +197,7 @@ export default async function CrmLeadsPage({
       ) : null}
 
       {leads.length > 0 ? (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

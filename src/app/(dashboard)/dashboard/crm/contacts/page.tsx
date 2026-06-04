@@ -73,7 +73,7 @@ export default async function CrmContactsPage({
       </form>
 
       {contacts.length > 0 ? (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

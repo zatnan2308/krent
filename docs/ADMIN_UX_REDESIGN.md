@@ -50,7 +50,19 @@ portal не затрагиваем. Шрифт Inter подключён глоб
 - [x] 7. Growth ✅ — Marketing(+nav→underline, segments/contacts/campaign), SEO/Analytics/Search Console → StatCard, Reports/Integrations/Agent Sync → PageHeader; Google/Meta Ads метрики на bg-card
 - [x] 8. Website ✅ — Home/Pages/Navigation/About → PageHeader (+actions «View page»); Home 12-табовый бар → подчёркнутый стиль; Pages-таблица на bg-card
 - [x] 9. Settings ✅ — заголовок → PageHeader; 7-табовый бар → подчёркнутый; формы-секции на белый bg-card
-- [ ] 10. Финальный проход: анимации / пустые / загрузки / адаптив + QA
+- [x] 10. Финальный проход ✅ — единообразие таблиц (leads/contacts → bg-card), route-level **skeleton-загрузка** (`dashboard/loading.tsx`, shimmer вместо спиннера)
+
+## Статус: все 8 секций сайдбара пройдены ✅
+Overview · CRM · Properties · Rentals/Bookings/Calendar/Clients · Communication ·
+Growth · Website · Settings — каждая страница и вкладка на единых `PageHeader` /
+`StatCard` / тулбар-cards / подчёркнутые под-навигации, с моторикой из фундамента.
+
+### Опциональный остаток (вне scope «админки администратора»)
+- **Super-admin** (`/super-admin/*`) — это панель ВЛАДЕЛЬЦА платформы, не организации;
+  использует тот же AppShell (уже получила новую палитру/шрифт/каркас), но per-page
+  заголовки там пока ad-hoc. Можно за один проход раскатать `PageHeader`, если нужно.
+- Возможные доработки: tabs/группировка для очень длинной `agent-sync`; fade при
+  переключении вкладок внутри Home/Settings; карточные section-обёртки в Home-секциях.
 
 ## Где что лежит (для следующих стадий)
 - Каркас: `src/components/layout/{app-shell,app-sidebar,app-topbar,nav-config}.tsx`
