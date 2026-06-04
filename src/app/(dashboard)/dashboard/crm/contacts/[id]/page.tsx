@@ -7,6 +7,7 @@ import {
   LEAD_STATUS_LABELS,
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
+import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
 import { getContact, listNotes } from "@/features/crm/queries";
@@ -17,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants/routes";
+import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -45,6 +47,18 @@ export default async function ContactDetailPage({
   const notes = await listNotes(context.organization.id, {
     contactId: params.id,
   });
+  const admin = createAdminClient();
+  const { data: portalRows } = await admin
+    .from("portal_accounts")
+    .select("id, portal_type, status")
+    .eq("organization_id", context.organization.id)
+    .eq("contact_id", params.id)
+    .order("created_at", { ascending: false });
+  const portalAccounts = (portalRows ?? []).map((row) => ({
+    id: row.id,
+    portalType: row.portal_type,
+    status: row.status,
+  }));
   const canManage = hasPermission(context, "crm.manage");
   const { contact, leads, deals } = detail;
 
@@ -115,6 +129,19 @@ export default async function ContactDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Portal access</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactPortalAccess
+            contactId={contact.id}
+            accounts={portalAccounts}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
