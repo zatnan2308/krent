@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 
 import { listPages } from "@/features/cms/dashboard-queries";
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
+import { hasPermission } from "@/server/permissions";
 
 export const metadata: Metadata = {
   title: "Pages",
@@ -26,6 +28,9 @@ export default async function PagesListPage() {
   const context = await requireOrganizationContext();
   if (!context.organization) {
     return null;
+  }
+  if (!hasPermission(context, "pages.manage")) {
+    redirect(ROUTES.dashboard.root);
   }
 
   const pages = await listPages(

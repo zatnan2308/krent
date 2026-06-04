@@ -24,7 +24,9 @@ export default async function AboutEditorPage() {
   if (!context.organization) {
     return null;
   }
-  if (!hasPermission(context, "organization.view")) {
+  // Все Save на этой странице требуют branding.manage (как и Home) — гейтим
+  // страницу тем же правом, чтобы видимость совпадала с редактируемостью.
+  if (!hasPermission(context, "branding.manage")) {
     redirect(ROUTES.dashboard.root);
   }
   const [content, intros, legal] = await Promise.all([

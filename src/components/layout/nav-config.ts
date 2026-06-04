@@ -159,17 +159,23 @@ export const dashboardNavSections: NavSection[] = [
     label: "Website",
     items: [
       { label: "Home page", href: ROUTES.dashboard.home, icon: Home, permission: "branding.manage" },
-      { label: "Pages", href: ROUTES.dashboard.pages, icon: FileText },
+      {
+        label: "Pages",
+        href: ROUTES.dashboard.pages,
+        icon: FileText,
+        permission: "pages.manage",
+      },
       {
         label: "Navigation",
         href: ROUTES.dashboard.navigation,
         icon: PanelsTopLeft,
+        permission: "navigation.manage",
       },
       {
         label: "About page",
         href: ROUTES.dashboard.about,
         icon: Info,
-        permission: "organization.view",
+        permission: "branding.manage",
       },
     ],
   },

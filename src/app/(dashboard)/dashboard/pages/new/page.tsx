@@ -6,6 +6,7 @@ import { PageEditor } from "@/features/cms/page-editor";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
+import { hasPermission } from "@/server/permissions";
 
 export const metadata: Metadata = {
   title: "New page",
@@ -14,6 +15,9 @@ export const metadata: Metadata = {
 export default async function NewPagePage() {
   const context = await requireOrganizationContext();
   if (!context.organization) {
+    redirect(ROUTES.dashboard.root);
+  }
+  if (!hasPermission(context, "pages.manage")) {
     redirect(ROUTES.dashboard.root);
   }
 
