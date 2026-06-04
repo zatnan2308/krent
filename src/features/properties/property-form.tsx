@@ -409,7 +409,7 @@ export function PropertyForm({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+        <TabsList className="flex h-auto flex-wrap justify-start gap-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
@@ -1277,16 +1277,7 @@ export function PropertyForm({
         </TabsContent>
       </Tabs>
 
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {saved ? (
-        <p className="text-sm text-emerald-600">All changes saved.</p>
-      ) : null}
-
-      <div className="flex items-center gap-3">
+      <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-3 border-t bg-background/85 px-4 py-3 backdrop-blur-md lg:-mx-6 lg:px-6">
         <Button type="button" onClick={handleSave} disabled={pending}>
           {pending ? "Saving..." : "Save changes"}
         </Button>
@@ -1298,6 +1289,16 @@ export function PropertyForm({
         >
           Back to list
         </Button>
+        {error ? (
+          <span className="text-sm text-destructive" role="alert">
+            {error}
+          </span>
+        ) : null}
+        {saved ? (
+          <span className="text-sm font-medium text-emerald-600">
+            All changes saved.
+          </span>
+        ) : null}
       </div>
     </div>
   );

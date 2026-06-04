@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { AmenitiesManager } from "@/features/properties/amenities-manager";
 import { getAmenityCatalog } from "@/features/properties/dashboard-queries";
+import { PageHeader } from "@/components/ui/page-header";
+import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -20,13 +22,14 @@ export default async function AmenitiesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Amenities</h1>
-        <p className="text-sm text-muted-foreground">
-          Amenity catalog used across the listings of{" "}
-          {context.organization.name}.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Properties", href: ROUTES.dashboard.properties },
+          { label: "Amenities" },
+        ]}
+        title="Amenities"
+        description={`Amenity catalog used across the listings of ${context.organization.name}.`}
+      />
       <AmenitiesManager catalog={catalog} canManage={canManage} />
     </div>
   );

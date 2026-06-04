@@ -44,7 +44,7 @@ portal не затрагиваем. Шрифт Inter подключён глоб
 ## Роадмап (по секциям, после фундамента)
 - [ ] 2. Раскатка `PageHeader` на все страницы + виджеты Overview
 - [x] 3. CRM ✅ — заголовки → `PageHeader` (+ крошки на detail), hub → `StatCard`, `CrmNav` → подчёркнутая под-навигация, фильтры/поиск → тулбар-cards
-- [ ] 4. Properties (список + 8-табовый редактор объекта)
+- [x] 4. Properties ✅ — список (PageHeader+actions, тулбар, таблица на bg-card), редактор объекта (крошки + **липкая панель сохранения**, компактный таб-бар), new/amenities/calendar → PageHeader
 - [ ] 5. Rentals / Bookings / Calendar
 - [ ] 6. Messages / Email
 - [ ] 7. Growth (Marketing / SEO / Analytics / Reports / Integrations / Agent Sync → табы)

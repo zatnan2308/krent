@@ -12,6 +12,7 @@ import type { PropertyStatus } from "@/features/properties/types";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -73,46 +74,47 @@ export default async function PropertiesListPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Properties</h1>
-          <p className="text-sm text-muted-foreground">
-            Listings of {context.organization.name}.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {canManageAmenities ? (
-            <Link
-              href={ROUTES.dashboard.propertiesAmenities}
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Amenities
-            </Link>
-          ) : null}
-          {canCreate ? (
-            <Link
-              href={`${ROUTES.dashboard.properties}/new`}
-              className={buttonVariants()}
-            >
-              New property
-            </Link>
-          ) : null}
-        </div>
-      </div>
+      <PageHeader
+        title="Properties"
+        description={`Listings of ${context.organization.name}.`}
+        actions={
+          <>
+            {canManageAmenities ? (
+              <Link
+                href={ROUTES.dashboard.propertiesAmenities}
+                className={buttonVariants({ variant: "outline" })}
+              >
+                Amenities
+              </Link>
+            ) : null}
+            {canCreate ? (
+              <Link
+                href={`${ROUTES.dashboard.properties}/new`}
+                className={buttonVariants()}
+              >
+                New property
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
-      <form method="get" className="flex flex-wrap gap-2">
+      <form
+        method="get"
+        className="flex flex-wrap gap-2 rounded-lg border bg-card p-4 shadow-sm"
+      >
         <input
           type="search"
           name="q"
           defaultValue={q}
           placeholder="Search by title…"
-          className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm"
+          className="h-10 w-56 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <select
           name="status"
           defaultValue={status}
           aria-label="Status filter"
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <option value="">All statuses</option>
           {Object.entries(PROPERTY_STATUS_LABELS).map(([value, label]) => (
@@ -130,7 +132,7 @@ export default async function PropertiesListPage({
       </form>
 
       {properties.length > 0 ? (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

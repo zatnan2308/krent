@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getPropertyForEdit } from "@/features/properties/dashboard-queries";
@@ -17,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 
@@ -63,20 +63,18 @@ export default async function PropertyCalendarPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={`${ROUTES.dashboard.properties}/${params.id}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; Back to property
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          Rental calendar
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {property.property.title}
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Properties", href: ROUTES.dashboard.properties },
+          {
+            label: property.property.title,
+            href: `${ROUTES.dashboard.properties}/${params.id}`,
+          },
+          { label: "Rental calendar" },
+        ]}
+        title="Rental calendar"
+        description={property.property.title}
+      />
 
       <Card>
         <CardHeader>

@@ -13,6 +13,7 @@ import {
 } from "@/features/properties/extras-manager";
 import { PropertyForm } from "@/features/properties/property-form";
 import { buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -46,32 +47,32 @@ export default async function EditPropertyPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {property.property.title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Edit listing details, pricing, media and location.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href={`/${context.organization.default_language}/properties/${property.property.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            View public page
-          </Link>
-          <Link
-            href={`${ROUTES.dashboard.properties}/${params.id}/calendar`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Rental calendar
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Properties", href: ROUTES.dashboard.properties },
+          { label: property.property.title },
+        ]}
+        title={property.property.title}
+        description="Edit listing details, pricing, media and location."
+        actions={
+          <>
+            <Link
+              href={`/${context.organization.default_language}/properties/${property.property.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              View public page
+            </Link>
+            <Link
+              href={`${ROUTES.dashboard.properties}/${params.id}/calendar`}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Rental calendar
+            </Link>
+          </>
+        }
+      />
       <PropertyForm
         initial={property}
         amenityCatalog={amenityCatalog}
