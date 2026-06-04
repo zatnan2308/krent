@@ -111,6 +111,9 @@ export default async function SettingsPage() {
           socialFacebook: brand.data?.social_facebook ?? null,
           socialX: brand.data?.social_x ?? null,
           socialYoutube: brand.data?.social_youtube ?? null,
+          acqTransferPct: brand.data?.acq_transfer_pct ?? 4,
+          acqAgencyPct: brand.data?.acq_agency_pct ?? 2,
+          acqRegistrationPct: brand.data?.acq_registration_pct ?? 0.25,
         }}
         localization={{
           organizationName: context.organization.name,

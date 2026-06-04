@@ -733,6 +733,9 @@ export type Database = {
       brand_settings: {
         Row: {
           accent_color: string | null
+          acq_agency_pct: number
+          acq_registration_pct: number
+          acq_transfer_pct: number
           contact_address: string | null
           contact_email: string | null
           contact_messenger: string | null
@@ -760,6 +763,9 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          acq_agency_pct?: number
+          acq_registration_pct?: number
+          acq_transfer_pct?: number
           contact_address?: string | null
           contact_email?: string | null
           contact_messenger?: string | null
@@ -787,6 +793,9 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          acq_agency_pct?: number
+          acq_registration_pct?: number
+          acq_transfer_pct?: number
           contact_address?: string | null
           contact_email?: string | null
           contact_messenger?: string | null

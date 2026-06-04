@@ -139,6 +139,9 @@ const siteContactSchema = z.object({
   socialFacebook: z.string().trim().max(300).nullable(),
   socialX: z.string().trim().max(300).nullable(),
   socialYoutube: z.string().trim().max(300).nullable(),
+  acqTransferPct: z.coerce.number().min(0).max(100),
+  acqAgencyPct: z.coerce.number().min(0).max(100),
+  acqRegistrationPct: z.coerce.number().min(0).max(100),
 });
 export type SiteContactInput = z.infer<typeof siteContactSchema>;
 
@@ -173,6 +176,9 @@ export async function updateSiteContact(
       social_facebook: parsed.data.socialFacebook,
       social_x: parsed.data.socialX,
       social_youtube: parsed.data.socialYoutube,
+      acq_transfer_pct: parsed.data.acqTransferPct,
+      acq_agency_pct: parsed.data.acqAgencyPct,
+      acq_registration_pct: parsed.data.acqRegistrationPct,
     },
     { onConflict: "organization_id" },
   );

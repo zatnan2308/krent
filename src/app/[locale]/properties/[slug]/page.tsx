@@ -337,18 +337,27 @@ export default async function PropertyDetailPage({
   // Занятые даты для дизейбла в календаре бронирования.
   const bookedDates = showBooking ? await getBookedDates(property.id) : [];
 
-  // Acquisition cost (Dubai-typical fees), выводится из цены.
+  // Acquisition cost — ставки настраиваются в brand_settings (white-label);
+  // дефолты совпадают с прежними значениями (Дубай).
   const acqBase = view.price ? view.price.amount : 0;
+  const transferPct = site.brand?.acq_transfer_pct ?? 4;
+  const agencyPct = site.brand?.acq_agency_pct ?? 2;
+  const registrationPct = site.brand?.acq_registration_pct ?? 0.25;
   const fmtC = (n: number): string =>
     formatCurrency(Math.round(n), priceCurrency, locale);
+  const pctText = (n: number): string => `${n}%`;
   const acquisition: [string, string, string][] = [
     ["Purchase price", fmtC(acqBase), ""],
-    ["DLD transfer fee", fmtC(acqBase * 0.04), "4%"],
-    ["Agency fee", fmtC(acqBase * 0.02), "2%"],
-    ["Registration", fmtC(acqBase * 0.0025), "0.25%"],
+    ["Transfer fee", fmtC((acqBase * transferPct) / 100), pctText(transferPct)],
+    ["Agency fee", fmtC((acqBase * agencyPct) / 100), pctText(agencyPct)],
+    [
+      "Registration",
+      fmtC((acqBase * registrationPct) / 100),
+      pctText(registrationPct),
+    ],
   ];
   const acquisitionTotalText = fmtC(
-    acqBase + acqBase * 0.04 + acqBase * 0.02 + acqBase * 0.0025,
+    acqBase * (1 + (transferPct + agencyPct + registrationPct) / 100),
   );
 
   // Краткие детали сделки для sticky-панели (дизайн property-buy) —

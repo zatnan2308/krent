@@ -421,6 +421,52 @@ function SiteContactSection({ initial }: { initial: SiteContactInput }) {
         </div>
       </div>
 
+      <div>
+        <p className="mb-2 text-sm font-semibold">Acquisition fees</p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Percentages used in the buyer&apos;s total cost of acquisition on
+          property pages.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Field label="Transfer fee %">
+            <Input
+              type="number"
+              step="0.01"
+              value={form.acqTransferPct}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  acqTransferPct: Number(e.target.value),
+                }))
+              }
+            />
+          </Field>
+          <Field label="Agency fee %">
+            <Input
+              type="number"
+              step="0.01"
+              value={form.acqAgencyPct}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, acqAgencyPct: Number(e.target.value) }))
+              }
+            />
+          </Field>
+          <Field label="Registration %">
+            <Input
+              type="number"
+              step="0.01"
+              value={form.acqRegistrationPct}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  acqRegistrationPct: Number(e.target.value),
+                }))
+              }
+            />
+          </Field>
+        </div>
+      </div>
+
       <Submit pending={pending} msg={msg} />
     </form>
   );
