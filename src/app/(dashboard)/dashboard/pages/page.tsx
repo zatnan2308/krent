@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 
 import { listPages } from "@/features/cms/dashboard-queries";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ export default async function PagesListPage() {
     context.organization.id,
     context.organization.default_language,
   );
+  const defaultLocale = context.organization.default_language;
 
   return (
     <div className="space-y-6">
@@ -66,6 +68,17 @@ export default async function PagesListPage() {
                     >
                       {page.title}
                     </Link>
+                    {page.status === "published" ? (
+                      <a
+                        href={`/${defaultLocale}/${page.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 inline-flex text-muted-foreground hover:text-foreground"
+                        aria-label="View public page"
+                      >
+                        <ExternalLink className="inline h-3.5 w-3.5" />
+                      </a>
+                    ) : null}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     /{page.slug}
