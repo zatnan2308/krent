@@ -15,6 +15,9 @@ interface PublicFooterProps {
   browseNav?: { label: string; href: string }[];
   areasNav?: { label: string; href: string }[];
   legalNav?: { label: string; href: string }[];
+  /** Языки/валюты организации для нижней строки; пустые → дефолты. */
+  locales?: string[];
+  currencies?: string[];
 }
 
 const DEFAULT_TAGLINE =
@@ -118,8 +121,19 @@ export function PublicFooter({
   browseNav,
   areasNav,
   legalNav,
+  locales,
+  currencies,
 }: PublicFooterProps) {
   const { email: supportEmail, phone: supportPhone } = contact;
+  // Нижняя строка: языки + валюты организации (фолбэк — дефолтный набор).
+  const localeLabels = (
+    locales && locales.length > 0 ? locales : ["en", "ar", "ru"]
+  ).map((code) => code.toUpperCase());
+  const currencyLabels =
+    currencies && currencies.length > 0
+      ? currencies.map((code) => code.toUpperCase())
+      : ["USD", "AED", "EUR"];
+  const bottomStrip = [...localeLabels, ...currencyLabels].join(" · ");
   const colBrowse =
     browseNav && browseNav.length > 0
       ? browseNav
@@ -396,9 +410,7 @@ export function PublicFooter({
               </a>
             ))}
           </div>
-          <div style={{ textAlign: "right" }}>
-            EN · AR · RU · USD · AED · EUR · CAD · GBP
-          </div>
+          <div style={{ textAlign: "right" }}>{bottomStrip}</div>
         </div>
       </div>
 

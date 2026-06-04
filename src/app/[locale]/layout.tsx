@@ -142,6 +142,8 @@ export default async function LocaleLayout({
         footerBrowseNav={browseNav}
         footerAreasNav={areasNav}
         footerLegalNav={legalNav}
+        footerLocales={site?.organization.enabled_languages}
+        footerCurrencies={site?.organization.enabled_currencies}
         currentUserName={userName}
         currentUserEmail={userEmail}
       >

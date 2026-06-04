@@ -46,6 +46,9 @@ interface PublicLayoutProps {
   footerBrowseNav?: NavLink[];
   footerAreasNav?: NavLink[];
   footerLegalNav?: NavLink[];
+  /** Языки/валюты организации для нижней строки футера. */
+  footerLocales?: string[];
+  footerCurrencies?: string[];
   /** Имя текущего пользователя (для приветствия в хедере). */
   currentUserName?: string | null;
   currentUserEmail?: string | null;
@@ -64,6 +67,8 @@ export function PublicLayout({
   footerBrowseNav,
   footerAreasNav,
   footerLegalNav,
+  footerLocales,
+  footerCurrencies,
   currentUserName,
   currentUserEmail,
   children,
@@ -92,6 +97,8 @@ export function PublicLayout({
         browseNav={footerBrowseNav}
         areasNav={footerAreasNav}
         legalNav={footerLegalNav}
+        locales={footerLocales}
+        currencies={footerCurrencies}
       />
       <CookieBanner />
       <ScrollTopButton />
