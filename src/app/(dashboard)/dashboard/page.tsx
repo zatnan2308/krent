@@ -14,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -142,36 +144,21 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {context.organization.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">Workspace overview.</p>
-      </div>
+      <PageHeader
+        title={context.organization.name}
+        description="Key metrics and what's coming up across your workspace."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <Link key={metric.label} href={metric.href}>
-              <Card className="transition-colors hover:border-primary/40">
-                <CardContent className="flex items-center gap-3 p-4">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  </span>
-                  <div>
-                    <p className="text-2xl font-semibold tabular-nums">
-                      {metric.value}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {metric.label}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+        {metrics.map((metric) => (
+          <StatCard
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+            icon={metric.icon}
+            href={metric.href}
+          />
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -440,3 +440,59 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================================
+   Dashboard / admin scope — собственная палитра админки.
+   Чёрный/графит остаётся ведущим акцентом. ПОЛНОСТЬЮ изолировано
+   от :root, чтобы НИКАК не влиять на публичный editorial-сайт
+   (он использует shadcn-токены :root). Класс .dashboard висит на
+   корне AppShell и покрывает dashboard + super-admin + мобильный
+   drawer (он портален — класс продублирован на его контенте).
+   ============================================================ */
+.dashboard {
+  --background: 240 6% 98%;          /* мягкий off-white фон приложения */
+  --foreground: 240 10% 7%;
+  --card: 0 0% 100%;                 /* карточки — чистый белый, дают «pop» */
+  --card-foreground: 240 10% 7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 7%;
+  --primary: 240 9% 11%;             /* графит-чёрный — фирменный акцент */
+  --primary-foreground: 0 0% 99%;
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 6% 12%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 44%;
+  --accent: 240 5% 94%;              /* hover-поверхность */
+  --accent-foreground: 240 6% 10%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 240 6% 90%;
+  --input: 240 6% 88%;
+  --ring: 240 10% 12%;
+  --radius: 0.625rem;
+}
+
+/* Фон рабочей области: off-white + еле заметная точечная сетка для глубины. */
+.app-surface {
+  background-color: hsl(240 6% 96.5%);
+  background-image: radial-gradient(hsl(240 8% 12% / 0.05) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
+/* Тонкий скроллбар внутри админки (WebKit + Firefox). */
+.dashboard *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.dashboard *::-webkit-scrollbar-thumb {
+  background-color: hsl(240 5% 80%);
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+.dashboard *::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(240 5% 70%);
+}
+.dashboard *::-webkit-scrollbar-track {
+  background: transparent;
+}

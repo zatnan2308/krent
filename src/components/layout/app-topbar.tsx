@@ -45,7 +45,7 @@ export function AppTopbar({
   onMenuClick,
 }: AppTopbarProps) {
   return (
-    <header className="flex h-16 items-center gap-3 border-b bg-background px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65 lg:px-6">
       <Button
         variant="ghost"
         size="icon"

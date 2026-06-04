@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -42,9 +43,10 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const pathname = usePathname();
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
+    <div className="dashboard min-h-screen bg-background lg:grid lg:grid-cols-[16rem_1fr]">
       <aside className="hidden border-r bg-background lg:block">
         <div className="sticky top-0 h-screen">
           <AppSidebar
@@ -61,7 +63,7 @@ export function AppShell({
           <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 lg:hidden" />
           <DialogPrimitive.Content
             aria-describedby={undefined}
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left lg:hidden"
+            className="dashboard fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left lg:hidden"
           >
             <DialogPrimitive.Title className="sr-only">
               Navigation
@@ -89,7 +91,14 @@ export function AppShell({
           publicSiteUrl={publicSiteUrl}
           onMenuClick={() => setMobileOpen(true)}
         />
-        <main className="flex-1 bg-muted/30 p-4 lg:p-6">{children}</main>
+        <main className="app-surface flex-1 p-4 lg:p-6">
+          <div
+            key={pathname}
+            className="mx-auto w-full max-w-[1600px] animate-fade-in-up"
+          >
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );
