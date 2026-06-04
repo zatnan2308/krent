@@ -19,7 +19,28 @@ const DEFAULT_NEWSLETTER_TITLE = "Quarterly market reports";
 const DEFAULT_NEWSLETTER_BLURB =
   "Four issues per year. No filler, no unsubscribe traps.";
 
-function Monogram({ size = 56, gold = false }: { size?: number; gold?: boolean }) {
+/** Инициалы бренда для монограммы (из названия сайта). */
+function initialsFrom(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0))
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "K"
+  );
+}
+
+function Monogram({
+  size = 56,
+  gold = false,
+  initials = "AK",
+}: {
+  size?: number;
+  gold?: boolean;
+  initials?: string;
+}) {
   return (
     <span
       className="serif"
@@ -39,7 +60,7 @@ function Monogram({ size = 56, gold = false }: { size?: number; gold?: boolean }
         flexShrink: 0,
       }}
     >
-      AK
+      {initials}
     </span>
   );
 }
@@ -186,7 +207,7 @@ export function PublicFooter({
                 color: "inherit",
               }}
             >
-              <Monogram size={56} gold />
+              <Monogram size={56} gold initials={initialsFrom(siteName)} />
               <span
                 className="serif"
                 style={{

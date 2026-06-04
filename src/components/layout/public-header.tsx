@@ -22,8 +22,29 @@ interface PublicHeaderProps {
   currentUserEmail?: string | null;
 }
 
-/** Маленький монограмм-knob AK в рамке (editorial mark). */
-function Monogram({ size = 32, gold = false }: { size?: number; gold?: boolean }) {
+/** Инициалы бренда для монограммы (из названия сайта). */
+function initialsFrom(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0))
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "K"
+  );
+}
+
+/** Маленький монограмм-knob в рамке (editorial mark). */
+function Monogram({
+  size = 32,
+  gold = false,
+  initials = "AK",
+}: {
+  size?: number;
+  gold?: boolean;
+  initials?: string;
+}) {
   return (
     <span
       className="serif"
@@ -43,7 +64,7 @@ function Monogram({ size = 32, gold = false }: { size?: number; gold?: boolean }
         flexShrink: 0,
       }}
     >
-      AK
+      {initials}
     </span>
   );
 }
@@ -153,7 +174,7 @@ export function PublicHeader({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt={siteName} style={{ height: 32, width: "auto" }} />
           ) : (
-            <Monogram size={32} gold />
+            <Monogram size={32} gold initials={initialsFrom(siteName)} />
           )}
           <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
             <span
