@@ -12,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -72,20 +74,14 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground">
-          Traffic, conversions and tracking integrations for the last{" "}
-          {overview.rangeDays} days.
-        </p>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description={`Traffic, conversions and tracking integrations for the last ${overview.rangeDays} days.`}
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {summary.map((stat) => (
-          <div key={stat.label} className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-xl font-semibold">{stat.value}</p>
-          </div>
+          <StatCard key={stat.label} label={stat.label} value={stat.value} />
         ))}
       </div>
 

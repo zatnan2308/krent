@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getGscOverview } from "@/features/integrations/queries";
@@ -9,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -47,28 +48,18 @@ export default async function SearchConsoleDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.dashboard.integrations}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; Integrations
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          Search Console
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Last {overview.rangeDays} days. Live sync and date comparison
-          activate once the OAuth flow is wired.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Integrations", href: ROUTES.dashboard.integrations },
+          { label: "Search Console" },
+        ]}
+        title="Search Console"
+        description={`Last ${overview.rangeDays} days. Live sync and date comparison activate once the OAuth flow is wired.`}
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {summary.map((stat) => (
-          <div key={stat.label} className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-xl font-semibold">{stat.value}</p>
-          </div>
+          <StatCard key={stat.label} label={stat.label} value={stat.value} />
         ))}
       </div>
 

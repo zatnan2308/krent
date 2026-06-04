@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { CampaignEditor } from "@/features/campaigns/campaign-editor";
@@ -10,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -60,20 +60,14 @@ export default async function CampaignPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.dashboard.marketing}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; All campaigns
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {data.campaign.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Build the email, preview it and send it to a contact segment.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Marketing", href: ROUTES.dashboard.marketing },
+          { label: data.campaign.name },
+        ]}
+        title={data.campaign.name}
+        description="Build the email, preview it and send it to a contact segment."
+      />
 
       <CampaignEditor
         campaign={data.campaign}

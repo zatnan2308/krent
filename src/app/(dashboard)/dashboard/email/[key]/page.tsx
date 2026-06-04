@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { getEmailTemplate } from "@/features/notifications/queries";
@@ -10,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -41,21 +41,14 @@ export default async function EmailTemplatePage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.dashboard.email}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; Email &amp; notifications
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {template.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Customise the transactional email for this event. Saving creates an
-          organisation-specific version of the template.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Email & notifications", href: ROUTES.dashboard.email },
+          { label: template.name },
+        ]}
+        title={template.name}
+        description="Customise the transactional email for this event. Saving creates an organisation-specific version of the template."
+      />
 
       <Card>
         <CardHeader>

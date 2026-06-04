@@ -14,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -106,20 +108,14 @@ export default async function SeoPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">SEO</h1>
-        <p className="text-sm text-muted-foreground">
-          Audit of titles, descriptions, image alt text and indexing across
-          your pages and properties.
-        </p>
-      </div>
+      <PageHeader
+        title="SEO"
+        description="Audit of titles, descriptions, image alt text and indexing across your pages and properties."
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {summary.map((item) => (
-          <div key={item.label} className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">{item.label}</p>
-            <p className="text-2xl font-semibold">{item.value}</p>
-          </div>
+          <StatCard key={item.label} label={item.label} value={item.value} />
         ))}
       </div>
 

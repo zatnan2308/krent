@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -77,13 +78,10 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-        <p className="text-sm text-muted-foreground">
-          Funnel, sources, property and agent performance, email campaigns,
-          and rental KPIs.
-        </p>
-      </div>
+      <PageHeader
+        title="Reports"
+        description="Funnel, sources, property and agent performance, email campaigns, and rental KPIs."
+      />
 
       <Card>
         <CardHeader>

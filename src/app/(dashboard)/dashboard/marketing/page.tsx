@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -57,14 +58,10 @@ export default async function MarketingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Marketing campaigns
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Build and send newsletters to your contact segments.
-        </p>
-      </div>
+      <PageHeader
+        title="Marketing campaigns"
+        description="Build and send newsletters to your contact segments."
+      />
       <MarketingNav />
 
       <Card>
@@ -96,7 +93,7 @@ export default async function MarketingPage() {
       </Card>
 
       {campaigns.length > 0 ? (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

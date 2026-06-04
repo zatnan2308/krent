@@ -28,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -80,14 +81,10 @@ export default async function AgentSyncPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Agent Sync</h1>
-        <p className="text-sm text-muted-foreground">
-          Connect agent websites to the agency CRM. Share properties via API,
-          JSON/XML feeds or a drop-in widget. Webhooks deliver real-time
-          updates.
-        </p>
-      </div>
+      <PageHeader
+        title="Agent Sync"
+        description="Connect agent websites to the agency CRM. Share properties via API, JSON/XML feeds or a drop-in widget. Webhooks deliver real-time updates."
+      />
 
       <Card>
         <CardHeader>

@@ -6,6 +6,7 @@ import { MarketingNav } from "@/features/campaigns/marketing-nav";
 import { listMarketingContacts } from "@/features/campaigns/queries";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -38,19 +39,14 @@ export default async function MarketingContactsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Marketing contacts
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {subscribedCount} of {contacts.length} contact(s) subscribed to
-          marketing email.
-        </p>
-      </div>
+      <PageHeader
+        title="Marketing contacts"
+        description={`${subscribedCount} of ${contacts.length} contact(s) subscribed to marketing email.`}
+      />
       <MarketingNav />
 
       {contacts.length > 0 ? (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

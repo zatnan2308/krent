@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -48,15 +49,10 @@ export default async function IntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Integrations
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Connect Search Console, Google Ads and Meta Ads to power the
-          marketing dashboards.
-        </p>
-      </div>
+      <PageHeader
+        title="Integrations"
+        description="Connect Search Console, Google Ads and Meta Ads to power the marketing dashboards."
+      />
 
       <Card>
         <CardHeader>

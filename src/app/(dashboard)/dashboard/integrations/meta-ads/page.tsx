@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { REAL_ESTATE_AD_WARNINGS } from "@/features/integrations/constants";
@@ -10,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -77,21 +77,14 @@ export default async function MetaAdsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.dashboard.integrations}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; Integrations
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          Meta Ads
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Last {overview.rangeDays} days. Live sync activates once the
-          OAuth flow is wired.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Integrations", href: ROUTES.dashboard.integrations },
+          { label: "Meta Ads" },
+        ]}
+        title="Meta Ads"
+        description={`Last ${overview.rangeDays} days. Live sync activates once the OAuth flow is wired.`}
+      />
 
       <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
         {REAL_ESTATE_AD_WARNINGS.map((line, index) => (
@@ -101,9 +94,12 @@ export default async function MetaAdsDashboard() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         {summary.map((stat) => (
-          <div key={stat.label} className="rounded-lg border p-3">
+          <div
+            key={stat.label}
+            className="rounded-lg border bg-card p-3 shadow-sm"
+          >
             <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-lg font-semibold">{stat.value}</p>
+            <p className="text-lg font-semibold tabular-nums">{stat.value}</p>
           </div>
         ))}
       </div>

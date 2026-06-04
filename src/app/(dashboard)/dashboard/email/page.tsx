@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -60,15 +61,10 @@ export default async function EmailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Email &amp; notifications
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Transactional email templates, notification settings and delivery
-          logs.
-        </p>
-      </div>
+      <PageHeader
+        title="Email & notifications"
+        description="Transactional email templates, notification settings and delivery logs."
+      />
 
       <Card>
         <CardHeader>
