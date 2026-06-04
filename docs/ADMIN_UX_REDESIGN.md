@@ -45,7 +45,7 @@ portal не затрагиваем. Шрифт Inter подключён глоб
 - [ ] 2. Раскатка `PageHeader` на все страницы + виджеты Overview
 - [x] 3. CRM ✅ — заголовки → `PageHeader` (+ крошки на detail), hub → `StatCard`, `CrmNav` → подчёркнутая под-навигация, фильтры/поиск → тулбар-cards
 - [x] 4. Properties ✅ — список (PageHeader+actions, тулбар, таблица на bg-card), редактор объекта (крошки + **липкая панель сохранения**, компактный таб-бар), new/amenities/calendar → PageHeader
-- [ ] 5. Rentals / Bookings / Calendar
+- [x] 5. Rentals / Bookings / Calendar / Client portals ✅ — PageHeader везде, Rentals KPI → StatCard, Bookings фильтр-тулбар + таблица на bg-card + detail-крошки, Calendar nav в actions
 - [ ] 6. Messages / Email
 - [ ] 7. Growth (Marketing / SEO / Analytics / Reports / Integrations / Agent Sync → табы)
 - [ ] 8. Website (Home: 12 табов → перекомпоновка; Pages / Navigation / About)

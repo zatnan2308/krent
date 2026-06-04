@@ -25,6 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -87,42 +88,40 @@ export default async function BookingDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.dashboard.bookings}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; All bookings
-        </Link>
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {booking.reference}
-          </h1>
-          <Badge variant={BOOKING_STATUS_BADGE[booking.status]}>
-            {BOOKING_STATUS_LABELS[booking.status]}
-          </Badge>
-          <Badge variant="outline">
-            {BOOKING_PAYMENT_STATUS_LABELS[booking.payment_status]}
-          </Badge>
-        </div>
-        {property ? (
-          <p className="mt-1 text-sm text-muted-foreground">
-            <Link
-              href={`${ROUTES.dashboard.properties}/${property.id}`}
-              className="hover:underline"
-            >
-              {property.title}
-            </Link>
-            {" · "}
-            <Link
-              href={`${ROUTES.dashboard.properties}/${property.id}/calendar`}
-              className="hover:underline"
-            >
-              Calendar
-            </Link>
-          </p>
-        ) : null}
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Bookings", href: ROUTES.dashboard.bookings },
+          { label: booking.reference },
+        ]}
+        title={booking.reference}
+        actions={
+          <>
+            <Badge variant={BOOKING_STATUS_BADGE[booking.status]}>
+              {BOOKING_STATUS_LABELS[booking.status]}
+            </Badge>
+            <Badge variant="outline">
+              {BOOKING_PAYMENT_STATUS_LABELS[booking.payment_status]}
+            </Badge>
+          </>
+        }
+      />
+      {property ? (
+        <p className="-mt-3 text-sm text-muted-foreground">
+          <Link
+            href={`${ROUTES.dashboard.properties}/${property.id}`}
+            className="hover:underline"
+          >
+            {property.title}
+          </Link>
+          {" · "}
+          <Link
+            href={`${ROUTES.dashboard.properties}/${property.id}/calendar`}
+            className="hover:underline"
+          >
+            Calendar
+          </Link>
+        </p>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>

@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
@@ -142,14 +143,15 @@ export default async function BookingsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Bookings</h1>
-        <p className="text-sm text-muted-foreground">
-          Direct booking requests and online payments from your website.
-        </p>
-      </div>
+      <PageHeader
+        title="Bookings"
+        description="Direct booking requests and online payments from your website."
+      />
 
-      <form method="get" className="flex flex-wrap items-end gap-3">
+      <form
+        method="get"
+        className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4 shadow-sm"
+      >
         <div className="space-y-1.5">
           <label htmlFor="q" className="text-sm font-medium">
             Search
@@ -237,7 +239,7 @@ export default async function BookingsPage({
             {total} booking{total === 1 ? "" : "s"}
             {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
           </p>
-          <div className="rounded-lg border">
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>

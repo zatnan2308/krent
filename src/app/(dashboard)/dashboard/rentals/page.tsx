@@ -10,6 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -194,51 +197,38 @@ export default async function RentalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Rentals</h1>
-          <p className="text-sm text-muted-foreground">
-            Occupancy, upcoming bookings and channel sync across every rentable
-            property.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href={ROUTES.dashboard.calendar}
-            className="inline-flex h-9 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
-          >
-            <CalendarDays className="mr-2 h-4 w-4" />
-            Calendar
-          </Link>
-          <Link
-            href={ROUTES.dashboard.bookings}
-            className="inline-flex h-9 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
-          >
-            <CalendarCheck className="mr-2 h-4 w-4" />
-            Bookings
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Rentals"
+        description="Occupancy, upcoming bookings and channel sync across every rentable property."
+        actions={
+          <>
+            <Link
+              href={ROUTES.dashboard.calendar}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <CalendarDays className="mr-2 h-4 w-4" />
+              Calendar
+            </Link>
+            <Link
+              href={ROUTES.dashboard.bookings}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <CalendarCheck className="mr-2 h-4 w-4" />
+              Bookings
+            </Link>
+          </>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {summary.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Card key={item.label}>
-              <CardContent className="flex items-center gap-3 p-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-                  <Icon className="h-5 w-5 text-muted-foreground" />
-                </span>
-                <div>
-                  <p className="text-2xl font-semibold tabular-nums">
-                    {item.value}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {summary.map((item) => (
+          <StatCard
+            key={item.label}
+            label={item.label}
+            value={item.value}
+            icon={item.icon}
+          />
+        ))}
       </div>
 
       <Card>

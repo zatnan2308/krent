@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -62,14 +63,10 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Client portals
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Invite buyers, sellers and guests to their personal portals.
-        </p>
-      </div>
+      <PageHeader
+        title="Client portals"
+        description="Invite buyers, sellers and guests to their personal portals."
+      />
 
       <Card>
         <CardHeader>

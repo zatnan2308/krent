@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   currentMonth,
   monthLabel,
@@ -108,41 +109,39 @@ export default async function CalendarOverviewPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
-          <p className="text-sm text-muted-foreground">
-            Occupancy across all rentable properties.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href={`${ROUTES.dashboard.calendar}?m=${offset - 1}`}
-            aria-label="Previous month"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-          <span className="min-w-40 text-center text-sm font-medium">
-            {monthLabel(month)}
-          </span>
-          <Link
-            href={`${ROUTES.dashboard.calendar}?m=${offset + 1}`}
-            aria-label="Next month"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-          {offset !== 0 ? (
+      <PageHeader
+        title="Calendar"
+        description="Occupancy across all rentable properties."
+        actions={
+          <>
             <Link
-              href={ROUTES.dashboard.calendar}
-              className="text-sm text-muted-foreground hover:underline"
+              href={`${ROUTES.dashboard.calendar}?m=${offset - 1}`}
+              aria-label="Previous month"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent"
             >
-              Today
+              <ChevronLeft className="h-4 w-4" />
             </Link>
-          ) : null}
-        </div>
-      </div>
+            <span className="min-w-40 text-center text-sm font-medium tabular-nums">
+              {monthLabel(month)}
+            </span>
+            <Link
+              href={`${ROUTES.dashboard.calendar}?m=${offset + 1}`}
+              aria-label="Next month"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+            {offset !== 0 ? (
+              <Link
+                href={ROUTES.dashboard.calendar}
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Today
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3 text-xs">
         {[
