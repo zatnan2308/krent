@@ -11,6 +11,10 @@ interface PublicFooterProps {
   siteName: string;
   contact: SiteContactInfo;
   footerNav: { label: string; href: string }[];
+  /** Колонки футера из БД; пустые/отсутствующие → встроенные дефолты ниже. */
+  browseNav?: { label: string; href: string }[];
+  areasNav?: { label: string; href: string }[];
+  legalNav?: { label: string; href: string }[];
 }
 
 const DEFAULT_TAGLINE =
@@ -111,44 +115,59 @@ export function PublicFooter({
   siteName,
   contact,
   footerNav,
+  browseNav,
+  areasNav,
+  legalNav,
 }: PublicFooterProps) {
   const { email: supportEmail, phone: supportPhone } = contact;
-  const colBrowse = [
-    {
-      label: "All properties",
-      href: buildLocalizedPath(locale, "/properties"),
-    },
-    {
-      label: "Buy",
-      href: buildLocalizedPath(locale, "/properties?purpose=sale"),
-    },
-    {
-      label: "Long-term rent",
-      href: buildLocalizedPath(locale, "/properties?purpose=long_term_rent"),
-    },
-    {
-      label: "Vacation rentals",
-      href: buildLocalizedPath(locale, "/properties?purpose=short_term_rental"),
-    },
-  ];
-  const colMarkets = [
-    {
-      label: "Downtown Dubai",
-      href: buildLocalizedPath(locale, "/properties?area=Downtown Dubai"),
-    },
-    {
-      label: "Dubai Marina",
-      href: buildLocalizedPath(locale, "/properties?area=Dubai Marina"),
-    },
-    {
-      label: "Palm Jumeirah",
-      href: buildLocalizedPath(locale, "/properties?area=Palm Jumeirah"),
-    },
-    {
-      label: "Emirates Hills",
-      href: buildLocalizedPath(locale, "/properties?area=Emirates Hills"),
-    },
-  ];
+  const colBrowse =
+    browseNav && browseNav.length > 0
+      ? browseNav
+      : [
+          {
+            label: "All properties",
+            href: buildLocalizedPath(locale, "/properties"),
+          },
+          {
+            label: "Buy",
+            href: buildLocalizedPath(locale, "/properties?purpose=sale"),
+          },
+          {
+            label: "Long-term rent",
+            href: buildLocalizedPath(
+              locale,
+              "/properties?purpose=long_term_rent",
+            ),
+          },
+          {
+            label: "Vacation rentals",
+            href: buildLocalizedPath(
+              locale,
+              "/properties?purpose=short_term_rental",
+            ),
+          },
+        ];
+  const colMarkets =
+    areasNav && areasNav.length > 0
+      ? areasNav
+      : [
+          {
+            label: "Downtown Dubai",
+            href: buildLocalizedPath(locale, "/properties?area=Downtown Dubai"),
+          },
+          {
+            label: "Dubai Marina",
+            href: buildLocalizedPath(locale, "/properties?area=Dubai Marina"),
+          },
+          {
+            label: "Palm Jumeirah",
+            href: buildLocalizedPath(locale, "/properties?area=Palm Jumeirah"),
+          },
+          {
+            label: "Emirates Hills",
+            href: buildLocalizedPath(locale, "/properties?area=Emirates Hills"),
+          },
+        ];
   const colCompany =
     footerNav.length > 0
       ? footerNav
@@ -162,11 +181,20 @@ export function PublicFooter({
             href: buildLocalizedPath(locale, "/contact"),
           },
         ];
-  const colLegal = [
-    { label: "Privacy policy", href: buildLocalizedPath(locale, "/privacy") },
-    { label: "Terms of service", href: buildLocalizedPath(locale, "/terms") },
-    { label: "Cookies", href: buildLocalizedPath(locale, "/cookies") },
-  ];
+  const colLegal =
+    legalNav && legalNav.length > 0
+      ? legalNav
+      : [
+          {
+            label: "Privacy policy",
+            href: buildLocalizedPath(locale, "/privacy"),
+          },
+          {
+            label: "Terms of service",
+            href: buildLocalizedPath(locale, "/terms"),
+          },
+          { label: "Cookies", href: buildLocalizedPath(locale, "/cookies") },
+        ];
 
   return (
     <footer

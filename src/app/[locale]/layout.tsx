@@ -89,12 +89,27 @@ export default async function LocaleLayout({
         ? item.url
         : buildLocalizedPath(locale, item.url),
     }));
-  const [headerNav, footerNav]: [NavLink[], NavLink[]] = site
+  const [headerNav, footerNav, browseNav, areasNav, legalNav]: [
+    NavLink[],
+    NavLink[],
+    NavLink[],
+    NavLink[],
+    NavLink[],
+  ] = site
     ? await Promise.all([
         getPublicNavigation(site.organization.id, "header").then(localizeNav),
         getPublicNavigation(site.organization.id, "footer").then(localizeNav),
+        getPublicNavigation(site.organization.id, "footer_browse").then(
+          localizeNav,
+        ),
+        getPublicNavigation(site.organization.id, "footer_areas").then(
+          localizeNav,
+        ),
+        getPublicNavigation(site.organization.id, "footer_legal").then(
+          localizeNav,
+        ),
       ])
-    : [[], []];
+    : [[], [], [], [], []];
 
   // Имя для приветствия — из user_metadata.full_name либо часть email.
   let userName: string | null = null;
@@ -123,6 +138,9 @@ export default async function LocaleLayout({
         contact={contact}
         headerNav={headerNav}
         footerNav={footerNav}
+        footerBrowseNav={browseNav}
+        footerAreasNav={areasNav}
+        footerLegalNav={legalNav}
         currentUserName={userName}
         currentUserEmail={userEmail}
       >

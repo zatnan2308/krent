@@ -14,10 +14,15 @@ export default async function NavigationPage() {
     return null;
   }
 
-  const [header, footer] = await Promise.all([
-    getNavigationItems(context.organization.id, "header"),
-    getNavigationItems(context.organization.id, "footer"),
-  ]);
+  const orgId = context.organization.id;
+  const [header, footer, footerBrowse, footerAreas, footerLegal] =
+    await Promise.all([
+      getNavigationItems(orgId, "header"),
+      getNavigationItems(orgId, "footer"),
+      getNavigationItems(orgId, "footer_browse"),
+      getNavigationItems(orgId, "footer_areas"),
+      getNavigationItems(orgId, "footer_legal"),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -27,7 +32,13 @@ export default async function NavigationPage() {
           Header and footer menus of {context.organization.name}.
         </p>
       </div>
-      <NavigationManager header={header} footer={footer} />
+      <NavigationManager
+        header={header}
+        footer={footer}
+        footerBrowse={footerBrowse}
+        footerAreas={footerAreas}
+        footerLegal={footerLegal}
+      />
     </div>
   );
 }

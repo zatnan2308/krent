@@ -10,7 +10,10 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 const MENU_NAMES: Record<string, string> = {
   header: "Header",
-  footer: "Footer",
+  footer: "Footer — Company",
+  footer_browse: "Footer — Browse",
+  footer_areas: "Footer — Areas",
+  footer_legal: "Footer — Legal",
 };
 
 /** Возвращает id меню организации по ключу, создавая его при отсутствии. */

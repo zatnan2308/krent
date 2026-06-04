@@ -24,23 +24,60 @@ import type { Tables } from "@/types/database";
 interface NavigationManagerProps {
   header: Tables<"navigation_items">[];
   footer: Tables<"navigation_items">[];
+  footerBrowse: Tables<"navigation_items">[];
+  footerAreas: Tables<"navigation_items">[];
+  footerLegal: Tables<"navigation_items">[];
 }
 
-export function NavigationManager({ header, footer }: NavigationManagerProps) {
+export function NavigationManager({
+  header,
+  footer,
+  footerBrowse,
+  footerAreas,
+  footerLegal,
+}: NavigationManagerProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <MenuEditor
         menuKey="header"
         title="Header menu"
         hint="Links shown in the public site header navigation."
         items={header}
       />
-      <MenuEditor
-        menuKey="footer"
-        title="Footer menu"
-        hint="Extra links column (“Company”) in the public site footer. Leave empty to use defaults."
-        items={footer}
-      />
+
+      <div className="space-y-6">
+        <div className="border-t pt-6">
+          <h2 className="text-base font-semibold">Footer columns</h2>
+          <p className="text-xs text-muted-foreground">
+            Each column of the public site footer. Leave a column empty to fall
+            back to the built-in defaults.
+          </p>
+        </div>
+        <MenuEditor
+          menuKey="footer_browse"
+          title="Browse column"
+          hint="First footer column — usually listing shortcuts (buy, rent…)."
+          items={footerBrowse}
+        />
+        <MenuEditor
+          menuKey="footer_areas"
+          title="Areas column"
+          hint="Second footer column — usually neighbourhoods or regions you cover."
+          items={footerAreas}
+        />
+        <MenuEditor
+          menuKey="footer"
+          title="Company column"
+          hint="Third footer column — about, contact and company links."
+          items={footer}
+        />
+        <MenuEditor
+          menuKey="footer_legal"
+          title="Legal column"
+          hint="Fourth footer column — privacy, terms and other legal pages."
+          items={footerLegal}
+        />
+      </div>
     </div>
   );
 }

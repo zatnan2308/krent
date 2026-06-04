@@ -40,6 +40,10 @@ interface PublicLayoutProps {
   contact: SiteContactInfo;
   headerNav: NavLink[];
   footerNav: NavLink[];
+  /** Колонки футера (Browse/Areas/Legal); пустые → дефолты в футере. */
+  footerBrowseNav?: NavLink[];
+  footerAreasNav?: NavLink[];
+  footerLegalNav?: NavLink[];
   /** Имя текущего пользователя (для приветствия в хедере). */
   currentUserName?: string | null;
   currentUserEmail?: string | null;
@@ -54,6 +58,9 @@ export function PublicLayout({
   contact,
   headerNav,
   footerNav,
+  footerBrowseNav,
+  footerAreasNav,
+  footerLegalNav,
   currentUserName,
   currentUserEmail,
   children,
@@ -78,6 +85,9 @@ export function PublicLayout({
         siteName={siteName}
         contact={contact}
         footerNav={footerNav}
+        browseNav={footerBrowseNav}
+        areasNav={footerAreasNav}
+        legalNav={footerLegalNav}
       />
       <CookieBanner />
       <ScrollTopButton />
