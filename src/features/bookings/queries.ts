@@ -362,6 +362,8 @@ export async function listBookings(
     status?: BookingStatus;
     source?: BookingSource;
     q?: string;
+    checkInFrom?: string;
+    checkInTo?: string;
     page?: number;
     pageSize?: number;
   } = {},
@@ -379,6 +381,12 @@ export async function listBookings(
   }
   if (filters.source) {
     query = query.eq("source", filters.source);
+  }
+  if (filters.checkInFrom) {
+    query = query.gte("check_in", filters.checkInFrom);
+  }
+  if (filters.checkInTo) {
+    query = query.lte("check_in", filters.checkInTo);
   }
   if (filters.q) {
     // Санитизация: запятая и скобки — управляющие символы в синтаксисе `or`.

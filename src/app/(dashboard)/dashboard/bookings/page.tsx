@@ -91,6 +91,15 @@ export default async function BookingsPage({
   const source = parseSource(
     typeof searchParams.source === "string" ? searchParams.source : undefined,
   );
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const checkInFrom =
+    typeof searchParams.from === "string" && datePattern.test(searchParams.from)
+      ? searchParams.from
+      : "";
+  const checkInTo =
+    typeof searchParams.to === "string" && datePattern.test(searchParams.to)
+      ? searchParams.to
+      : "";
   const pageParam = Number(
     typeof searchParams.page === "string" ? searchParams.page : "1",
   );
@@ -105,6 +114,8 @@ export default async function BookingsPage({
     ...(status ? { status } : {}),
     ...(source ? { source } : {}),
     ...(q ? { q } : {}),
+    ...(checkInFrom ? { checkInFrom } : {}),
+    ...(checkInTo ? { checkInTo } : {}),
     page: requestedPage,
   });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -116,6 +127,8 @@ export default async function BookingsPage({
     if (q) params.set("q", q);
     if (status) params.set("status", status);
     if (source) params.set("source", source);
+    if (checkInFrom) params.set("from", checkInFrom);
+    if (checkInTo) params.set("to", checkInTo);
     if (target > 1) params.set("page", String(target));
     const qs = params.toString();
     return qs ? `${ROUTES.dashboard.bookings}?${qs}` : ROUTES.dashboard.bookings;
@@ -185,6 +198,30 @@ export default async function BookingsPage({
               </option>
             ))}
           </select>
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="from" className="text-sm font-medium">
+            Check-in from
+          </label>
+          <input
+            id="from"
+            type="date"
+            name="from"
+            defaultValue={checkInFrom}
+            className={`${FIELD_CLASS} w-44`}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="to" className="text-sm font-medium">
+            Check-in to
+          </label>
+          <input
+            id="to"
+            type="date"
+            name="to"
+            defaultValue={checkInTo}
+            className={`${FIELD_CLASS} w-44`}
+          />
         </div>
         <button
           type="submit"
@@ -267,7 +304,7 @@ export default async function BookingsPage({
         <EmptyState
           title="No bookings found"
           description={
-            q || status || source
+            q || status || source || checkInFrom || checkInTo
               ? "No bookings match your filters. Try clearing the search."
               : "Booking requests from your website will appear here."
           }
