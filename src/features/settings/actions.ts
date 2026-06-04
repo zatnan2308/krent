@@ -45,6 +45,56 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
   return { ok: true };
 }
 
+// ---- Public agent profile (agent_profiles) -----------------------
+
+const agentProfileSchema = z.object({
+  title: z.string().trim().max(120).nullable(),
+  bio: z.string().trim().max(2000).nullable(),
+  phone: z.string().trim().max(60).nullable(),
+  reraNumber: z.string().trim().max(60).nullable(),
+  specialization: z.string().trim().max(200).nullable(),
+  photoUrl: z.string().trim().max(500).nullable(),
+});
+export type AgentProfileInput = z.infer<typeof agentProfileSchema>;
+
+/**
+ * Сохраняет публичный профиль агента текущего пользователя в его
+ * организации. Идёт user-клиентом: RLS разрешает писать только свой
+ * профиль (`user_id = auth.uid()`).
+ */
+export async function updateAgentProfile(
+  input: AgentProfileInput,
+): Promise<ActionResult> {
+  const parsed = agentProfileSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the profile form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No organization." };
+  }
+  const supabase = createClient();
+  const { error } = await supabase.from("agent_profiles").upsert(
+    {
+      organization_id: context.organization.id,
+      user_id: context.user.id,
+      title: parsed.data.title,
+      bio: parsed.data.bio,
+      phone: parsed.data.phone,
+      rera_number: parsed.data.reraNumber,
+      specialization: parsed.data.specialization,
+      photo_url: parsed.data.photoUrl,
+    },
+    { onConflict: "organization_id,user_id" },
+  );
+  if (error) {
+    return { ok: false, error: "Could not save your public profile." };
+  }
+  revalidatePath("/dashboard/settings");
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
 // ---- Password ----------------------------------------------------
 
 const passwordSchema = z.object({

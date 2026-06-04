@@ -34,10 +34,49 @@ async function resolveAgent(
   }
 }
 
+/** Поля публичного профиля агента из agent_profiles. */
+interface AgentProfileFields {
+  title: string | null;
+  bio: string | null;
+  phone: string | null;
+  reraNumber: string | null;
+  specialization: string | null;
+  photoUrl: string | null;
+}
+
+/** Загружает профили агентов организации по user_id. */
+async function loadAgentProfiles(
+  admin: Admin,
+  organizationId: string,
+  userIds: string[],
+): Promise<Map<string, AgentProfileFields>> {
+  const profiles = new Map<string, AgentProfileFields>();
+  if (userIds.length === 0) {
+    return profiles;
+  }
+  const { data } = await admin
+    .from("agent_profiles")
+    .select("user_id, title, bio, phone, rera_number, specialization, photo_url")
+    .eq("organization_id", organizationId)
+    .in("user_id", [...new Set(userIds)]);
+  for (const row of data ?? []) {
+    profiles.set(row.user_id, {
+      title: row.title,
+      bio: row.bio,
+      phone: row.phone,
+      reraNumber: row.rera_number,
+      specialization: row.specialization,
+      photoUrl: row.photo_url,
+    });
+  }
+  return profiles;
+}
+
 /** Карточка агента в списке. */
 export interface AgentSummary {
   id: string;
   name: string;
+  title: string | null;
   photoUrl: string | null;
   listingCount: number;
 }
@@ -87,14 +126,19 @@ export async function listPublicAgents(
     }
   }
 
+  const profiles = await loadAgentProfiles(admin, organizationId, [
+    ...counts.keys(),
+  ]);
   const agents: AgentSummary[] = [];
   for (const [id, listingCount] of counts.entries()) {
     const info = await resolveAgent(admin, id);
     if (info) {
+      const profile = profiles.get(id);
       agents.push({
         id,
         name: info.name,
-        photoUrl: info.photoUrl,
+        title: profile?.title ?? null,
+        photoUrl: profile?.photoUrl ?? info.photoUrl,
         listingCount,
       });
     }
@@ -108,6 +152,11 @@ export interface AgentProfile {
   id: string;
   name: string;
   photoUrl: string | null;
+  title: string | null;
+  bio: string | null;
+  phone: string | null;
+  reraNumber: string | null;
+  specialization: string | null;
   listings: {
     id: string;
     title: string;
@@ -141,15 +190,24 @@ export async function getPublicAgent(
     return null;
   }
 
-  const covers = await loadCovers(
-    admin,
-    rows.map((row) => row.id),
-  );
+  const [covers, profiles] = await Promise.all([
+    loadCovers(
+      admin,
+      rows.map((row) => row.id),
+    ),
+    loadAgentProfiles(admin, organizationId, [agentId]),
+  ]);
+  const profile = profiles.get(agentId);
 
   return {
     id: agentId,
     name: info.name,
-    photoUrl: info.photoUrl,
+    photoUrl: profile?.photoUrl ?? info.photoUrl,
+    title: profile?.title ?? null,
+    bio: profile?.bio ?? null,
+    phone: profile?.phone ?? null,
+    reraNumber: profile?.reraNumber ?? null,
+    specialization: profile?.specialization ?? null,
     listings: rows.map((row) => ({
       id: row.id,
       title: row.title,

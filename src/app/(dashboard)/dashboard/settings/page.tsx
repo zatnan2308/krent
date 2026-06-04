@@ -72,6 +72,21 @@ export default async function SettingsPage() {
     enabled: enabledById.get(m.id) ?? false,
   }));
 
+  const { data: agentProfileRow } = await admin
+    .from("agent_profiles")
+    .select("title, bio, phone, rera_number, specialization, photo_url")
+    .eq("organization_id", orgId)
+    .eq("user_id", context.user.id)
+    .maybeSingle();
+  const agentProfile = {
+    title: agentProfileRow?.title ?? null,
+    bio: agentProfileRow?.bio ?? null,
+    phone: agentProfileRow?.phone ?? null,
+    reraNumber: agentProfileRow?.rera_number ?? null,
+    specialization: agentProfileRow?.specialization ?? null,
+    photoUrl: agentProfileRow?.photo_url ?? null,
+  };
+
   const meta = (context.user.user_metadata ?? {}) as Record<string, unknown>;
   const profile = {
     fullName: typeof meta.full_name === "string" ? meta.full_name : "",
@@ -92,6 +107,7 @@ export default async function SettingsPage() {
 
       <SettingsTabs
         profile={profile}
+        agentProfile={agentProfile}
         branding={{
           primaryColor: brand.data?.primary_color ?? null,
           secondaryColor: brand.data?.secondary_color ?? null,

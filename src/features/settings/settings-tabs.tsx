@@ -9,10 +9,12 @@ import {
   inviteMember,
   removeMember,
   toggleModule,
+  updateAgentProfile,
   updateBranding,
   updateLocalization,
   updateProfile,
   updateSiteContact,
+  type AgentProfileInput,
   type BrandingInput,
   type LocalizationInput,
   type ProfileInput,
@@ -57,6 +59,7 @@ interface RoleRow {
 
 interface Props {
   profile: { fullName: string; avatarUrl: string; bio: string; phone: string };
+  agentProfile: AgentProfileInput;
   branding: BrandingInput;
   siteContact: SiteContactInput;
   localization: LocalizationInput;
@@ -102,6 +105,7 @@ export function SettingsTabs(props: Props) {
       {tab === "profile" ? (
         <div className="space-y-4">
           <ProfileSection initial={props.profile} />
+          <AgentProfileSection initial={props.agentProfile} />
           <PasswordSection />
         </div>
       ) : null}
@@ -195,6 +199,82 @@ function ProfileSection({
             className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
+          />
+        </Field>
+      </div>
+      <Submit pending={pending} msg={msg} />
+    </form>
+  );
+}
+
+function AgentProfileSection({ initial }: { initial: AgentProfileInput }) {
+  const router = useRouter();
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [form, setForm] = React.useState<AgentProfileInput>({ ...initial });
+  const set =
+    (key: keyof AgentProfileInput) => (value: string) =>
+      setForm((f) => ({ ...f, [key]: value || null }));
+
+  return (
+    <form
+      className="space-y-3 rounded-md border p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setPending(true);
+        const result = await updateAgentProfile(form);
+        setPending(false);
+        setMsg(result.ok ? "Public profile saved." : result.error);
+        if (result.ok) router.refresh();
+      }}
+    >
+      <div>
+        <p className="text-sm font-semibold">Public agent profile</p>
+        <p className="text-xs text-muted-foreground">
+          Shown on your public agent page and on listings you’re assigned to.
+          Leave a field blank to hide it.
+        </p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Field label="Title">
+          <Input
+            value={form.title ?? ""}
+            onChange={(e) => set("title")(e.target.value)}
+            placeholder="Senior Property Consultant"
+          />
+        </Field>
+        <Field label="Specialization">
+          <Input
+            value={form.specialization ?? ""}
+            onChange={(e) => set("specialization")(e.target.value)}
+            placeholder="Luxury residential · Downtown"
+          />
+        </Field>
+        <Field label="RERA number">
+          <Input
+            value={form.reraNumber ?? ""}
+            onChange={(e) => set("reraNumber")(e.target.value)}
+          />
+        </Field>
+        <Field label="Public phone">
+          <Input
+            value={form.phone ?? ""}
+            onChange={(e) => set("phone")(e.target.value)}
+            placeholder="+971 50 000 0000"
+          />
+        </Field>
+        <Field label="Photo URL" wide>
+          <Input
+            value={form.photoUrl ?? ""}
+            onChange={(e) => set("photoUrl")(e.target.value)}
+            placeholder="https://…"
+          />
+        </Field>
+        <Field label="Bio" wide>
+          <textarea
+            className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+            value={form.bio ?? ""}
+            onChange={(e) => set("bio")(e.target.value)}
           />
         </Field>
       </div>

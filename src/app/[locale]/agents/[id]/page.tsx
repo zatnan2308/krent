@@ -95,17 +95,68 @@ export default async function AgentProfilePage({
       </Link>
 
       <header className="flex items-center gap-4">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold">
-          {initials(agent.name)}
-        </span>
+        {agent.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={agent.photoUrl}
+            alt={agent.name}
+            className="h-16 w-16 rounded-full object-cover"
+          />
+        ) : (
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold">
+            {initials(agent.name)}
+          </span>
+        )}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{agent.name}</h1>
-          <p className="text-muted-foreground">
-            {agent.listings.length} active listing(s) ·{" "}
-            {site.organization.name}
+          {agent.title ? (
+            <p className="text-muted-foreground">{agent.title}</p>
+          ) : null}
+          <p className="text-sm text-muted-foreground">
+            {agent.listings.length} active listing(s) · {site.organization.name}
           </p>
         </div>
       </header>
+
+      {agent.bio ||
+      agent.specialization ||
+      agent.reraNumber ||
+      agent.phone ? (
+        <section className="space-y-3">
+          {agent.bio ? (
+            <p className="max-w-2xl whitespace-pre-line text-muted-foreground">
+              {agent.bio}
+            </p>
+          ) : null}
+          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+            {agent.specialization ? (
+              <div>
+                <dt className="text-muted-foreground">Specialization</dt>
+                <dd className="font-medium">{agent.specialization}</dd>
+              </div>
+            ) : null}
+            {agent.reraNumber ? (
+              <div>
+                <dt className="text-muted-foreground">RERA</dt>
+                <dd className="font-medium">{agent.reraNumber}</dd>
+              </div>
+            ) : null}
+            {agent.phone ? (
+              <div>
+                <dt className="text-muted-foreground">Phone</dt>
+                <dd className="font-medium">
+                  <a
+                    href={`tel:${agent.phone.replace(/\s+/g, "")}`}
+                    className="hover:underline"
+                  >
+                    {agent.phone}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        </section>
+      ) : null}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">

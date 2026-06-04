@@ -197,6 +197,53 @@ export type Database = {
           },
         ]
       }
+      agent_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          organization_id: string
+          phone: string | null
+          photo_url: string | null
+          rera_number: string | null
+          specialization: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          organization_id: string
+          phone?: string | null
+          photo_url?: string | null
+          rera_number?: string | null
+          specialization?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          organization_id?: string
+          phone?: string | null
+          photo_url?: string | null
+          rera_number?: string | null
+          specialization?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_website_connections: {
         Row: {
           agent_id: string

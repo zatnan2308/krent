@@ -150,6 +150,17 @@ export default async function AgentsPage({
                     >
                       {agent.name}
                     </div>
+                    {agent.title ? (
+                      <div
+                        style={{
+                          marginTop: 2,
+                          fontSize: 12.5,
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {agent.title}
+                      </div>
+                    ) : null}
                     <div
                       className="tnum"
                       style={{
