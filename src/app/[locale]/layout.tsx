@@ -68,6 +68,7 @@ export default async function LocaleLayout({
     email: brand?.contact_email ?? null,
     phone: brand?.contact_phone ?? null,
     whatsapp: brand?.contact_whatsapp ?? null,
+    messenger: brand?.contact_messenger ?? null,
     address: brand?.contact_address ?? null,
     hours: brand?.office_hours ?? null,
     responseTime: brand?.response_time ?? null,

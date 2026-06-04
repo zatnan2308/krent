@@ -735,6 +735,7 @@ export type Database = {
           accent_color: string | null
           contact_address: string | null
           contact_email: string | null
+          contact_messenger: string | null
           contact_phone: string | null
           contact_whatsapp: string | null
           created_at: string
@@ -761,6 +762,7 @@ export type Database = {
           accent_color?: string | null
           contact_address?: string | null
           contact_email?: string | null
+          contact_messenger?: string | null
           contact_phone?: string | null
           contact_whatsapp?: string | null
           created_at?: string
@@ -787,6 +789,7 @@ export type Database = {
           accent_color?: string | null
           contact_address?: string | null
           contact_email?: string | null
+          contact_messenger?: string | null
           contact_phone?: string | null
           contact_whatsapp?: string | null
           created_at?: string

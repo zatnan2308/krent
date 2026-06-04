@@ -97,6 +97,7 @@ export default async function SettingsPage() {
           contactEmail: brand.data?.contact_email ?? null,
           contactPhone: brand.data?.contact_phone ?? null,
           contactWhatsapp: brand.data?.contact_whatsapp ?? null,
+          contactMessenger: brand.data?.contact_messenger ?? null,
           contactAddress: brand.data?.contact_address ?? null,
           officeHours: brand.data?.office_hours ?? null,
           responseTime: brand.data?.response_time ?? null,

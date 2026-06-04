@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 
 import { CookieBanner } from "@/components/layout/cookie-banner";
+import {
+  ContactFab,
+  ScrollTopButton,
+} from "@/components/layout/floating-actions";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import type { Locale } from "@/lib/i18n";
@@ -11,6 +15,7 @@ export interface SiteContactInfo {
   email: string | null;
   phone: string | null;
   whatsapp: string | null;
+  messenger: string | null;
   address: string | null;
   hours: string | null;
   responseTime: string | null;
@@ -75,6 +80,8 @@ export function PublicLayout({
         footerNav={footerNav}
       />
       <CookieBanner />
+      <ScrollTopButton />
+      <ContactFab contact={contact} />
     </div>
   );
 }

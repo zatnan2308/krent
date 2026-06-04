@@ -98,6 +98,7 @@ export function PublicHeader({
   }, []);
 
   const defaultNav = [
+    { label: "Home", href: buildLocalizedPath(locale, "/") },
     { label: "Properties", href: buildLocalizedPath(locale, "/properties") },
     { label: "About", href: buildLocalizedPath(locale, "/about") },
     { label: "Contact", href: buildLocalizedPath(locale, "/contact") },

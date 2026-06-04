@@ -315,6 +315,13 @@ function SiteContactSection({ initial }: { initial: SiteContactInput }) {
               placeholder="https://wa.me/9715… or +971…"
             />
           </Field>
+          <Field label="Messenger (m.me link)">
+            <Input
+              value={form.contactMessenger ?? ""}
+              onChange={(e) => set("contactMessenger")(e.target.value)}
+              placeholder="https://m.me/yourpage"
+            />
+          </Field>
           <Field label="Office address">
             <Input
               value={form.contactAddress ?? ""}
