@@ -58,6 +58,10 @@ export function TaskManager({
   const [priority, setPriority] = React.useState<TaskPriority>("medium");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const todayStr = React.useMemo(
+    () => new Date().toISOString().slice(0, 10),
+    [],
+  );
 
   async function handleCreate() {
     if (!title.trim()) {
@@ -167,6 +171,8 @@ export function TaskManager({
         <ul className="divide-y">
           {tasks.map((task) => {
             const done = task.status === "completed";
+            const overdue =
+              !done && !!task.dueDate && task.dueDate < todayStr;
             return (
               <li key={task.id} className="flex items-start gap-3 py-3">
                 {canManage ? (
@@ -196,7 +202,18 @@ export function TaskManager({
                     <Badge variant={priorityVariant(task.priority)}>
                       {task.priority}
                     </Badge>
-                    {task.dueDate ? <span>Due {task.dueDate}</span> : null}
+                    {task.dueDate ? (
+                      <span
+                        className={
+                          overdue
+                            ? "font-medium text-destructive"
+                            : undefined
+                        }
+                      >
+                        {overdue ? "Overdue · " : "Due "}
+                        {task.dueDate}
+                      </span>
+                    ) : null}
                     {task.agentName ? <span>· {task.agentName}</span> : null}
                     {showRelations && task.leadId ? (
                       <Link
