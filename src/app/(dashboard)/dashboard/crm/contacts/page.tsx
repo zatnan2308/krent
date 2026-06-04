@@ -6,6 +6,7 @@ import { ContactsCsvImport } from "@/features/crm/contacts-csv-import";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { listContacts } from "@/features/crm/queries";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -44,27 +45,28 @@ export default async function CrmContactsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Contacts</h1>
-        <p className="text-sm text-muted-foreground">
-          People who reached out to {context.organization.name}.
-        </p>
-      </div>
+      <PageHeader
+        title="Contacts"
+        description={`People who reached out to ${context.organization.name}.`}
+      />
       <CrmNav />
 
       <ContactsCsvImport />
 
-      <form method="get" className="flex flex-wrap gap-2">
+      <form
+        method="get"
+        className="flex flex-wrap gap-2 rounded-lg border bg-card p-4 shadow-sm"
+      >
         <input
           type="search"
           name="q"
           defaultValue={q}
           placeholder="Search name, email or phone…"
-          className="h-9 w-72 rounded-md border border-input bg-background px-3 text-sm"
+          className="h-10 w-72 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <button
           type="submit"
-          className="h-9 rounded-md border border-input px-3 text-sm font-medium hover:bg-accent"
+          className="h-10 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent"
         >
           Search
         </button>

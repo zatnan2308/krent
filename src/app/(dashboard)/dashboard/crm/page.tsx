@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ListTodo, TrendingUp, UserCheck, Users } from "lucide-react";
 
 import {
   LEAD_STATUS_LABELS,
@@ -15,6 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -34,34 +37,49 @@ export default async function CrmDashboardPage() {
 
   const overview = await getCrmOverview(context.organization.id);
   const stats = [
-    { label: "New leads", value: overview.newLeads },
-    { label: "Total leads", value: overview.totalLeads },
-    { label: "Open deals", value: overview.openDeals },
-    { label: "Open tasks", value: overview.openTasks },
+    {
+      label: "New leads",
+      value: overview.newLeads,
+      icon: UserCheck,
+      href: ROUTES.dashboard.crmLeads,
+    },
+    {
+      label: "Total leads",
+      value: overview.totalLeads,
+      icon: Users,
+      href: ROUTES.dashboard.crmLeads,
+    },
+    {
+      label: "Open deals",
+      value: overview.openDeals,
+      icon: TrendingUp,
+      href: ROUTES.dashboard.crmDeals,
+    },
+    {
+      label: "Open tasks",
+      value: overview.openTasks,
+      icon: ListTodo,
+      href: ROUTES.dashboard.crmTasks,
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">CRM</h1>
-        <p className="text-sm text-muted-foreground">
-          Leads, contacts and deals of {context.organization.name}.
-        </p>
-      </div>
+      <PageHeader
+        title="CRM"
+        description={`Leads, contacts and deals of ${context.organization.name}.`}
+      />
       <CrmNav />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{stat.value}</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            href={stat.href}
+          />
         ))}
       </div>
 

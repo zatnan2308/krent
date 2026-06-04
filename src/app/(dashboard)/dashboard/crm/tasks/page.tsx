@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { getOrgAgents, listTasks } from "@/features/crm/queries";
 import { TaskManager } from "@/features/crm/task-manager";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -29,12 +30,10 @@ export default async function CrmTasksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
-        <p className="text-sm text-muted-foreground">
-          Follow-ups and to-dos across your leads and deals.
-        </p>
-      </div>
+      <PageHeader
+        title="Tasks"
+        description="Follow-ups and to-dos across your leads and deals."
+      />
       <CrmNav />
       <TaskManager
         tasks={tasks}

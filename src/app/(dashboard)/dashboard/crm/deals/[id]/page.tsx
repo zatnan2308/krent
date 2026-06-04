@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -57,20 +58,15 @@ export default async function DealDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={`${ROUTES.dashboard.crm}/deals`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; All deals
-        </Link>
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {deal.title}
-          </h1>
-          <Badge variant="secondary">{deal.status}</Badge>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "CRM", href: ROUTES.dashboard.crm },
+          { label: "Deals", href: ROUTES.dashboard.crmDeals },
+          { label: deal.title },
+        ]}
+        title={deal.title}
+        actions={<Badge variant="secondary">{deal.status}</Badge>}
+      />
       <CrmNav />
 
       <div className="grid gap-6 lg:grid-cols-3">

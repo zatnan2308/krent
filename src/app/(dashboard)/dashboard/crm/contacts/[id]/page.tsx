@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -74,17 +75,14 @@ export default async function ContactDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={ROUTES.dashboard.crmContacts}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; All contacts
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {contact.full_name}
-        </h1>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "CRM", href: ROUTES.dashboard.crm },
+          { label: "Contacts", href: ROUTES.dashboard.crmContacts },
+          { label: contact.full_name },
+        ]}
+        title={contact.full_name}
+      />
       <CrmNav />
 
       <div className="grid gap-6 lg:grid-cols-3">

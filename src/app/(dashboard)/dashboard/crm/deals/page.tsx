@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { DealBoard } from "@/features/crm/deal-board";
 import { getDealStages, listDeals } from "@/features/crm/queries";
+import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -29,12 +30,10 @@ export default async function CrmDealsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Deal pipeline</h1>
-        <p className="text-sm text-muted-foreground">
-          Deals progress through the stages of your sales pipeline.
-        </p>
-      </div>
+      <PageHeader
+        title="Deal pipeline"
+        description="Deals progress through the stages of your sales pipeline."
+      />
       <CrmNav />
       <DealBoard stages={stages} deals={deals} canManage={canManage} />
     </div>
