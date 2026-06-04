@@ -289,7 +289,7 @@ export async function updateLocalization(
 // ---- Modules toggle ---------------------------------------------
 
 const moduleToggleSchema = z.object({
-  moduleId: z.uuid(),
+  moduleId: z.guid(),
   enabled: z.boolean(),
 });
 export type ModuleToggleInput = z.infer<typeof moduleToggleSchema>;
@@ -376,7 +376,7 @@ export async function addDomain(input: AddDomainInput): Promise<ActionResult> {
 }
 
 export async function removeDomain(domainId: string): Promise<ActionResult> {
-  if (!z.uuid().safeParse(domainId).success) {
+  if (!z.guid().safeParse(domainId).success) {
     return { ok: false, error: "Invalid domain." };
   }
   const access = await requireDomainAccess();
@@ -393,7 +393,7 @@ export async function removeDomain(domainId: string): Promise<ActionResult> {
 
 /** Помечает домен подтверждённым (ручная верификация после настройки DNS). */
 export async function verifyDomain(domainId: string): Promise<ActionResult> {
-  if (!z.uuid().safeParse(domainId).success) {
+  if (!z.guid().safeParse(domainId).success) {
     return { ok: false, error: "Invalid domain." };
   }
   const access = await requireDomainAccess();
@@ -413,7 +413,7 @@ export async function verifyDomain(domainId: string): Promise<ActionResult> {
 export async function setPrimaryDomain(
   domainId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(domainId).success) {
+  if (!z.guid().safeParse(domainId).success) {
     return { ok: false, error: "Invalid domain." };
   }
   const access = await requireDomainAccess();
@@ -448,7 +448,7 @@ export async function setPrimaryDomain(
 
 const inviteMemberSchema = z.object({
   email: z.email(),
-  roleId: z.uuid(),
+  roleId: z.guid(),
 });
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 
@@ -504,7 +504,7 @@ export async function inviteMember(
   return { ok: true };
 }
 
-const removeMemberSchema = z.object({ userId: z.uuid() });
+const removeMemberSchema = z.object({ userId: z.guid() });
 export async function removeMember(
   input: z.infer<typeof removeMemberSchema>,
 ): Promise<ActionResult> {
@@ -538,8 +538,8 @@ export async function removeMember(
 }
 
 const changeRoleSchema = z.object({
-  userId: z.uuid(),
-  roleId: z.uuid(),
+  userId: z.guid(),
+  roleId: z.guid(),
 });
 export async function changeMemberRole(
   input: z.infer<typeof changeRoleSchema>,

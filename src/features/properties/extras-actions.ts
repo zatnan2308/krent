@@ -122,7 +122,7 @@ export async function uploadPropertyDocument(
 // ---- Videos -----------------------------------------------------
 
 const videoSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   url: z.url(),
   title: z.string().trim().max(200).nullable(),
   type: z.enum([
@@ -166,7 +166,7 @@ export async function addPropertyVideo(input: AddVideoInput): Promise<ActionResu
 }
 
 export async function deletePropertyVideo(id: string): Promise<ActionResult> {
-  if (!z.uuid().safeParse(id).success) return { ok: false, error: "Invalid id." };
+  if (!z.guid().safeParse(id).success) return { ok: false, error: "Invalid id." };
   const context = await requireOrganizationContext();
   if (!context.organization) return { ok: false, error: "No organization." };
   const supabase = createClient();
@@ -186,7 +186,7 @@ export async function deletePropertyVideo(id: string): Promise<ActionResult> {
 // ---- Documents --------------------------------------------------
 
 const documentSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   name: z.string().trim().min(1).max(200),
   url: z.url(),
   type: z.enum([
@@ -231,7 +231,7 @@ export async function addPropertyDocument(
 }
 
 export async function deletePropertyDocument(id: string): Promise<ActionResult> {
-  if (!z.uuid().safeParse(id).success) return { ok: false, error: "Invalid id." };
+  if (!z.guid().safeParse(id).success) return { ok: false, error: "Invalid id." };
   const context = await requireOrganizationContext();
   if (!context.organization) return { ok: false, error: "No organization." };
   const supabase = createClient();
@@ -259,7 +259,7 @@ export async function deletePropertyDocument(id: string): Promise<ActionResult> 
 // ---- Nearby places ----------------------------------------------
 
 const nearbyPlaceSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   name: z.string().trim().min(1).max(200),
   category: z.string().trim().max(100).nullable(),
   distance: z.coerce.number().min(0).nullable(),
@@ -303,7 +303,7 @@ export async function addNearbyPlace(
 }
 
 export async function deleteNearbyPlace(id: string): Promise<ActionResult> {
-  if (!z.uuid().safeParse(id).success) return { ok: false, error: "Invalid id." };
+  if (!z.guid().safeParse(id).success) return { ok: false, error: "Invalid id." };
   const context = await requireOrganizationContext();
   if (!context.organization) return { ok: false, error: "No organization." };
   const supabase = createClient();

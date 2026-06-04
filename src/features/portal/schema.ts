@@ -4,9 +4,9 @@ const PORTAL_TYPE_VALUES = ["buyer", "seller", "guest"] as const;
 
 /** Приглашение контакта в клиентский портал. */
 export const invitePortalSchema = z.object({
-  contactId: z.uuid(),
+  contactId: z.guid(),
   portalType: z.enum(PORTAL_TYPE_VALUES),
-  propertyId: z.uuid().nullable(),
+  propertyId: z.guid().nullable(),
 });
 export type InvitePortalInput = z.infer<typeof invitePortalSchema>;
 

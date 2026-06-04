@@ -228,7 +228,7 @@ export async function sendTest(input: SendTestInput): Promise<ActionResult> {
 export async function sendCampaignNow(
   campaignId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(campaignId).success) {
+  if (!z.guid().safeParse(campaignId).success) {
     return { ok: false, error: "Invalid campaign." };
   }
   const access = await requireMarketingAccess();
@@ -316,7 +316,7 @@ export async function createSegment(
 export async function refreshSegment(
   segmentId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(segmentId).success) {
+  if (!z.guid().safeParse(segmentId).success) {
     return { ok: false, error: "Invalid segment." };
   }
   const access = await requireMarketingAccess();
@@ -335,7 +335,7 @@ export async function refreshSegment(
 export async function deleteSegment(
   segmentId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(segmentId).success) {
+  if (!z.guid().safeParse(segmentId).success) {
     return { ok: false, error: "Invalid segment." };
   }
   const access = await requireMarketingAccess();
@@ -367,7 +367,7 @@ export async function setContactConsentAction(
   contactId: string,
   granted: boolean,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(contactId).success) {
+  if (!z.guid().safeParse(contactId).success) {
     return { ok: false, error: "Invalid contact." };
   }
   const access = await requireMarketingAccess();

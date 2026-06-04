@@ -319,12 +319,12 @@ export async function moveDeal(
 }
 
 const updateDealSchema = z.object({
-  dealId: z.uuid(),
+  dealId: z.guid(),
   title: z.string().trim().min(1).max(200),
   amount: z.coerce.number().min(0).nullable(),
   currency: z.string().trim().min(3).max(10),
   expectedCloseDate: z.string().trim().nullable(),
-  stageId: z.uuid().nullable(),
+  stageId: z.guid().nullable(),
 });
 export type UpdateDealInput = z.infer<typeof updateDealSchema>;
 

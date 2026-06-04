@@ -9,7 +9,7 @@ import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
 const submitProofSchema = z.object({
-  rentalPaymentId: z.uuid(),
+  rentalPaymentId: z.guid(),
   txHash: z.string().trim().max(200).nullable(),
   network: z.string().trim().max(60).nullable(),
   amount: z.number().nullable(),
@@ -20,7 +20,7 @@ const submitProofSchema = z.object({
 export type SubmitCryptoProofInput = z.infer<typeof submitProofSchema>;
 
 const reviewProofSchema = z.object({
-  proofId: z.uuid(),
+  proofId: z.guid(),
   decision: z.enum(["approved", "rejected"]),
   reviewerNotes: z.string().trim().max(2000).nullable(),
 });

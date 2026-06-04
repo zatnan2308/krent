@@ -25,7 +25,7 @@ export const ingestEventSchema = z.object({
   eventType: z.enum(ANALYTICS_EVENT_TYPES),
   path: z.string().max(2000).nullable(),
   entityType: z.string().max(60).nullable(),
-  entityId: z.uuid().nullable(),
+  entityId: z.guid().nullable(),
   payload: z.record(z.string(), z.unknown()).nullable(),
   utm: utmSchema.nullable(),
 });

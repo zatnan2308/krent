@@ -12,7 +12,7 @@ import { hasPermission } from "@/server/permissions";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 const markPaidSchema = z.object({
-  paymentId: z.uuid(),
+  paymentId: z.guid(),
   note: z.string().trim().max(500).nullable(),
 });
 export type MarkPaidInput = z.infer<typeof markPaidSchema>;

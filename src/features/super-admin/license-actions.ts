@@ -26,7 +26,7 @@ const licenseStatusSchema = z.enum([
 ] as const satisfies readonly Enums<"license_status">[]);
 
 const createLicenseSchema = z.object({
-  organizationId: z.uuid(),
+  organizationId: z.guid(),
   clientName: z.string().trim().min(1).max(200),
   clientEmail: z.email().nullable(),
   domain: z.string().trim().max(200).nullable(),
@@ -40,7 +40,7 @@ const createLicenseSchema = z.object({
 export type CreateLicenseInput = z.infer<typeof createLicenseSchema>;
 
 const updateLicenseSchema = z.object({
-  id: z.uuid(),
+  id: z.guid(),
   status: licenseStatusSchema,
   clientName: z.string().trim().min(1).max(200),
   clientEmail: z.email().nullable(),
@@ -149,7 +149,7 @@ export async function setLicenseStatus(
   status: Enums<"license_status">,
 ): Promise<LicenseActionResult> {
   await requireSuperAdmin();
-  if (!z.uuid().safeParse(id).success) {
+  if (!z.guid().safeParse(id).success) {
     return { ok: false, error: "Invalid license id." };
   }
   if (!licenseStatusSchema.safeParse(status).success) {

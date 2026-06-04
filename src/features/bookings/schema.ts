@@ -8,7 +8,7 @@ const isoDate = z
 
 /** Запрос расчёта стоимости бронирования (booking widget). */
 export const bookingQuoteSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   checkIn: isoDate,
   checkOut: isoDate,
   adults: z.number().int().min(1).max(50),

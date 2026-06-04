@@ -14,13 +14,13 @@ const SEGMENT_RULE_VALUES = [
 
 /** Метаданные кампании. */
 export const saveCampaignSchema = z.object({
-  campaignId: z.uuid(),
+  campaignId: z.guid(),
   name: z.string().min(1).max(200),
   subject: z.string().max(300),
   previewText: z.string().max(300),
   language: z.string().max(12),
   senderName: z.string().max(120),
-  segmentId: z.uuid().nullable(),
+  segmentId: z.guid().nullable(),
 });
 export type SaveCampaignInput = z.infer<typeof saveCampaignSchema>;
 
@@ -32,7 +32,7 @@ const blockSchema = z.object({
 
 /** Сохранение блоков письма кампании. */
 export const saveCampaignBlocksSchema = z.object({
-  campaignId: z.uuid(),
+  campaignId: z.guid(),
   blocks: z.array(blockSchema).max(60),
 });
 export type SaveCampaignBlocksInput = z.infer<
@@ -41,14 +41,14 @@ export type SaveCampaignBlocksInput = z.infer<
 
 /** Отправка тестового письма кампании. */
 export const sendTestSchema = z.object({
-  campaignId: z.uuid(),
+  campaignId: z.guid(),
   email: z.email().max(320),
 });
 export type SendTestInput = z.infer<typeof sendTestSchema>;
 
 /** Планирование кампании (placeholder — без авто-отправки). */
 export const scheduleCampaignSchema = z.object({
-  campaignId: z.uuid(),
+  campaignId: z.guid(),
   scheduledAt: z.string().min(1).max(40),
 });
 export type ScheduleCampaignInput = z.infer<typeof scheduleCampaignSchema>;

@@ -187,7 +187,7 @@ export async function deleteHomeItem(
   table: ListTable,
   id: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(id).success) return { ok: false, error: "Bad id." };
+  if (!z.guid().safeParse(id).success) return { ok: false, error: "Bad id." };
   const g = await gate();
   if (!g.ok) return g;
   const admin = createAdminClient();
@@ -206,7 +206,7 @@ export async function deleteHomeItem(
 // ---- Markets ---------------------------------------------------
 
 const marketSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   name: z.string().trim().min(1).max(120),
   region: z.string().trim().max(120).nullable(),
@@ -255,7 +255,7 @@ export async function saveMarket(input: MarketInput): Promise<ActionResult> {
 // ---- Process step ----------------------------------------------
 
 const processSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   stepNumber: z.string().trim().min(1).max(10),
   title: z.string().trim().min(1).max(120),
@@ -298,7 +298,7 @@ export async function saveProcessStep(
 // ---- Testimonial -----------------------------------------------
 
 const testimonialSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   quote: z.string().trim().min(1).max(2000),
   authorName: z.string().trim().max(200).nullable(),
@@ -341,7 +341,7 @@ export async function saveTestimonial(
 // ---- Trust badge ------------------------------------------------
 
 const trustSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   label: z.string().trim().min(1).max(60),
   sub: z.string().trim().max(120).nullable(),
@@ -380,7 +380,7 @@ export async function saveTrustBadge(input: TrustInput): Promise<ActionResult> {
 // ---- Press logo -------------------------------------------------
 
 const pressSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   name: z.string().trim().min(1).max(80),
   logoUrl: z.string().trim().max(500).nullable(),
@@ -465,7 +465,7 @@ export async function saveSection(input: SectionInput): Promise<ActionResult> {
 // ---- Intent option ("How can I help you?") ----------------------
 
 const intentSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(400).nullable(),
@@ -508,7 +508,7 @@ export async function saveIntentOption(
 // ---- Reason ("Why work with Alexey") ----------------------------
 
 const reasonSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   title: z.string().trim().min(1).max(120),
   body: z.string().trim().max(600).nullable(),
@@ -547,7 +547,7 @@ export async function saveReason(input: ReasonInput): Promise<ActionResult> {
 // ---- Stat (Advantage big numbers) -------------------------------
 
 const statSchema = z.object({
-  id: z.uuid().nullable(),
+  id: z.guid().nullable(),
   sortOrder: z.number().int().min(0).max(999),
   value: z.string().trim().min(1).max(20),
   suffix: z.string().trim().max(20).nullable(),

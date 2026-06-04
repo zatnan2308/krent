@@ -6,7 +6,7 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Схема формы сохранения страницы (page + перевод на язык по умолчанию). */
 export const savePageSchema = z.object({
-  id: z.uuid().optional(),
+  id: z.guid().optional(),
   title: z.string().min(1).max(200),
   slug: z
     .string()

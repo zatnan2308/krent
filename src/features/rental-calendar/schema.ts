@@ -16,7 +16,7 @@ const isoDate = z
 /** Ручная блокировка дат (block / maintenance / cleaning). */
 export const createCalendarEventSchema = z
   .object({
-    propertyId: z.uuid(),
+    propertyId: z.guid(),
     status: z.enum(BLOCK_STATUS_VALUES),
     startDate: isoDate,
     endDate: isoDate,
@@ -32,7 +32,7 @@ export type CreateCalendarEventInput = z.infer<
 
 /** Правила доступности календаря. */
 export const availabilityRuleSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   minStay: z.number().int().min(1),
   maxStay: z.number().int().min(1).nullable(),
   checkInDays: z.array(z.number().int().min(0).max(6)),
@@ -47,7 +47,7 @@ export type AvailabilityRuleInput = z.infer<typeof availabilityRuleSchema>;
 /** Правило цены на диапазон дат. */
 export const priceRuleSchema = z
   .object({
-    propertyId: z.uuid(),
+    propertyId: z.guid(),
     startDate: isoDate,
     endDate: isoDate,
     price: z.number().nonnegative(),
@@ -62,7 +62,7 @@ export type PriceRuleInput = z.infer<typeof priceRuleSchema>;
 
 /** Источник импорта iCal. */
 export const importSourceSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   name: z.string().min(1).max(120),
   provider: z.enum(PROVIDER_VALUES),
   url: z.url().max(2000),

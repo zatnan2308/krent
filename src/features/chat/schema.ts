@@ -2,14 +2,14 @@ import { z } from "zod";
 
 /** Старт диалога с клиентом портала. */
 export const startConversationSchema = z.object({
-  portalAccountId: z.uuid(),
-  propertyId: z.uuid().nullable(),
+  portalAccountId: z.guid(),
+  propertyId: z.guid().nullable(),
 });
 export type StartConversationInput = z.infer<typeof startConversationSchema>;
 
 /** Отправка текстового сообщения. */
 export const sendMessageSchema = z.object({
-  conversationId: z.uuid(),
+  conversationId: z.guid(),
   message: z.string().min(1).max(4000),
 });
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;

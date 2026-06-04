@@ -75,7 +75,7 @@ const locationSchema = z.object({
 
 /** Схема полной формы редактирования объекта со всеми вкладками. */
 export const updatePropertySchema = z.object({
-  id: z.uuid(),
+  id: z.guid(),
   title: z.string().min(1).max(200),
   slug: z
     .string()
@@ -111,7 +111,7 @@ export const updatePropertySchema = z.object({
   /** Вторая цена — аренда для объектов «Sale & rent» (mixed). */
   rentPrice: priceSchema.nullable().default(null),
   location: locationSchema,
-  amenityIds: z.array(z.uuid()),
+  amenityIds: z.array(z.guid()),
 });
 export type UpdatePropertyInput = z.infer<typeof updatePropertySchema>;
 

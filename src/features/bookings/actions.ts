@@ -434,7 +434,7 @@ function revalidateBooking(bookingId: string): void {
 export async function confirmBookingAction(
   bookingId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(bookingId).success) {
+  if (!z.guid().safeParse(bookingId).success) {
     return { ok: false, error: "Invalid booking." };
   }
   const access = await requireBookingAccess();
@@ -453,7 +453,7 @@ export async function confirmBookingAction(
 export async function cancelBookingAction(
   bookingId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(bookingId).success) {
+  if (!z.guid().safeParse(bookingId).success) {
     return { ok: false, error: "Invalid booking." };
   }
   const access = await requireBookingAccess();
@@ -479,7 +479,7 @@ export async function cancelBookingAction(
 export async function completeBookingAction(
   bookingId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(bookingId).success) {
+  if (!z.guid().safeParse(bookingId).success) {
     return { ok: false, error: "Invalid booking." };
   }
   const access = await requireBookingAccess();

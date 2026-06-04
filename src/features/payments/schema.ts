@@ -5,7 +5,7 @@ const MODE_VALUES = ["test", "live"] as const;
 
 /** Запуск онлайн-оплаты бронирования (booking widget). */
 export const startPaymentSchema = z.object({
-  bookingId: z.uuid(),
+  bookingId: z.guid(),
   provider: z.enum(PROVIDER_VALUES),
   returnPath: z.string().max(2000).nullable(),
 });
@@ -28,7 +28,7 @@ export type SavePaymentProviderInput = z.infer<
 
 /** Возврат средств по бронированию (dashboard). */
 export const issueRefundSchema = z.object({
-  bookingId: z.uuid(),
+  bookingId: z.guid(),
   amount: z.number().positive(),
   reason: z.string().max(500).nullable(),
 });
@@ -36,7 +36,7 @@ export type IssueRefundInput = z.infer<typeof issueRefundSchema>;
 
 /** Ручная фиксация платежа по бронированию (dashboard). */
 export const recordManualPaymentSchema = z.object({
-  bookingId: z.uuid(),
+  bookingId: z.guid(),
   provider: z.enum(PROVIDER_VALUES),
   amount: z.number().positive(),
   reference: z.string().max(200).nullable(),

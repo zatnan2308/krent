@@ -42,7 +42,7 @@ export const submitLeadSchema = z.object({
   email: z.email().max(320),
   phone: z.string().max(60).nullable(),
   message: z.string().max(4000).nullable(),
-  propertyId: z.uuid().nullable(),
+  propertyId: z.guid().nullable(),
   locationInterest: z.string().max(300).nullable(),
   budgetMin: z.number().nonnegative().nullable(),
   budgetMax: z.number().nonnegative().nullable(),
@@ -57,9 +57,9 @@ export type SubmitLeadInput = z.infer<typeof submitLeadSchema>;
 /** Заметка к лиду / контакту / сделке. */
 export const createNoteSchema = z.object({
   body: z.string().min(1).max(4000),
-  contactId: z.uuid().nullable(),
-  leadId: z.uuid().nullable(),
-  dealId: z.uuid().nullable(),
+  contactId: z.guid().nullable(),
+  leadId: z.guid().nullable(),
+  dealId: z.guid().nullable(),
 });
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 
@@ -69,10 +69,10 @@ export const createTaskSchema = z.object({
   description: z.string().max(2000).nullable(),
   dueDate: z.string().max(20).nullable(),
   priority: z.enum(TASK_PRIORITY_VALUES),
-  assignedAgentId: z.uuid().nullable(),
-  contactId: z.uuid().nullable(),
-  leadId: z.uuid().nullable(),
-  dealId: z.uuid().nullable(),
+  assignedAgentId: z.guid().nullable(),
+  contactId: z.guid().nullable(),
+  leadId: z.guid().nullable(),
+  dealId: z.guid().nullable(),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 

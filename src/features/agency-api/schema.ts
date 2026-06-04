@@ -9,7 +9,7 @@ import {
 /** Создание API-ключа. */
 export const createApiKeySchema = z.object({
   name: z.string().trim().min(1).max(120),
-  agentId: z.uuid().nullable(),
+  agentId: z.guid().nullable(),
   scopes: z
     .array(z.enum(API_SCOPE_KEYS))
     .min(1)
@@ -21,14 +21,14 @@ export type CreateApiKeyInput = z.infer<typeof createApiKeySchema>;
 
 /** Отзыв ключа. */
 export const revokeApiKeySchema = z.object({
-  id: z.uuid(),
+  id: z.guid(),
 });
 export type RevokeApiKeyInput = z.infer<typeof revokeApiKeySchema>;
 
 /** Сохранение подключения сайта агента. */
 export const saveAgentConnectionSchema = z.object({
-  id: z.uuid().nullable(),
-  agentId: z.uuid(),
+  id: z.guid().nullable(),
+  agentId: z.guid(),
   name: z.string().trim().min(1).max(160),
   primaryDomain: z.string().trim().max(200).nullable(),
   canonicalOwner: z.enum(CANONICAL_OWNER_MODES),
@@ -40,8 +40,8 @@ export type SaveAgentConnectionInput = z.infer<
 
 /** Сохранение webhook-эндпоинта. */
 export const saveWebhookEndpointSchema = z.object({
-  id: z.uuid().nullable(),
-  agentWebsiteConnectionId: z.uuid().nullable(),
+  id: z.guid().nullable(),
+  agentWebsiteConnectionId: z.guid().nullable(),
   url: z.url().max(500),
   secret: z.string().max(200).nullable(),
   eventTypes: z
@@ -55,7 +55,7 @@ export type SaveWebhookEndpointInput = z.infer<
 
 /** Удаление webhook-эндпоинта. */
 export const deleteWebhookEndpointSchema = z.object({
-  id: z.uuid(),
+  id: z.guid(),
 });
 export type DeleteWebhookEndpointInput = z.infer<
   typeof deleteWebhookEndpointSchema
@@ -63,7 +63,7 @@ export type DeleteWebhookEndpointInput = z.infer<
 
 /** Удаление подключения сайта агента. */
 export const deleteAgentConnectionSchema = z.object({
-  id: z.uuid(),
+  id: z.guid(),
 });
 export type DeleteAgentConnectionInput = z.infer<
   typeof deleteAgentConnectionSchema
@@ -71,8 +71,8 @@ export type DeleteAgentConnectionInput = z.infer<
 
 /** Настройки видимости конкретного объекта на сайте агента. */
 export const setExternalVisibilitySchema = z.object({
-  propertyId: z.uuid(),
-  agentWebsiteConnectionId: z.uuid(),
+  propertyId: z.guid(),
+  agentWebsiteConnectionId: z.guid(),
   visible: z.boolean(),
 });
 export type SetExternalVisibilityInput = z.infer<
@@ -93,7 +93,7 @@ export type SavePropertySyncSettingsInput = z.infer<
 
 /** Настройки фида сайта агента. */
 export const saveAgentFeedSettingsSchema = z.object({
-  agentWebsiteConnectionId: z.uuid(),
+  agentWebsiteConnectionId: z.guid(),
   defaultLocale: z.string().trim().min(2).max(10),
   defaultCurrency: z.string().trim().min(3).max(10),
 });
@@ -103,7 +103,7 @@ export type SaveAgentFeedSettingsInput = z.infer<
 
 /** Создание лида через публичный API. */
 export const createLeadApiSchema = z.object({
-  propertyId: z.uuid().nullable(),
+  propertyId: z.guid().nullable(),
   name: z.string().trim().min(1).max(200),
   email: z.email().nullable(),
   phone: z.string().trim().max(60).nullable(),
@@ -114,7 +114,7 @@ export type CreateLeadApiInput = z.infer<typeof createLeadApiSchema>;
 
 /** Создание showing request через публичный API. */
 export const createShowingRequestApiSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   name: z.string().trim().min(1).max(200),
   email: z.email().nullable(),
   phone: z.string().trim().max(60).nullable(),
@@ -127,7 +127,7 @@ export type CreateShowingRequestApiInput = z.infer<
 
 /** Создание booking request через публичный API. */
 export const createBookingRequestApiSchema = z.object({
-  propertyId: z.uuid(),
+  propertyId: z.guid(),
   startDate: z.string().min(1),
   endDate: z.string().min(1),
   guests: z.number().int().min(1).max(50),

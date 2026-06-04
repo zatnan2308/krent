@@ -260,7 +260,7 @@ export async function connectMetaAds(
 export async function disconnectIntegration(
   connectionId: string,
 ): Promise<ActionResult> {
-  if (!z.uuid().safeParse(connectionId).success) {
+  if (!z.guid().safeParse(connectionId).success) {
     return { ok: false, error: "Invalid connection." };
   }
   const access = await requireIntegrationAccess();
