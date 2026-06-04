@@ -115,10 +115,112 @@ async function recordEmailEvent(
   }
 }
 
+type Admin = ReturnType<typeof createAdminClient>;
+
 /**
- * Вебхук Resend: отказы доставки (email.bounced) и жалобы на спам
- * (email.complained). Подпись проверяется по RESEND_WEBHOOK_SECRET,
- * если он задан; иначе уведомление логируется без проверки.
+ * Пересчитывает агрегат вовлечённости кампании из источника правды
+ * (campaign_recipients) — идемпотентно и без гонок/двойного счёта.
+ */
+async function recomputeCampaignMetric(
+  admin: Admin,
+  campaignId: string,
+  markColumn: "delivered_at" | "opened_at" | "clicked_at",
+  countColumn: "delivered_count" | "opened_count" | "clicked_count",
+): Promise<void> {
+  const { count } = await admin
+    .from("campaign_recipients")
+    .select("id", { count: "exact", head: true })
+    .eq("campaign_id", campaignId)
+    .not(markColumn, "is", null);
+  const value = count ?? 0;
+  const updatedAt = new Date().toISOString();
+  const payload =
+    countColumn === "delivered_count"
+      ? { delivered_count: value, updated_at: updatedAt }
+      : countColumn === "opened_count"
+        ? { opened_count: value, updated_at: updatedAt }
+        : { clicked_count: value, updated_at: updatedAt };
+  await admin
+    .from("campaign_reports")
+    .update(payload)
+    .eq("campaign_id", campaignId);
+}
+
+/**
+ * Фиксирует доставку/открытие/клик письма кампании: помечает получателя
+ * (по provider_message_id → email_sends → campaign_recipients) первым
+ * таймстемпом и пересчитывает соответствующий счётчик отчёта.
+ */
+async function recordEngagement(
+  type: "email.delivered" | "email.opened" | "email.clicked",
+  data: unknown,
+): Promise<void> {
+  const messageId = readString(data, "email_id");
+  if (!messageId) {
+    return;
+  }
+  const admin = createAdminClient();
+  const { data: send } = await admin
+    .from("email_sends")
+    .select("id")
+    .eq("provider_message_id", messageId)
+    .maybeSingle();
+  if (!send) {
+    return;
+  }
+  const { data: recipient } = await admin
+    .from("campaign_recipients")
+    .select("id, campaign_id, delivered_at, opened_at, clicked_at")
+    .eq("email_send_id", send.id)
+    .maybeSingle();
+  if (!recipient) {
+    return;
+  }
+
+  const nowIso = new Date().toISOString();
+  if (type === "email.delivered") {
+    if (recipient.delivered_at) return;
+    await admin
+      .from("campaign_recipients")
+      .update({ delivered_at: nowIso })
+      .eq("id", recipient.id);
+    await recomputeCampaignMetric(
+      admin,
+      recipient.campaign_id,
+      "delivered_at",
+      "delivered_count",
+    );
+  } else if (type === "email.opened") {
+    if (recipient.opened_at) return;
+    await admin
+      .from("campaign_recipients")
+      .update({ opened_at: nowIso })
+      .eq("id", recipient.id);
+    await recomputeCampaignMetric(
+      admin,
+      recipient.campaign_id,
+      "opened_at",
+      "opened_count",
+    );
+  } else {
+    if (recipient.clicked_at) return;
+    await admin
+      .from("campaign_recipients")
+      .update({ clicked_at: nowIso })
+      .eq("id", recipient.id);
+    await recomputeCampaignMetric(
+      admin,
+      recipient.campaign_id,
+      "clicked_at",
+      "clicked_count",
+    );
+  }
+}
+
+/**
+ * Вебхук Resend: отказы (email.bounced), жалобы (email.complained) и
+ * вовлечённость (email.delivered/opened/clicked). Подпись проверяется по
+ * RESEND_WEBHOOK_SECRET, если он задан; иначе обрабатывается без проверки.
  */
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -147,16 +249,22 @@ export async function POST(request: Request) {
   }
 
   const type = readString(payload, "type");
-  if (type === "email.bounced" || type === "email.complained") {
-    const data =
-      payload && typeof payload === "object" && "data" in payload
-        ? (payload as Record<string, unknown>).data
-        : null;
-    try {
+  const data =
+    payload && typeof payload === "object" && "data" in payload
+      ? (payload as Record<string, unknown>).data
+      : null;
+  try {
+    if (type === "email.bounced" || type === "email.complained") {
       await recordEmailEvent(type, data);
-    } catch {
-      // Сбой логирования не должен мешать ответу 200.
+    } else if (
+      type === "email.delivered" ||
+      type === "email.opened" ||
+      type === "email.clicked"
+    ) {
+      await recordEngagement(type, data);
     }
+  } catch {
+    // Сбой обработки не должен мешать ответу 200.
   }
 
   return NextResponse.json({ received: true });

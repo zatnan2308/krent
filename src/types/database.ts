@@ -929,11 +929,14 @@ export type Database = {
       campaign_recipients: {
         Row: {
           campaign_id: string
+          clicked_at: string | null
           contact_id: string | null
           created_at: string
+          delivered_at: string | null
           email: string
           email_send_id: string | null
           id: string
+          opened_at: string | null
           organization_id: string
           reason: string | null
           sent_at: string | null
@@ -942,11 +945,14 @@ export type Database = {
         }
         Insert: {
           campaign_id: string
+          clicked_at?: string | null
           contact_id?: string | null
           created_at?: string
+          delivered_at?: string | null
           email: string
           email_send_id?: string | null
           id?: string
+          opened_at?: string | null
           organization_id: string
           reason?: string | null
           sent_at?: string | null
@@ -955,11 +961,14 @@ export type Database = {
         }
         Update: {
           campaign_id?: string
+          clicked_at?: string | null
           contact_id?: string | null
           created_at?: string
+          delivered_at?: string | null
           email?: string
           email_send_id?: string | null
           id?: string
+          opened_at?: string | null
           organization_id?: string
           reason?: string | null
           sent_at?: string | null
