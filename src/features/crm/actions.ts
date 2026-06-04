@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -260,6 +261,81 @@ export async function moveDeal(
   }
 
   revalidatePath(CRM_DEALS);
+  return { ok: true };
+}
+
+const updateDealSchema = z.object({
+  dealId: z.uuid(),
+  title: z.string().trim().min(1).max(200),
+  amount: z.coerce.number().min(0).nullable(),
+  currency: z.string().trim().min(3).max(10),
+  expectedCloseDate: z.string().trim().nullable(),
+  stageId: z.uuid().nullable(),
+});
+export type UpdateDealInput = z.infer<typeof updateDealSchema>;
+
+/** Обновляет поля сделки (сумма/валюта/дата закрытия/стадия). */
+export async function updateDeal(
+  input: UpdateDealInput,
+): Promise<ActionResult> {
+  const parsed = updateDealSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the deal form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to manage deals." };
+  }
+
+  const supabase = createClient();
+  const d = parsed.data;
+  const updatePayload: {
+    title: string;
+    amount: number | null;
+    currency: string;
+    expected_close_date: string | null;
+    stage_id: string | null;
+    status?: "open" | "won" | "lost";
+  } = {
+    title: d.title,
+    amount: d.amount,
+    currency: d.currency,
+    expected_close_date: d.expectedCloseDate || null,
+    stage_id: d.stageId,
+  };
+  if (d.stageId) {
+    const { data: stage } = await supabase
+      .from("deal_stages")
+      .select("is_won, is_lost")
+      .eq("id", d.stageId)
+      .maybeSingle();
+    if (stage) {
+      updatePayload.status = stage.is_won
+        ? "won"
+        : stage.is_lost
+          ? "lost"
+          : "open";
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("deals")
+    .update(updatePayload)
+    .eq("id", d.dealId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not update the deal." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "You cannot edit this deal." };
+  }
+
+  revalidatePath(CRM_DEALS);
+  revalidatePath(`${CRM_DEALS}/${d.dealId}`);
   return { ok: true };
 }
 

@@ -431,6 +431,85 @@ export async function listDeals(
   }));
 }
 
+/** Детали одной сделки для страницы редактирования. */
+export interface DealDetail {
+  id: string;
+  title: string;
+  amount: number | null;
+  currency: string;
+  status: string;
+  stageId: string | null;
+  stageName: string | null;
+  contactId: string;
+  contactName: string;
+  contactEmail: string | null;
+  propertyTitle: string | null;
+  agentName: string | null;
+  expectedCloseDate: string | null;
+  createdAt: string;
+}
+
+/** Сделка организации со связанными данными. */
+export async function getDeal(
+  organizationId: string,
+  dealId: string,
+): Promise<DealDetail | null> {
+  const supabase = createClient();
+  const { data: deal } = await supabase
+    .from("deals")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("id", dealId)
+    .maybeSingle();
+  if (!deal) {
+    return null;
+  }
+
+  const [contactRes, stageRes, propertyRes] = await Promise.all([
+    supabase
+      .from("contacts")
+      .select("id, full_name, email")
+      .eq("id", deal.contact_id)
+      .maybeSingle(),
+    deal.stage_id
+      ? supabase
+          .from("deal_stages")
+          .select("name")
+          .eq("id", deal.stage_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null as { name: string } | null }),
+    deal.property_id
+      ? supabase
+          .from("properties")
+          .select("title")
+          .eq("id", deal.property_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null as { title: string } | null }),
+  ]);
+  const agentNames = deal.assigned_agent_id
+    ? await resolveUserNames([deal.assigned_agent_id])
+    : new Map<string, string>();
+
+  return {
+    id: deal.id,
+    title: deal.title,
+    amount: deal.amount,
+    currency: deal.currency ?? "USD",
+    status: deal.status,
+    stageId: deal.stage_id,
+    stageName: stageRes.data?.name ?? null,
+    contactId: deal.contact_id,
+    contactName: contactRes.data?.full_name ?? "Unknown contact",
+    contactEmail: contactRes.data?.email ?? null,
+    propertyTitle: propertyRes.data?.title ?? null,
+    agentName: deal.assigned_agent_id
+      ? (agentNames.get(deal.assigned_agent_id) ?? null)
+      : null,
+    expectedCloseDate: deal.expected_close_date,
+    createdAt: deal.created_at,
+  };
+}
+
 // ---- Сводка ---------------------------------------------------
 
 /** Сводка для дашборда CRM: счётчики + недавние лиды. */

@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { moveDeal } from "@/features/crm/actions";
 import type { DealListItem } from "@/features/crm/queries";
 import type { DealStage } from "@/features/crm/types";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   DEFAULT_CURRENCY,
   isCurrencyCode,
@@ -76,7 +78,12 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
                   key={deal.id}
                   className="space-y-2 rounded-md border bg-background p-3"
                 >
-                  <p className="text-sm font-medium">{deal.title}</p>
+                  <Link
+                    href={`${ROUTES.dashboard.crm}/deals/${deal.id}`}
+                    className="block text-sm font-medium hover:underline"
+                  >
+                    {deal.title}
+                  </Link>
                   <p className="text-xs text-muted-foreground">
                     {deal.contactName}
                   </p>
