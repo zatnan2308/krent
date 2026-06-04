@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 
 import { AboutEditor } from "@/features/about/about-editor";
 import { getAboutContent } from "@/features/about/queries";
@@ -35,12 +36,23 @@ export default async function AboutEditorPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">About page</h1>
-        <p className="text-sm text-muted-foreground">
-          Edit the public <strong>/about</strong> page — hero, story and the
-          timeline of milestones.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">About page</h1>
+          <p className="text-sm text-muted-foreground">
+            Edit the public <strong>/about</strong> page — hero, story and the
+            timeline of milestones.
+          </p>
+        </div>
+        <a
+          href={`/${context.organization.default_language}/about`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium hover:bg-accent"
+        >
+          <ExternalLink className="h-4 w-4" />
+          View page
+        </a>
       </div>
       <AboutEditor
         page={{

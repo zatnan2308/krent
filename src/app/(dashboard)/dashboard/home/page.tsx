@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 
 import { HomeEditor } from "@/features/home/home-editor";
 import { getHomeContent } from "@/features/home/queries";
@@ -28,13 +29,24 @@ export default async function DashboardHomePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Home page</h1>
-        <p className="text-sm text-muted-foreground">
-          Edit the content shown on the public home page of{" "}
-          <strong>{context.organization.name}</strong>. Changes appear on the
-          live site immediately after save.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Home page</h1>
+          <p className="text-sm text-muted-foreground">
+            Edit the content shown on the public home page of{" "}
+            <strong>{context.organization.name}</strong>. Changes appear on the
+            live site immediately after save.
+          </p>
+        </div>
+        <a
+          href={`/${context.organization.default_language}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium hover:bg-accent"
+        >
+          <ExternalLink className="h-4 w-4" />
+          View page
+        </a>
       </div>
 
       <HomeEditor content={content} />
