@@ -9,6 +9,44 @@
 
 ---
 
+## ✅ Прогресс реализации (2026-06-04, всё в `main`)
+
+**P0 — закрыты все 5:**
+- ✅ P0-1 crons в vercel.json (`0e0b67a`)
+- ✅ P0-2 Rentals hub `/dashboard/rentals` (`1893d87`)
+- ✅ P0-3 сообщения: клиент-инициация + чат в /account + автоприглашение гостя при бронировании (`0c7636a`, `dbed117`)
+- ✅ P0-4 диспетчер запланированных кампаний `/api/cron/campaigns-dispatch` (`643ae10`)
+- ✅ P0-5 честный статус интеграций (pending вместо ложного connected) (`f5eca32`)
+
+**P1 — закрыто 11:**
+- ✅ P1-1/2 навигация: секции + фильтр по правам; «Clients»→«Client portals» (`38fb8da`)
+- ✅ P1-3 занятые даты гостю + buffer_days (`e73e80a`)
+- ✅ P1-5 organization.name редактируемое (`d4ed566`)
+- ✅ P1-6 редактор seo_settings (`7541ef9`)
+- ✅ P1-7 acquisition fees в brand_settings (white-label) (`0904ff1`)
+- ✅ P1-8 Overview с реальными метриками (`b90191a`)
+- ✅ P1-12 медиа reorder/alt в UI (`ae45cdf`)
+- ✅ P1-15 письмо-приглашение в портал (`56d2fa6`)
+- ✅ P1-16a смена пароля в Settings (`f91c50c`)
+
+**Осталось (P1):**
+- ⬜ P1-4 `/dashboard/calendar`: листание месяцев, блокировка из сетки, фильтр, occupancy %
+- ⬜ P1-9 CRM: страница `crm/deals/[id]` + редактирование сделки (сумма/валюта/дата/агент) + заметки/задачи к сделке
+- ⬜ P1-10 CRM-задачи: подсветка overdue + напоминания (cron→bell/email) + назначение другому агенту
+- ⬜ P1-11 поиск + фильтры + пагинация в списках leads/contacts/properties
+- ⬜ P1-13 мультиязычный редактор объекта (`property_translations`/`slug_localized`)
+- ⬜ P1-14 Navigation v2: drag-reorder, вложенность/дропдауны (`parent_id`), выбор `page_id`, остальные колонки футера
+- ⬜ P1-16b вкладка Domains в Settings (таблица `domains` + права уже есть)
+- ⬜ P1-17b блок «Portal access» (Invite/Revoke) на карточке контакта `crm/contacts/[id]`
+
+**Осталось (P2):** весь раздел 4 ниже (open/click email-трекинг, карта в локации, множественные цены, профиль агента, превью в редакторах, колокол read/unread, syncReports для GSC/Ads, и т.д.).
+
+> Системный helper писем-приглашений: `src/features/portal/invite-email.ts`
+> (`ensurePortalInvite`/`sendPortalInviteEmail`) + системный шаблон `portal.invited`
+> (миграция `20260604170000`). Переиспользуется в booking и в inviteToPortal.
+
+---
+
 ## 0. Прямые ответы на жалобы пользователя
 
 ### «Настройка доступных дат для букинга и просмотр резерваций не работает/неудобно»
