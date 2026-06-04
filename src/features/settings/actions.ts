@@ -274,6 +274,124 @@ export async function toggleModule(
   return { ok: true };
 }
 
+// ---- Domains -----------------------------------------------------
+
+const addDomainSchema = z.object({
+  domain: z.string().trim().min(3).max(255),
+});
+export type AddDomainInput = z.infer<typeof addDomainSchema>;
+
+/** Нормализует ввод домена: убирает протокол, путь и регистр. */
+function normalizeDomain(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+}
+
+async function requireDomainAccess(): Promise<
+  { ok: true; organizationId: string } | { ok: false; error: string }
+> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  if (!hasPermission(context, "domains.manage")) {
+    return { ok: false, error: "You cannot manage domains." };
+  }
+  return { ok: true, organizationId: context.organization.id };
+}
+
+export async function addDomain(input: AddDomainInput): Promise<ActionResult> {
+  const parsed = addDomainSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Enter a valid domain." };
+  const access = await requireDomainAccess();
+  if (!access.ok) return access;
+  const admin = createAdminClient();
+  const { error } = await admin.from("domains").insert({
+    organization_id: access.organizationId,
+    domain: normalizeDomain(parsed.data.domain),
+    status: "pending",
+    type: "landing",
+  });
+  if (error) {
+    if (error.code === "23505") {
+      return { ok: false, error: "This domain is already added." };
+    }
+    return { ok: false, error: "Could not add the domain." };
+  }
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+export async function removeDomain(domainId: string): Promise<ActionResult> {
+  if (!z.uuid().safeParse(domainId).success) {
+    return { ok: false, error: "Invalid domain." };
+  }
+  const access = await requireDomainAccess();
+  if (!access.ok) return access;
+  const admin = createAdminClient();
+  await admin
+    .from("domains")
+    .delete()
+    .eq("id", domainId)
+    .eq("organization_id", access.organizationId);
+  revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+/** Помечает домен подтверждённым (ручная верификация после настройки DNS). */
+export async function verifyDomain(domainId: string): Promise<ActionResult> {
+  if (!z.uuid().safeParse(domainId).success) {
+    return { ok: false, error: "Invalid domain." };
+  }
+  const access = await requireDomainAccess();
+  if (!access.ok) return access;
+  const admin = createAdminClient();
+  await admin
+    .from("domains")
+    .update({ status: "verified", verified_at: new Date().toISOString() })
+    .eq("id", domainId)
+    .eq("organization_id", access.organizationId);
+  revalidatePath("/dashboard/settings");
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
+/** Делает домен основным: снимает primary с других, помечает verified. */
+export async function setPrimaryDomain(
+  domainId: string,
+): Promise<ActionResult> {
+  if (!z.uuid().safeParse(domainId).success) {
+    return { ok: false, error: "Invalid domain." };
+  }
+  const access = await requireDomainAccess();
+  if (!access.ok) return access;
+  const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("domains")
+    .select("id")
+    .eq("id", domainId)
+    .eq("organization_id", access.organizationId)
+    .maybeSingle();
+  if (!target) return { ok: false, error: "Domain not found." };
+  await admin
+    .from("domains")
+    .update({ type: "landing" })
+    .eq("organization_id", access.organizationId)
+    .eq("type", "primary");
+  await admin
+    .from("domains")
+    .update({
+      type: "primary",
+      status: "verified",
+      verified_at: new Date().toISOString(),
+    })
+    .eq("id", domainId);
+  revalidatePath("/dashboard/settings");
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
 // ---- Team / Members ---------------------------------------------
 
 const inviteMemberSchema = z.object({

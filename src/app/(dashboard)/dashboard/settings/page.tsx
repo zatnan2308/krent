@@ -24,7 +24,8 @@ export default async function SettingsPage() {
   const orgId = context.organization.id;
   const admin = createAdminClient();
 
-  const [brand, modulesAll, orgModules, members, roles] = await Promise.all([
+  const [brand, modulesAll, orgModules, members, roles, domainsData] =
+    await Promise.all([
     admin
       .from("brand_settings")
       .select("*")
@@ -40,6 +41,11 @@ export default async function SettingsPage() {
       .select("user_id, role_id, status")
       .eq("organization_id", orgId),
     admin.from("roles").select("id, key, name").order("name"),
+    admin
+      .from("domains")
+      .select("id, domain, status, type")
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: true }),
   ]);
 
   // Email пользователей через auth admin — параллельно (а не N последовательных).
@@ -137,6 +143,13 @@ export default async function SettingsPage() {
           name: r.name,
         }))}
         currentUserId={context.user.id}
+        domains={(domainsData.data ?? []).map((d) => ({
+          id: d.id,
+          domain: d.domain,
+          status: d.status,
+          type: d.type,
+        }))}
+        canManageDomains={hasPermission(context, "domains.manage")}
       />
     </div>
   );

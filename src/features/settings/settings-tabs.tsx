@@ -18,6 +18,10 @@ import {
   type ProfileInput,
   type SiteContactInput,
 } from "./actions";
+import {
+  DomainsSection,
+  type DomainRow,
+} from "@/features/settings/domains-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +32,8 @@ type Tab =
   | "contact"
   | "localization"
   | "modules"
-  | "team";
+  | "team"
+  | "domains";
 
 interface MemberRow {
   userId: string;
@@ -59,6 +64,8 @@ interface Props {
   members: MemberRow[];
   roles: RoleRow[];
   currentUserId: string;
+  domains: DomainRow[];
+  canManageDomains: boolean;
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -68,6 +75,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "localization", label: "Localization" },
   { key: "modules", label: "Modules" },
   { key: "team", label: "Team" },
+  { key: "domains", label: "Domains" },
 ];
 
 export function SettingsTabs(props: Props) {
@@ -110,6 +118,13 @@ export function SettingsTabs(props: Props) {
           members={props.members}
           roles={props.roles}
           currentUserId={props.currentUserId}
+        />
+      ) : null}
+
+      {tab === "domains" ? (
+        <DomainsSection
+          domains={props.domains}
+          canManage={props.canManageDomains}
         />
       ) : null}
     </div>
