@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import {
   changeMemberRole,
+  changePassword,
   inviteMember,
   removeMember,
   toggleModule,
@@ -90,7 +91,12 @@ export function SettingsTabs(props: Props) {
         ))}
       </div>
 
-      {tab === "profile" ? <ProfileSection initial={props.profile} /> : null}
+      {tab === "profile" ? (
+        <div className="space-y-4">
+          <ProfileSection initial={props.profile} />
+          <PasswordSection />
+        </div>
+      ) : null}
       {tab === "branding" ? <BrandingSection initial={props.branding} /> : null}
       {tab === "contact" ? (
         <SiteContactSection initial={props.siteContact} />
@@ -415,6 +421,54 @@ function SiteContactSection({ initial }: { initial: SiteContactInput }) {
         </div>
       </div>
 
+      <Submit pending={pending} msg={msg} />
+    </form>
+  );
+}
+
+function PasswordSection() {
+  const { msg, setMsg } = useToast();
+  const [pending, setPending] = React.useState(false);
+  const [password, setPassword] = React.useState("");
+  const [confirm, setConfirm] = React.useState("");
+  return (
+    <form
+      className="space-y-3 rounded-md border p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (password !== confirm) {
+          setMsg("Passwords do not match.");
+          return;
+        }
+        setPending(true);
+        const result = await changePassword({ newPassword: password });
+        setPending(false);
+        setMsg(result.ok ? "Password changed." : result.error);
+        if (result.ok) {
+          setPassword("");
+          setConfirm("");
+        }
+      }}
+    >
+      <p className="text-sm font-medium">Change password</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Field label="New password">
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </Field>
+        <Field label="Confirm password">
+          <Input
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+          />
+        </Field>
+      </div>
       <Submit pending={pending} msg={msg} />
     </form>
   );

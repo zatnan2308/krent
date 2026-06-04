@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
 import {
   ORG_CONTEXT_TAG,
@@ -42,6 +42,37 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
     return { ok: false, error: "Could not update profile." };
   }
   revalidatePath("/dashboard/settings");
+  return { ok: true };
+}
+
+// ---- Password ----------------------------------------------------
+
+const passwordSchema = z.object({
+  newPassword: z.string().min(8).max(200),
+});
+export type PasswordInput = z.infer<typeof passwordSchema>;
+
+/** Меняет пароль текущего пользователя (email/password аккаунт). */
+export async function changePassword(
+  input: PasswordInput,
+): Promise<ActionResult> {
+  const parsed = passwordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.newPassword,
+  });
+  if (error) {
+    return { ok: false, error: "Could not change the password." };
+  }
   return { ok: true };
 }
 
