@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { CrmNav } from "@/features/crm/crm-nav";
-import { listTasks } from "@/features/crm/queries";
+import { getOrgAgents, listTasks } from "@/features/crm/queries";
 import { TaskManager } from "@/features/crm/task-manager";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -21,7 +21,10 @@ export default async function CrmTasksPage() {
     redirect(ROUTES.dashboard.root);
   }
 
-  const tasks = await listTasks(context.organization.id);
+  const [tasks, agents] = await Promise.all([
+    listTasks(context.organization.id),
+    getOrgAgents(context.organization.id),
+  ]);
   const canManage = hasPermission(context, "crm.manage");
 
   return (
@@ -33,7 +36,12 @@ export default async function CrmTasksPage() {
         </p>
       </div>
       <CrmNav />
-      <TaskManager tasks={tasks} canManage={canManage} showRelations />
+      <TaskManager
+        tasks={tasks}
+        canManage={canManage}
+        agents={agents}
+        showRelations
+      />
     </div>
   );
 }

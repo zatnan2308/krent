@@ -40,6 +40,7 @@ interface TaskManagerProps {
   contactId?: string | null;
   dealId?: string | null;
   showRelations?: boolean;
+  agents?: { id: string; name: string }[];
 }
 
 /** Список задач с созданием, отметкой выполнения и удалением. */
@@ -50,12 +51,14 @@ export function TaskManager({
   contactId = null,
   dealId = null,
   showRelations = false,
+  agents = [],
 }: TaskManagerProps) {
   const router = useRouter();
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [dueDate, setDueDate] = React.useState("");
   const [priority, setPriority] = React.useState<TaskPriority>("medium");
+  const [assignedAgentId, setAssignedAgentId] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const todayStr = React.useMemo(
@@ -74,6 +77,7 @@ export function TaskManager({
       description: description.trim() || null,
       dueDate: dueDate || null,
       priority,
+      assignedAgentId: assignedAgentId || null,
       leadId,
       contactId,
       dealId,
@@ -84,6 +88,7 @@ export function TaskManager({
       setDescription("");
       setDueDate("");
       setPriority("medium");
+      setAssignedAgentId("");
       router.refresh();
     } else {
       setError(result.error);
@@ -149,6 +154,21 @@ export function TaskManager({
                 </option>
               ))}
             </select>
+            {agents.length > 0 ? (
+              <select
+                className={FIELD_CLASS}
+                value={assignedAgentId}
+                aria-label="Assignee"
+                onChange={(event) => setAssignedAgentId(event.target.value)}
+              >
+                <option value="">Assign to me</option>
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
+            ) : null}
           </div>
           <Button
             type="button"

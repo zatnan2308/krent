@@ -525,6 +525,24 @@ export async function getDeal(
   };
 }
 
+/** Активные участники организации — для назначения задач. */
+export async function getOrgAgents(
+  organizationId: string,
+): Promise<{ id: string; name: string }[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("status", "active");
+  const ids = [...new Set((data ?? []).map((member) => member.user_id))];
+  if (ids.length === 0) {
+    return [];
+  }
+  const names = await resolveUserNames(ids);
+  return ids.map((id) => ({ id, name: names.get(id) ?? "Agent" }));
+}
+
 // ---- Сводка ---------------------------------------------------
 
 /** Сводка для дашборда CRM: счётчики + недавние лиды. */

@@ -69,6 +69,7 @@ export const createTaskSchema = z.object({
   description: z.string().max(2000).nullable(),
   dueDate: z.string().max(20).nullable(),
   priority: z.enum(TASK_PRIORITY_VALUES),
+  assignedAgentId: z.uuid().nullable(),
   contactId: z.uuid().nullable(),
   leadId: z.uuid().nullable(),
   dealId: z.uuid().nullable(),

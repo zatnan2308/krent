@@ -433,7 +433,7 @@ export async function createTask(
   const { error } = await supabase.from("tasks").insert({
     organization_id: context.organization.id,
     created_by: context.user.id,
-    assigned_agent_id: context.user.id,
+    assigned_agent_id: data.assignedAgentId ?? context.user.id,
     contact_id: data.contactId,
     lead_id: data.leadId,
     deal_id: data.dealId,
