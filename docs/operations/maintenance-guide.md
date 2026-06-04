@@ -4,11 +4,14 @@
 
 ### Ежедневно (cron)
 
-- `/api/cron/calendar-sync` — раз в час, импорт iCal-фидов
-- `/api/cron/webhooks-retry` — раз в минуту, повторная доставка
-  webhook'ов
-- (опционально) `/api/cron/integrations-sync` — раз в сутки, обновление
-  отчётов Search Console / Ads
+- `/api/cron/calendar-sync` — раз в час, импорт iCal-фидов (зарегистрирован в `vercel.json`)
+- `/api/cron/webhooks-retry` — каждые 5 минут, повторная доставка
+  webhook'ов (зарегистрирован в `vercel.json`)
+- (план) `/api/cron/integrations-sync` — раз в сутки, обновление
+  отчётов Search Console / Ads (роут ещё не реализован — см. P2 в `docs/ADMIN_AUDIT.md`)
+
+> ⚠️ Cron чаще раза в сутки требует тариф Vercel **Pro**; на **Hobby** запускается
+> максимум раз в день. Также для работы нужен `CRON_SECRET` в env Vercel.
 
 ### Еженедельно (вручную)
 
