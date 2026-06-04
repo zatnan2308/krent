@@ -76,29 +76,31 @@ export default async function PropertyCalendarPage({
         description={property.property.title}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Availability calendar</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CalendarBoard propertyId={params.id} events={data.events} />
-        </CardContent>
-      </Card>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Availability calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CalendarBoard propertyId={params.id} events={data.events} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Availability &amp; pricing rules
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RulesForm
-            propertyId={params.id}
-            availabilityRule={data.availabilityRule}
-            priceRules={data.priceRules}
-          />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Availability &amp; pricing rules
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RulesForm
+              propertyId={params.id}
+              availabilityRule={data.availabilityRule}
+              priceRules={data.priceRules}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
