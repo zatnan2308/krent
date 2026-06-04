@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/server/auth";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
+import { sendPortalInviteEmail } from "./invite-email";
 import {
   invitePortalSchema,
   type ActionResult,
@@ -44,7 +45,7 @@ export async function inviteToPortal(
 
   const { data: contact } = await supabase
     .from("contacts")
-    .select("id, email")
+    .select("id, email, full_name")
     .eq("organization_id", organizationId)
     .eq("id", data.contactId)
     .maybeSingle();
@@ -58,12 +59,13 @@ export async function inviteToPortal(
     };
   }
 
+  const inviteToken = generateToken();
   const { error } = await supabase.from("portal_accounts").insert({
     organization_id: organizationId,
     contact_id: contact.id,
     portal_type: data.portalType,
     email: contact.email,
-    invite_token: generateToken(),
+    invite_token: inviteToken,
     status: "pending",
     invited_by: context.user.id,
     expires_at: new Date(Date.now() + INVITE_TTL_MS).toISOString(),
@@ -78,15 +80,34 @@ export async function inviteToPortal(
     return { ok: false, error: "Could not create the invitation." };
   }
 
+  const admin = createAdminClient();
+
   // Портал продавца: привязываем контакт к выбранному объекту.
   if (data.portalType === "seller" && data.propertyId) {
-    const admin = createAdminClient();
     await admin
       .from("properties")
       .update({ seller_contact_id: contact.id })
       .eq("id", data.propertyId)
       .eq("organization_id", organizationId);
   }
+
+  // Письмо-приглашение со ссылкой активации портала.
+  const { data: domain } = await admin
+    .from("domains")
+    .select("domain")
+    .eq("organization_id", organizationId)
+    .eq("status", "verified")
+    .eq("type", "primary")
+    .maybeSingle();
+  await sendPortalInviteEmail({
+    organizationId,
+    email: contact.email,
+    name: contact.full_name ?? null,
+    token: inviteToken,
+    baseUrl: domain?.domain
+      ? `https://${domain.domain}`
+      : (process.env.NEXT_PUBLIC_SITE_URL ?? ""),
+  });
 
   revalidatePath(CLIENTS_PATH);
   return { ok: true };
