@@ -31,6 +31,11 @@ import type {
   SizeUnit,
 } from "@/features/properties/types";
 import { PropertyMediaManager } from "@/features/properties/property-media-manager";
+import {
+  DocumentsManager,
+  NearbyPlacesManager,
+  VideosManager,
+} from "@/features/properties/extras-manager";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -193,6 +198,9 @@ interface PropertyFormProps {
   amenityCatalog: AmenityCatalog;
   currentUserId: string;
   canDelete: boolean;
+  videos: React.ComponentProps<typeof VideosManager>["videos"];
+  documents: React.ComponentProps<typeof DocumentsManager>["documents"];
+  nearbyPlaces: React.ComponentProps<typeof NearbyPlacesManager>["places"];
 }
 
 /** Редактор объекта с вкладками: все данные сохраняются одной кнопкой. */
@@ -201,6 +209,9 @@ export function PropertyForm({
   amenityCatalog,
   currentUserId,
   canDelete,
+  videos,
+  documents,
+  nearbyPlaces,
 }: PropertyFormProps) {
   const router = useRouter();
   const [form, setForm] = React.useState<FormState>(() => ({
@@ -1074,10 +1085,10 @@ export function PropertyForm({
         </TabsContent>
 
         {/* ---- Media ---- */}
-        <TabsContent value="media">
+        <TabsContent value="media" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Media</CardTitle>
+              <CardTitle className="text-base">Photos</CardTitle>
             </CardHeader>
             <CardContent>
               <PropertyMediaManager
@@ -1086,10 +1097,17 @@ export function PropertyForm({
               />
             </CardContent>
           </Card>
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <VideosManager propertyId={initial.property.id} videos={videos} />
+            <DocumentsManager
+              propertyId={initial.property.id}
+              documents={documents}
+            />
+          </div>
         </TabsContent>
 
         {/* ---- Location ---- */}
-        <TabsContent value="location">
+        <TabsContent value="location" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Location</CardTitle>
@@ -1183,6 +1201,10 @@ export function PropertyForm({
               </div>
             </CardContent>
           </Card>
+          <NearbyPlacesManager
+            propertyId={initial.property.id}
+            places={nearbyPlaces}
+          />
         </TabsContent>
 
         {/* ---- SEO ---- */}

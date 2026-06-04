@@ -6,11 +6,6 @@ import {
   getAmenityCatalog,
   getPropertyForEdit,
 } from "@/features/properties/dashboard-queries";
-import {
-  DocumentsManager,
-  NearbyPlacesManager,
-  VideosManager,
-} from "@/features/properties/extras-manager";
 import { PropertyForm } from "@/features/properties/property-form";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -45,6 +40,35 @@ export default async function EditPropertyPage({
     notFound();
   }
 
+  // Доп. сущности объекта грузим здесь и раскладываем по вкладкам формы:
+  // видео/документы → Media, ближайшие места → Location.
+  const admin = createAdminClient();
+  const [{ data: videos }, { data: docs }, { data: places }] =
+    await Promise.all([
+      admin
+        .from("property_videos")
+        .select("id, url, title, type")
+        .eq("property_id", params.id)
+        .order("sort_order"),
+      admin
+        .from("property_documents")
+        .select("id, name, url, type")
+        .eq("property_id", params.id)
+        .order("sort_order"),
+      admin
+        .from("nearby_places")
+        .select("id, name, category, distance, distance_unit")
+        .eq("property_id", params.id)
+        .order("sort_order"),
+    ]);
+  const nearbyPlaces = (places ?? []).map((place) => ({
+    id: place.id,
+    name: place.name,
+    category: place.category,
+    distance: place.distance,
+    distanceUnit: place.distance_unit,
+  }));
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -78,45 +102,9 @@ export default async function EditPropertyPage({
         amenityCatalog={amenityCatalog}
         currentUserId={context.user.id}
         canDelete={hasPermission(context, "properties.delete")}
-      />
-      <PropertyExtras propertyId={params.id} />
-    </div>
-  );
-}
-
-async function PropertyExtras({ propertyId }: { propertyId: string }) {
-  const admin = createAdminClient();
-  const [{ data: videos }, { data: docs }, { data: places }] =
-    await Promise.all([
-      admin
-        .from("property_videos")
-        .select("id, url, title, type")
-        .eq("property_id", propertyId)
-        .order("sort_order"),
-      admin
-        .from("property_documents")
-        .select("id, name, url, type")
-        .eq("property_id", propertyId)
-        .order("sort_order"),
-      admin
-        .from("nearby_places")
-        .select("id, name, category, distance, distance_unit")
-        .eq("property_id", propertyId)
-        .order("sort_order"),
-    ]);
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <VideosManager propertyId={propertyId} videos={videos ?? []} />
-      <DocumentsManager propertyId={propertyId} documents={docs ?? []} />
-      <NearbyPlacesManager
-        propertyId={propertyId}
-        places={(places ?? []).map((place) => ({
-          id: place.id,
-          name: place.name,
-          category: place.category,
-          distance: place.distance,
-          distanceUnit: place.distance_unit,
-        }))}
+        videos={videos ?? []}
+        documents={docs ?? []}
+        nearbyPlaces={nearbyPlaces}
       />
     </div>
   );
