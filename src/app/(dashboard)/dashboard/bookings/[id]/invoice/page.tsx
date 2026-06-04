@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { Download } from "lucide-react";
 
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -58,7 +59,17 @@ export default async function BookingInvoicePage({
     .maybeSingle();
 
   return (
-    <article className="mx-auto max-w-2xl space-y-6 rounded-lg border bg-background p-8 text-sm shadow-sm print:border-0 print:shadow-none">
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div className="flex justify-end print:hidden">
+        <a
+          href={`${ROUTES.dashboard.bookings}/${params.id}/invoice/pdf`}
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium hover:bg-accent"
+        >
+          <Download className="h-4 w-4" />
+          Download PDF
+        </a>
+      </div>
+      <article className="space-y-6 rounded-lg border bg-background p-8 text-sm shadow-sm print:border-0 print:shadow-none">
       <header className="flex items-start justify-between gap-4 border-b pb-4">
         <div>
           {brand?.logo_url ? (
@@ -127,10 +138,11 @@ export default async function BookingInvoicePage({
           invoice is auto-generated and does not require a signature.
         </p>
         <p className="mt-1">
-          Print or save this page as PDF from your browser (Ctrl/Cmd + P →
-          Save as PDF).
+          Use the &ldquo;Download PDF&rdquo; button above for a print-ready
+          copy.
         </p>
       </footer>
-    </article>
+      </article>
+    </div>
   );
 }

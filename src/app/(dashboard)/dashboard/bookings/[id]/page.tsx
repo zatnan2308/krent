@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Download } from "lucide-react";
 
 import { BookingManager } from "@/features/bookings/booking-manager";
 import {
@@ -201,8 +202,23 @@ export default async function BookingDetailPage({
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
           <CardTitle className="text-base">Price breakdown</CardTitle>
+          <div className="flex items-center gap-3 text-sm">
+            <Link
+              href={`${ROUTES.dashboard.bookings}/${booking.id}/invoice`}
+              className="text-primary hover:underline"
+            >
+              Invoice
+            </Link>
+            <a
+              href={`${ROUTES.dashboard.bookings}/${booking.id}/invoice/pdf`}
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              <Download className="h-3.5 w-3.5" />
+              PDF
+            </a>
+          </div>
         </CardHeader>
         <CardContent>
           {fees.length > 0 ? (
