@@ -186,6 +186,53 @@ export async function unassignLead(leadId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+const reassignLeadSchema = z.object({
+  leadId: z.guid(),
+  agentId: z.guid().nullable(),
+});
+
+/** (Ре)назначает лид агенту организации; null — снять. Только crm.manage_all. */
+export async function reassignLead(
+  input: z.infer<typeof reassignLeadSchema>,
+): Promise<ActionResult> {
+  const parsed = reassignLeadSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid agent." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage_all")) {
+    return { ok: false, error: "Only managers can reassign leads." };
+  }
+  const supabase = createClient();
+  const { leadId, agentId } = parsed.data;
+  const { data, error } = await supabase
+    .from("leads")
+    .update({ assigned_agent_id: agentId })
+    .eq("id", leadId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not reassign the lead." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Lead not found or not editable." };
+  }
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: agentId ? "lead.assigned" : "lead.unassigned",
+    entityType: "lead",
+    entityId: leadId,
+    ...(agentId ? { metadata: { agentId } } : {}),
+  });
+  revalidatePath(CRM_LEADS);
+  revalidatePath(`${CRM_LEADS}/${leadId}`);
+  return { ok: true };
+}
+
 /** Создаёт сделку из лида и помечает лид как converted. */
 export async function convertLeadToDeal(
   leadId: string,
@@ -428,6 +475,56 @@ export async function updateDeal(
 
   revalidatePath(CRM_DEALS);
   revalidatePath(`${CRM_DEALS}/${d.dealId}`);
+  return { ok: true };
+}
+
+const updateContactSchema = z.object({
+  contactId: z.guid(),
+  fullName: z.string().trim().min(1).max(200),
+  email: z.string().trim().max(200).nullable(),
+  phone: z.string().trim().max(50).nullable(),
+  preferredLanguage: z.string().trim().max(10).nullable(),
+  preferredCurrency: z.string().trim().max(10).nullable(),
+});
+export type UpdateContactInput = z.infer<typeof updateContactSchema>;
+
+/** Обновляет данные контакта (имя/email/телефон/язык/валюта). */
+export async function updateContact(
+  input: UpdateContactInput,
+): Promise<ActionResult> {
+  const parsed = updateContactSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the contact form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const supabase = createClient();
+  const d = parsed.data;
+  const { data, error } = await supabase
+    .from("contacts")
+    .update({
+      full_name: d.fullName,
+      email: d.email,
+      phone: d.phone,
+      preferred_language: d.preferredLanguage,
+      preferred_currency: d.preferredCurrency,
+    })
+    .eq("id", d.contactId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not update the contact." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Contact not found or not editable." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
+  revalidatePath(CRM_CONTACTS);
   return { ok: true };
 }
 

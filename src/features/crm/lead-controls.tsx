@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   assignLeadToSelf,
   convertLeadToDeal,
+  reassignLead,
   setLeadStatus,
-  unassignLead,
 } from "@/features/crm/actions";
 import { LEAD_STATUS_OPTIONS } from "@/features/crm/constants";
 import type { ActionResult } from "@/features/crm/schema";
@@ -22,8 +22,11 @@ interface LeadControlsProps {
   status: LeadStatus;
   assigned: boolean;
   canManage: boolean;
-  /** crm.manage_all — нужно, чтобы снять назначение (см. RLS). */
+  /** crm.manage_all — нужно для (ре)назначения лида другому агенту (см. RLS). */
   canManageAll: boolean;
+  /** Агенты организации — для селекта реассайна (только при manage_all). */
+  agents: { id: string; name: string }[];
+  assignedAgentId: string | null;
 }
 
 /** Управление лидом: статус, назначение, конвертация в сделку. */
@@ -33,6 +36,8 @@ export function LeadControls({
   assigned,
   canManage,
   canManageAll,
+  agents,
+  assignedAgentId,
 }: LeadControlsProps) {
   const router = useRouter();
   const [pending, setPending] = React.useState(false);
@@ -81,20 +86,34 @@ export function LeadControls({
         </select>
       </div>
 
+      {canManageAll ? (
+        <div className="space-y-1.5">
+          <label htmlFor="lead-agent" className="text-sm font-medium">
+            Assigned agent
+          </label>
+          <select
+            id="lead-agent"
+            className={FIELD_CLASS}
+            value={assignedAgentId ?? ""}
+            disabled={pending}
+            onChange={(event) =>
+              run(() =>
+                reassignLead({ leadId, agentId: event.target.value || null }),
+              )
+            }
+          >
+            <option value="">Unassigned</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
-        {assigned ? (
-          canManageAll ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={pending}
-              onClick={() => run(() => unassignLead(leadId))}
-            >
-              Unassign
-            </Button>
-          ) : null
-        ) : (
+        {!canManageAll && !assigned ? (
           <Button
             type="button"
             variant="outline"
@@ -104,7 +123,7 @@ export function LeadControls({
           >
             Assign to me
           </Button>
-        )}
+        ) : null}
         {status === "converted" ? (
           <span className="inline-flex items-center text-sm text-muted-foreground">
             Converted to a deal

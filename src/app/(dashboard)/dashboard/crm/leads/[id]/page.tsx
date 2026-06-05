@@ -13,6 +13,7 @@ import { NotesPanel } from "@/features/crm/notes-panel";
 import {
   getEntityActivity,
   getLead,
+  getOrgAgents,
   listNotes,
   listTasks,
 } from "@/features/crm/queries";
@@ -51,10 +52,11 @@ export default async function LeadDetailPage({
     notFound();
   }
 
-  const [notes, tasks, activity] = await Promise.all([
+  const [notes, tasks, activity, agents] = await Promise.all([
     listNotes(context.organization.id, { leadId: params.id }),
     listTasks(context.organization.id, { leadId: params.id }),
     getEntityActivity(context.organization.id, [params.id]),
+    getOrgAgents(context.organization.id),
   ]);
   const canManage = hasPermission(context, "crm.manage");
   const { lead, contact, attribution } = detail;
@@ -204,6 +206,8 @@ export default async function LeadDetailPage({
               assigned={lead.assigned_agent_id !== null}
               canManage={canManage}
               canManageAll={hasPermission(context, "crm.manage_all")}
+              agents={agents}
+              assignedAgentId={lead.assigned_agent_id}
             />
           </CardContent>
         </Card>

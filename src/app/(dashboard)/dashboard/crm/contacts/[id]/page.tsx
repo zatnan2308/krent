@@ -8,6 +8,7 @@ import {
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
 import { ActivityTimeline } from "@/features/crm/activity-timeline";
+import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -90,19 +91,18 @@ export default async function ContactDetailPage({
           <CardHeader>
             <CardTitle className="text-base">Contact details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            <p className="text-muted-foreground">
-              Email: {contact.email ?? "—"}
-            </p>
-            <p className="text-muted-foreground">
-              Phone: {contact.phone ?? "—"}
-            </p>
-            <p className="text-muted-foreground">
-              Language: {contact.preferred_language ?? "—"}
-            </p>
-            <p className="text-muted-foreground">
-              Currency: {contact.preferred_currency ?? "—"}
-            </p>
+          <CardContent>
+            <ContactEditForm
+              contact={{
+                id: contact.id,
+                fullName: contact.full_name,
+                email: contact.email,
+                phone: contact.phone,
+                language: contact.preferred_language,
+                currency: contact.preferred_currency,
+              }}
+              canManage={canManage}
+            />
           </CardContent>
         </Card>
 
