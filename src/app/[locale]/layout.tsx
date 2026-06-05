@@ -34,13 +34,27 @@ function whatsappLink(value: string): string {
 }
 
 /**
- * Site-wide мета: верификация Google Search Console из seo_settings
- * (наследуется всеми страницами под [locale]; страницы её не переопределяют).
+ * Site-wide мета: верификация Google Search Console + дефолтный заголовок
+ * из seo_settings. `title.default` подхватывают только страницы без своего
+ * title (страницы через buildPageMetadata уже сами прибавляют title_suffix —
+ * поэтому НЕ задаём template, иначе суффикс задвоится).
  */
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getPublicSiteContext();
+  const metadata: Metadata = {};
   const google = site?.seo?.google_site_verification?.trim();
-  return google ? { verification: { google } } : {};
+  if (google) {
+    metadata.verification = { google };
+  }
+  const defaultTitle = site?.seo?.default_title?.trim();
+  if (defaultTitle) {
+    const suffix = site?.seo?.title_suffix ?? "";
+    // Плоская строка-title на уровне layout — дефолт для страниц без своего
+    // title; дочерние страницы её переопределяют (без template — без задвоения
+    // suffix, который страницы через buildPageMetadata уже прибавляют сами).
+    metadata.title = `${defaultTitle}${suffix}`;
+  }
+  return metadata;
 }
 
 export default async function LocaleLayout({
