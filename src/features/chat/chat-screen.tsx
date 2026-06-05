@@ -80,8 +80,9 @@ export async function renderChatScreen({
                         <span className="block truncate font-medium">
                           {conversation.title}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {CONVERSATION_TYPE_LABELS[conversation.type]}
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {conversation.lastMessage ??
+                            CONVERSATION_TYPE_LABELS[conversation.type]}
                         </span>
                       </span>
                       {conversation.hasUnread ? (

@@ -143,8 +143,11 @@ export function ChatThread({
   }, [conversationId]);
 
   // Realtime: новое сообщение -> обновляем серверные данные ленты.
+  // Пачку INSERT'ов схлопываем в один router.refresh() (дебаунс), иначе при
+  // всплеске сообщений шёл полный refresh на каждую строку.
   React.useEffect(() => {
     let cleanup = () => {};
+    let timer: ReturnType<typeof setTimeout> | null = null;
     try {
       const supabase = createClient();
       const channel = supabase
@@ -158,12 +161,16 @@ export function ChatThread({
             filter: `conversation_id=eq.${conversationId}`,
           },
           () => {
-            router.refresh();
-            void markConversationRead(conversationId);
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+              router.refresh();
+              void markConversationRead(conversationId);
+            }, 300);
           },
         )
         .subscribe();
       cleanup = () => {
+        if (timer) clearTimeout(timer);
         void supabase.removeChannel(channel);
       };
     } catch {
