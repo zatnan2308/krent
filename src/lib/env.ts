@@ -45,6 +45,26 @@ const serverSchema = z.object({
   META_APP_ID: z.string().optional(),
   META_APP_SECRET: z.string().optional(),
   META_OAUTH_REDIRECT_URL: z.string().optional(),
+  // ---- Multi-channel messaging (self-hosted: КРЕДЫ ПОКУПАТЕЛЯ) ----------
+  // Каждая копия Krent подключает СВОИ аккаунты. Секреты — только из env
+  // (как Stripe), без Embedded Signup / Tech Provider. Без переменных канала
+  // он просто неактивен (honest «not configured»). META_GRAPH_VERSION
+  // покупатель держит актуальной — см. SETUP.md.
+  META_GRAPH_VERSION: z.string().optional(),
+  // WhatsApp Cloud API — Meta-приложение, WABA и номер ПОКУПАТЕЛЯ.
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_WABA_ID: z.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  // Telegram — бот ПОКУПАТЕЛЯ (через @BotFather).
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+  // Facebook Messenger — Страница и Meta-приложение ПОКУПАТЕЛЯ.
+  MESSENGER_PAGE_ID: z.string().optional(),
+  MESSENGER_PAGE_ACCESS_TOKEN: z.string().optional(),
+  MESSENGER_APP_SECRET: z.string().optional(),
+  MESSENGER_VERIFY_TOKEN: z.string().optional(),
 });
 
 export type ClientEnv = z.infer<typeof clientSchema>;
@@ -135,6 +155,18 @@ export function getServerEnv(): ServerEnv {
     META_APP_ID: process.env.META_APP_ID,
     META_APP_SECRET: process.env.META_APP_SECRET,
     META_OAUTH_REDIRECT_URL: process.env.META_OAUTH_REDIRECT_URL,
+    META_GRAPH_VERSION: process.env.META_GRAPH_VERSION,
+    WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
+    WHATSAPP_WABA_ID: process.env.WHATSAPP_WABA_ID,
+    WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN,
+    WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
+    WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+    TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
+    MESSENGER_PAGE_ID: process.env.MESSENGER_PAGE_ID,
+    MESSENGER_PAGE_ACCESS_TOKEN: process.env.MESSENGER_PAGE_ACCESS_TOKEN,
+    MESSENGER_APP_SECRET: process.env.MESSENGER_APP_SECRET,
+    MESSENGER_VERIFY_TOKEN: process.env.MESSENGER_VERIFY_TOKEN,
   };
 
   if (skipValidation) {

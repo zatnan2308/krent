@@ -3332,6 +3332,249 @@ export type Database = {
           },
         ]
       }
+      messaging_attachments: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          external_media_id: string | null
+          file_name: string
+          file_size: number
+          file_type: Database["public"]["Enums"]["attachment_type"]
+          file_url: string
+          id: string
+          message_id: string
+          mime_type: string
+          organization_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          external_media_id?: string | null
+          file_name: string
+          file_size?: number
+          file_type: Database["public"]["Enums"]["attachment_type"]
+          file_url: string
+          id?: string
+          message_id: string
+          mime_type: string
+          organization_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          external_media_id?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: Database["public"]["Enums"]["attachment_type"]
+          file_url?: string
+          id?: string
+          message_id?: string
+          mime_type?: string
+          organization_id?: string
+        }
+        Relationships: []
+      }
+      messaging_connections: {
+        Row: {
+          bot_username: string | null
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          created_at: string
+          created_by: string | null
+          display_name: string | null
+          encrypted_token: string | null
+          error_message: string | null
+          id: string
+          organization_id: string
+          page_id: string | null
+          page_name: string | null
+          phone_display: string | null
+          phone_number_id: string | null
+          status: Database["public"]["Enums"]["messaging_connection_status"]
+          updated_at: string
+          waba_id: string | null
+          webhook_token: string | null
+        }
+        Insert: {
+          bot_username?: string | null
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          encrypted_token?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          page_id?: string | null
+          page_name?: string | null
+          phone_display?: string | null
+          phone_number_id?: string | null
+          status?: Database["public"]["Enums"]["messaging_connection_status"]
+          updated_at?: string
+          waba_id?: string | null
+          webhook_token?: string | null
+        }
+        Update: {
+          bot_username?: string | null
+          channel?: Database["public"]["Enums"]["messaging_channel"]
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          encrypted_token?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          page_id?: string | null
+          page_name?: string | null
+          phone_display?: string | null
+          phone_number_id?: string | null
+          status?: Database["public"]["Enums"]["messaging_connection_status"]
+          updated_at?: string
+          waba_id?: string | null
+          webhook_token?: string | null
+        }
+        Relationships: []
+      }
+      messaging_conversations: {
+        Row: {
+          assigned_agent_id: string | null
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          channel_identity_id: string | null
+          connection_id: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          last_inbound_at: string | null
+          last_message_at: string | null
+          lead_id: string | null
+          organization_id: string
+          property_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_agent_id?: string | null
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          channel_identity_id?: string | null
+          connection_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          lead_id?: string | null
+          organization_id: string
+          property_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_agent_id?: string | null
+          channel?: Database["public"]["Enums"]["messaging_channel"]
+          channel_identity_id?: string | null
+          connection_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          lead_id?: string | null
+          organization_id?: string
+          property_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messaging_messages: {
+        Row: {
+          body: string
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          conversation_id: string
+          created_at: string
+          direction: Database["public"]["Enums"]["messaging_direction"]
+          error_message: string | null
+          external_message_id: string | null
+          id: string
+          organization_id: string
+          sender_user_id: string | null
+          status: Database["public"]["Enums"]["messaging_message_status"]
+        }
+        Insert: {
+          body?: string
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          conversation_id: string
+          created_at?: string
+          direction: Database["public"]["Enums"]["messaging_direction"]
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          organization_id: string
+          sender_user_id?: string | null
+          status?: Database["public"]["Enums"]["messaging_message_status"]
+        }
+        Update: {
+          body?: string
+          channel?: Database["public"]["Enums"]["messaging_channel"]
+          conversation_id?: string
+          created_at?: string
+          direction?: Database["public"]["Enums"]["messaging_direction"]
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          organization_id?: string
+          sender_user_id?: string | null
+          status?: Database["public"]["Enums"]["messaging_message_status"]
+        }
+        Relationships: []
+      }
+      messaging_read_state: {
+        Row: {
+          conversation_id: string
+          last_read_at: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          last_read_at?: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          last_read_at?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contact_channel_identities: {
+        Row: {
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          contact_id: string
+          created_at: string
+          external_id: string
+          handle: string | null
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["messaging_channel"]
+          contact_id: string
+          created_at?: string
+          external_id: string
+          handle?: string | null
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["messaging_channel"]
+          contact_id?: string
+          created_at?: string
+          external_id?: string
+          handle?: string | null
+          id?: string
+          organization_id?: string
+        }
+        Relationships: []
+      }
       message_reads: {
         Row: {
           conversation_id: string
@@ -6448,6 +6691,20 @@ export type Database = {
       media_category: "cover" | "gallery" | "floor_plan"
       member_status: "invited" | "active" | "inactive" | "suspended"
       message_type: "text" | "file" | "system"
+      messaging_channel: "whatsapp_cloud" | "telegram" | "messenger"
+      messaging_connection_status:
+        | "pending"
+        | "connected"
+        | "disconnected"
+        | "error"
+      messaging_direction: "inbound" | "outbound"
+      messaging_message_status:
+        | "received"
+        | "queued"
+        | "sent"
+        | "delivered"
+        | "read"
+        | "failed"
       notification_delivery_status: "sent" | "skipped" | "failed"
       notification_event_status:
         | "pending"
@@ -6748,6 +7005,22 @@ export const Constants = {
       media_category: ["cover", "gallery", "floor_plan"],
       member_status: ["invited", "active", "inactive", "suspended"],
       message_type: ["text", "file", "system"],
+      messaging_channel: ["whatsapp_cloud", "telegram", "messenger"],
+      messaging_connection_status: [
+        "pending",
+        "connected",
+        "disconnected",
+        "error",
+      ],
+      messaging_direction: ["inbound", "outbound"],
+      messaging_message_status: [
+        "received",
+        "queued",
+        "sent",
+        "delivered",
+        "read",
+        "failed",
+      ],
       notification_delivery_status: ["sent", "skipped", "failed"],
       notification_event_status: [
         "pending",
