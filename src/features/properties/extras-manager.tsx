@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 
 import {
   addNearbyPlace,
@@ -11,6 +11,8 @@ import {
   deleteNearbyPlace,
   deletePropertyDocument,
   deletePropertyVideo,
+  reorderPropertyDocument,
+  reorderPropertyVideo,
   uploadPropertyDocument,
 } from "@/features/properties/extras-actions";
 import { Button } from "@/components/ui/button";
@@ -71,6 +73,11 @@ export function VideosManager({
     router.refresh();
   }
 
+  async function handleMove(id: string, direction: "up" | "down") {
+    await reorderPropertyVideo(id, direction);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-3 rounded-md border p-3">
       <p className="text-sm font-semibold">Videos</p>
@@ -78,20 +85,40 @@ export function VideosManager({
         <p className="text-xs text-muted-foreground">No videos yet.</p>
       ) : (
         <ul className="space-y-1 text-sm">
-          {videos.map((v) => (
+          {videos.map((v, i) => (
             <li key={v.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
               <a href={v.url} target="_blank" rel="noreferrer" className="truncate underline">
                 {v.title ?? v.url}
               </a>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive"
-                onClick={() => handleDelete(v.id)}
-                aria-label="Delete video"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={i === 0}
+                  onClick={() => handleMove(v.id, "up")}
+                  aria-label="Move video up"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={i === videos.length - 1}
+                  onClick={() => handleMove(v.id, "down")}
+                  aria-label="Move video down"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive"
+                  onClick={() => handleDelete(v.id)}
+                  aria-label="Delete video"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -178,6 +205,11 @@ export function DocumentsManager({
     router.refresh();
   }
 
+  async function handleMove(id: string, direction: "up" | "down") {
+    await reorderPropertyDocument(id, direction);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-3 rounded-md border p-3">
       <p className="text-sm font-semibold">Documents</p>
@@ -185,20 +217,40 @@ export function DocumentsManager({
         <p className="text-xs text-muted-foreground">No documents yet.</p>
       ) : (
         <ul className="space-y-1 text-sm">
-          {documents.map((d) => (
+          {documents.map((d, i) => (
             <li key={d.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
               <a href={d.url} target="_blank" rel="noreferrer" className="truncate underline">
                 {d.name}
               </a>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive"
-                onClick={() => handleDelete(d.id)}
-                aria-label="Delete document"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={i === 0}
+                  onClick={() => handleMove(d.id, "up")}
+                  aria-label="Move document up"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={i === documents.length - 1}
+                  onClick={() => handleMove(d.id, "down")}
+                  aria-label="Move document down"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive"
+                  onClick={() => handleDelete(d.id)}
+                  aria-label="Delete document"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

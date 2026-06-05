@@ -183,6 +183,45 @@ export async function deletePropertyVideo(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Двигает видео вверх/вниз по sort_order через swap с соседом (как у фото). */
+export async function reorderPropertyVideo(
+  id: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  if (!z.guid().safeParse(id).success) return { ok: false, error: "Invalid id." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: current } = await supabase
+    .from("property_videos")
+    .select("id, property_id, sort_order")
+    .eq("organization_id", context.organization.id)
+    .eq("id", id)
+    .maybeSingle();
+  if (!current) return { ok: false, error: "Video not found." };
+  const { data: list } = await supabase
+    .from("property_videos")
+    .select("id, sort_order")
+    .eq("property_id", current.property_id)
+    .order("sort_order", { ascending: true });
+  if (!list) return { ok: false, error: "No video list." };
+  const index = list.findIndex((row) => row.id === current.id);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= list.length) return { ok: true };
+  const swap = list[swapIndex];
+  if (!swap) return { ok: true };
+  await supabase
+    .from("property_videos")
+    .update({ sort_order: swap.sort_order })
+    .eq("id", current.id);
+  await supabase
+    .from("property_videos")
+    .update({ sort_order: current.sort_order })
+    .eq("id", swap.id);
+  revalidatePath(editPath(current.property_id));
+  return { ok: true };
+}
+
 // ---- Documents --------------------------------------------------
 
 const documentSchema = z.object({
@@ -253,6 +292,45 @@ export async function deletePropertyDocument(id: string): Promise<ActionResult> 
     await admin.storage.from(DOCUMENT_BUCKET).remove([doc.storage_path]);
   }
   revalidatePath(editPath(doc.property_id));
+  return { ok: true };
+}
+
+/** Двигает документ вверх/вниз по sort_order через swap с соседом (как у фото). */
+export async function reorderPropertyDocument(
+  id: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  if (!z.guid().safeParse(id).success) return { ok: false, error: "Invalid id." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: current } = await supabase
+    .from("property_documents")
+    .select("id, property_id, sort_order")
+    .eq("organization_id", context.organization.id)
+    .eq("id", id)
+    .maybeSingle();
+  if (!current) return { ok: false, error: "Document not found." };
+  const { data: list } = await supabase
+    .from("property_documents")
+    .select("id, sort_order")
+    .eq("property_id", current.property_id)
+    .order("sort_order", { ascending: true });
+  if (!list) return { ok: false, error: "No document list." };
+  const index = list.findIndex((row) => row.id === current.id);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= list.length) return { ok: true };
+  const swap = list[swapIndex];
+  if (!swap) return { ok: true };
+  await supabase
+    .from("property_documents")
+    .update({ sort_order: swap.sort_order })
+    .eq("id", current.id);
+  await supabase
+    .from("property_documents")
+    .update({ sort_order: current.sort_order })
+    .eq("id", swap.id);
+  revalidatePath(editPath(current.property_id));
   return { ok: true };
 }
 
