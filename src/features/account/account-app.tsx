@@ -746,8 +746,18 @@ function MessagesView({
                     </span>
                   ) : null}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>
-                  Open in messages →
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-tertiary)",
+                    marginTop: 3,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    fontWeight: c.hasUnread ? 500 : 400,
+                  }}
+                >
+                  {c.lastMessage ?? "Open in messages →"}
                 </div>
               </div>
               {c.hasUnread ? (

@@ -23,6 +23,8 @@ export interface ConversationListItem {
   title: string;
   type: ConversationType;
   lastMessageAt: string | null;
+  /** Короткое превью последнего сообщения (для списков/превью). */
+  lastMessage: string | null;
   hasUnread: boolean;
 }
 
@@ -57,6 +59,28 @@ export async function listMyConversations(): Promise<ConversationListItem[]> {
   const participants = participantsResult.data ?? [];
   const reads = readsResult.data ?? [];
 
+  // Превью последнего сообщения каждого диалога (по 1 запросу на диалог —
+  // их у пользователя немного; параллельно).
+  const previewEntries = await Promise.all(
+    rows.map(async (conversation) => {
+      const { data } = await supabase
+        .from("chat_messages")
+        .select("message, message_type")
+        .eq("conversation_id", conversation.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      let preview: string | null = null;
+      if (data) {
+        const raw =
+          data.message_type === "file" ? "📎 Attachment" : data.message ?? "";
+        preview = raw.trim().slice(0, 120) || null;
+      }
+      return [conversation.id, preview] as const;
+    }),
+  );
+  const previews = new Map(previewEntries);
+
   const names = await resolveUserNames(
     participants
       .filter((participant) => participant.user_id !== user.id)
@@ -85,6 +109,7 @@ export async function listMyConversations(): Promise<ConversationListItem[]> {
         (otherNames.length > 0 ? otherNames.join(", ") : "Conversation"),
       type: conversation.type,
       lastMessageAt: conversation.last_message_at,
+      lastMessage: previews.get(conversation.id) ?? null,
       hasUnread,
     };
   });
