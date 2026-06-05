@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 
 const VISUAL_IMG =
   "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1600&q=85&auto=format&fit=crop";
@@ -26,25 +27,29 @@ function monogram(name: string): string {
 }
 
 type AuthTab = "signin" | "register";
+type AuthVariant = "signin" | "register" | "forgot" | "reset";
 
 /** Editorial split-screen оболочка для всех auth-страниц.
  *  Левая панель — визуал/бренд, правая — форма (children). */
 export function AuthShell({
-  eyebrow,
-  title,
-  activeTab,
+  variant,
   brandName = DEFAULT_BRANDING.logoText,
-  tagline = "Licensed Realtor",
+  tagline,
   children,
 }: {
-  eyebrow: string;
-  /** Заголовок левой панели; \n даёт перенос строки. */
-  title: string;
-  activeTab?: AuthTab;
+  variant: AuthVariant;
   brandName?: string;
   tagline?: string;
   children: React.ReactNode;
 }) {
+  const { dict } = useI18n();
+  const a = dict.auth;
+  const v = a[variant];
+  const eyebrow = v.eyebrow;
+  const title = v.title;
+  const taglineText = tagline ?? a.tagline;
+  const activeTab: AuthTab | undefined =
+    variant === "signin" || variant === "register" ? variant : undefined;
   const [pi, setPi] = React.useState(0);
   React.useEffect(() => {
     const id = setInterval(
@@ -142,7 +147,7 @@ export function AuthShell({
                   color: "var(--accent)",
                 }}
               >
-                {tagline}
+                {taglineText}
               </span>
             </span>
           </Link>
@@ -154,7 +159,7 @@ export function AuthShell({
               color: "rgba(245,244,238,0.7)",
             }}
           >
-            ← Back to site
+            ← {a.backToSite}
           </Link>
         </div>
 
@@ -274,8 +279,8 @@ export function AuthShell({
               />
               {(
                 [
-                  ["signin", "Sign in", ROUTES.auth.signIn],
-                  ["register", "Create account", ROUTES.auth.signUp],
+                  ["signin", a.tabSignIn, ROUTES.auth.signIn],
+                  ["register", a.tabRegister, ROUTES.auth.signUp],
                 ] as const
               ).map(([key, label, href]) => (
                 <Link
@@ -314,21 +319,21 @@ export function AuthShell({
           >
             {activeTab === "register" ? (
               <>
-                Already have an account?{" "}
+                {a.register.footerPrompt}{" "}
                 <Link href={ROUTES.auth.signIn} style={switchLinkStyle}>
-                  Sign in
+                  {a.register.footerAction}
                 </Link>
               </>
             ) : activeTab === "signin" ? (
               <>
-                New to {brandName}?{" "}
+                {a.signin.footerPrompt} {brandName}?{" "}
                 <Link href={ROUTES.auth.signUp} style={switchLinkStyle}>
-                  Create one
+                  {a.signin.footerAction}
                 </Link>
               </>
             ) : (
               <Link href={ROUTES.auth.signIn} style={switchLinkStyle}>
-                ← Back to sign in
+                ← {a.forgot.backToSignIn}
               </Link>
             )}
           </p>
@@ -436,6 +441,7 @@ export function AuthPasswordField({
 }) {
   const [show, setShow] = React.useState(false);
   const [focused, setFocused] = React.useState(false);
+  const { dict } = useI18n();
   return (
     <label style={{ display: "block" }}>
       <span style={labelStyle(focused)}>{label}</span>
@@ -466,7 +472,7 @@ export function AuthPasswordField({
             color: "var(--text-tertiary)",
           }}
         >
-          {show ? "Hide" : "Show"}
+          {show ? dict.auth.hide : dict.auth.show}
         </button>
       </div>
     </label>

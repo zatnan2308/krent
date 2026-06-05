@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthShell eyebrow="Account access" title={"Let's get you\nback in."}>
+    <AuthShell variant="forgot">
       <ForgotPasswordForm />
     </AuthShell>
   );

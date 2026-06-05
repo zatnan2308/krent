@@ -9,11 +9,14 @@ import {
   AuthSubmit,
 } from "@/features/auth/auth-shell";
 import type { AuthFormState } from "@/features/auth/schema";
+import { useI18n } from "@/lib/i18n/provider";
 
 const initialState: AuthFormState = { error: null, success: null };
 
 export function ForgotPasswordForm() {
   const [state, formAction] = useFormState(requestPasswordReset, initialState);
+  const { dict } = useI18n();
+  const t = dict.auth;
   return (
     <form
       action={formAction}
@@ -28,20 +31,20 @@ export function ForgotPasswordForm() {
             fontWeight: 400,
           }}
         >
-          Reset your password
+          {t.forgot.heading}
         </h2>
         <p
           style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 6 }}
         >
-          Enter your email — we&apos;ll send a secure reset link.
+          {t.forgot.blurb}
         </p>
       </div>
 
       <AuthField
-        label="Email"
+        label={t.fields.email}
         name="email"
         type="email"
-        placeholder="you@example.com"
+        placeholder={t.fields.emailPlaceholder}
         autoComplete="email"
         required
       />
@@ -51,7 +54,7 @@ export function ForgotPasswordForm() {
         <AuthNote variant="success">{state.success}</AuthNote>
       ) : null}
 
-      <AuthSubmit label="Send reset link" pendingLabel="Sending…" />
+      <AuthSubmit label={t.forgot.submit} pendingLabel={t.forgot.submitting} />
     </form>
   );
 }

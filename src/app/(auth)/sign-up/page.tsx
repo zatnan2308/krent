@@ -9,11 +9,7 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <AuthShell
-      eyebrow="Create account"
-      title={"Find your place\nin Dubai."}
-      activeTab="register"
-    >
+    <AuthShell variant="register">
       <SignUpForm />
     </AuthShell>
   );

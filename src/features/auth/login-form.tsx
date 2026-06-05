@@ -13,6 +13,7 @@ import {
 } from "@/features/auth/auth-shell";
 import type { AuthFormState } from "@/features/auth/schema";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 
 const initialState: AuthFormState = { error: null };
 
@@ -22,6 +23,8 @@ export function LoginForm() {
   const redirectTo = searchParams.get("redirectTo") ?? "";
   const confirmed = searchParams.get("confirmed");
   const passwordReset = searchParams.get("password_reset");
+  const { dict } = useI18n();
+  const t = dict.auth;
 
   return (
     <form
@@ -31,26 +34,24 @@ export function LoginForm() {
       <input type="hidden" name="redirectTo" value={redirectTo} readOnly />
 
       {confirmed ? (
-        <AuthNote variant="success">Email confirmed. Please sign in.</AuthNote>
+        <AuthNote variant="success">{t.login.confirmed}</AuthNote>
       ) : null}
       {passwordReset ? (
-        <AuthNote variant="success">
-          Password updated. Sign in with your new password.
-        </AuthNote>
+        <AuthNote variant="success">{t.login.passwordReset}</AuthNote>
       ) : null}
 
       <AuthField
-        label="Email"
+        label={t.fields.email}
         name="email"
         type="email"
-        placeholder="you@example.com"
+        placeholder={t.fields.emailPlaceholder}
         autoComplete="email"
         required
       />
       <AuthPasswordField
-        label="Password"
+        label={t.fields.password}
         name="password"
-        placeholder="Your password"
+        placeholder={t.fields.yourPassword}
         autoComplete="current-password"
         required
       />
@@ -78,19 +79,19 @@ export function LoginForm() {
             name="remember"
             style={{ accentColor: "var(--accent)", width: 15, height: 15 }}
           />{" "}
-          Remember me
+          {t.login.rememberMe}
         </label>
         <Link
           href={ROUTES.auth.forgotPassword}
           style={{ fontSize: 13, color: "var(--accent)" }}
         >
-          Forgot password?
+          {t.login.forgotPassword}
         </Link>
       </div>
 
       {state.error ? <AuthNote variant="error">{state.error}</AuthNote> : null}
 
-      <AuthSubmit label="Sign in" pendingLabel="Signing in…" />
+      <AuthSubmit label={t.signin.submit} pendingLabel={t.signin.submitting} />
     </form>
   );
 }

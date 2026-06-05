@@ -10,11 +10,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AuthShell
-      eyebrow="Welcome back"
-      title={"Your Dubai\nportfolio awaits."}
-      activeTab="signin"
-    >
+    <AuthShell variant="signin">
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

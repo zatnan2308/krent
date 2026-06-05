@@ -9,11 +9,14 @@ import {
   AuthSubmit,
 } from "@/features/auth/auth-shell";
 import type { AuthFormState } from "@/features/auth/schema";
+import { useI18n } from "@/lib/i18n/provider";
 
 const initialState: AuthFormState = { error: null, success: null };
 
 export function ResetPasswordForm() {
   const [state, formAction] = useFormState(resetPassword, initialState);
+  const { dict } = useI18n();
+  const t = dict.auth;
   return (
     <form
       action={formAction}
@@ -28,27 +31,27 @@ export function ResetPasswordForm() {
             fontWeight: 400,
           }}
         >
-          Set a new password
+          {t.reset.heading}
         </h2>
         <p
           style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 6 }}
         >
-          Enter your new password — you&apos;ll be signed in afterwards.
+          {t.reset.blurb}
         </p>
       </div>
 
       <AuthPasswordField
-        label="New password"
+        label={t.fields.newPassword}
         name="password"
-        placeholder="At least 8 characters"
+        placeholder={t.fields.newPasswordPlaceholder}
         autoComplete="new-password"
         required
         minLength={8}
       />
       <AuthPasswordField
-        label="Confirm new password"
+        label={t.fields.confirmPassword}
         name="confirmPassword"
-        placeholder="Repeat your password"
+        placeholder={t.fields.confirmPasswordPlaceholder}
         autoComplete="new-password"
         required
         minLength={8}
@@ -59,7 +62,7 @@ export function ResetPasswordForm() {
         <AuthNote variant="success">{state.success}</AuthNote>
       ) : null}
 
-      <AuthSubmit label="Set new password" pendingLabel="Saving…" />
+      <AuthSubmit label={t.reset.submit} pendingLabel={t.reset.submitting} />
     </form>
   );
 }

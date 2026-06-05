@@ -10,42 +10,45 @@ import {
   AuthSubmit,
 } from "@/features/auth/auth-shell";
 import type { AuthFormState } from "@/features/auth/schema";
+import { useI18n } from "@/lib/i18n/provider";
 
 const initialState: AuthFormState = { error: null, success: null };
 
 export function SignUpForm() {
   const [state, formAction] = useFormState(signUp, initialState);
+  const { dict } = useI18n();
+  const t = dict.auth;
   return (
     <form
       action={formAction}
       style={{ display: "flex", flexDirection: "column", gap: 18 }}
     >
       <AuthField
-        label="Full name"
+        label={t.fields.fullName}
         name="fullName"
-        placeholder="Your name"
+        placeholder={t.fields.fullNamePlaceholder}
         autoComplete="name"
         required
       />
       <AuthField
-        label="Email"
+        label={t.fields.email}
         name="email"
         type="email"
-        placeholder="you@example.com"
+        placeholder={t.fields.emailPlaceholder}
         autoComplete="email"
         required
       />
       <AuthField
-        label="Phone"
+        label={t.fields.phone}
         name="phone"
         type="tel"
         placeholder="+971 ..."
         autoComplete="tel"
       />
       <AuthPasswordField
-        label="Password"
+        label={t.fields.password}
         name="password"
-        placeholder="Create a password"
+        placeholder={t.fields.createPassword}
         autoComplete="new-password"
         required
         minLength={8}
@@ -75,13 +78,13 @@ export function SignUpForm() {
           }}
         />
         <span>
-          I agree to the{" "}
+          {t.signup.agreePrefix}{" "}
           <a href="#" style={{ color: "var(--accent)" }}>
-            Terms
+            {t.signup.terms}
           </a>{" "}
-          and{" "}
+          {t.signup.and}{" "}
           <a href="#" style={{ color: "var(--accent)" }}>
-            Privacy Policy
+            {t.signup.privacy}
           </a>
           .
         </span>
@@ -92,7 +95,10 @@ export function SignUpForm() {
         <AuthNote variant="success">{state.success}</AuthNote>
       ) : null}
 
-      <AuthSubmit label="Create account" pendingLabel="Creating account…" />
+      <AuthSubmit
+        label={t.register.submit}
+        pendingLabel={t.register.submitting}
+      />
     </form>
   );
 }

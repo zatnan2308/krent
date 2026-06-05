@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ResetPasswordPage() {
   return (
-    <AuthShell eyebrow="Account access" title={"Choose a new\npassword."}>
+    <AuthShell variant="reset">
       <ResetPasswordForm />
     </AuthShell>
   );
