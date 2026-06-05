@@ -2,6 +2,7 @@ import { normalizePhoneE164, phoneToDigits } from "@/lib/phone";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { Enums } from "@/types/database";
 
+import { notifyInboundChannelMessage } from "./notifications";
 import type { MessagingChannel, MessagingConnection } from "./types";
 
 type Admin = ReturnType<typeof createAdminClient>;
@@ -273,6 +274,14 @@ export async function recordInboundMessage(
     .from("messaging_conversations")
     .update({ last_message_at: now, last_inbound_at: now })
     .eq("id", params.conversationId);
+
+  // Уведомляем ответственного (колокол + письмо) — только для новых входящих.
+  await notifyInboundChannelMessage({
+    organizationId: params.organizationId,
+    conversationId: params.conversationId,
+    messageId: message.id,
+    channel: params.channel,
+  });
   return { messageId: message.id, isNew: true };
 }
 
