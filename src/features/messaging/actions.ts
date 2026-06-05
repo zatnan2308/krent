@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getClientEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { TablesUpdate } from "@/types/database";
+import { logAudit } from "@/server/audit";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -218,7 +219,9 @@ export async function sendChannelMessage(input: {
 
   const { data: conversation } = await admin
     .from("messaging_conversations")
-    .select("id, channel, channel_identity_id, connection_id, last_inbound_at")
+    .select(
+      "id, channel, channel_identity_id, connection_id, contact_id, last_inbound_at",
+    )
     .eq("organization_id", organizationId)
     .eq("id", input.conversationId)
     .maybeSingle();
@@ -278,6 +281,17 @@ export async function sendChannelMessage(input: {
     externalMessageId: result.externalMessageId ?? null,
     status: "sent",
   });
+  // Активность на таймлайне контакта.
+  if (conversation.contact_id) {
+    await logAudit({
+      organizationId,
+      userId: context.user.id,
+      action: "messaging.sent",
+      entityType: "contact",
+      entityId: conversation.contact_id,
+      metadata: { channel: conversation.channel },
+    });
+  }
   revalidatePath(MESSAGES_PATH);
   return { ok: true };
 }

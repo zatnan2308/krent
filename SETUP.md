@@ -95,3 +95,15 @@ Webhook URLs to register (replace host with your `NEXT_PUBLIC_SITE_URL`):
 
 > No Embedded Signup / Tech Provider flow is used. There is no OAuth onboarding
 > operated by the seller — you configure everything under your own accounts.
+
+### 2.4 Templates & message tags
+
+- **WhatsApp** requires an **approved template** to message a contact outside the
+  24-hour window. Create and submit templates in your own **Meta WhatsApp Manager**
+  (category + language); the app sends an approved template **by name**. Suggested
+  starters: booking confirmation, viewing reminder, new-listing announcement.
+- **Messenger** allows an **allowed message tag** outside the 24-hour window.
+- **Telegram** needs no templates — replies are free once the user has started the bot.
+
+The unified inbox composer enforces these rules automatically: free text inside the
+window, and a clear prompt to use a template/tag when the window is closed.

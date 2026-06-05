@@ -12,6 +12,8 @@ import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
+import { ContactChannels } from "@/features/messaging/contact-channels";
+import { getContactChannels } from "@/features/messaging/queries";
 import {
   getContact,
   getEntityActivity,
@@ -54,6 +56,10 @@ export default async function ContactDetailPage({
   const notes = await listNotes(context.organization.id, {
     contactId: params.id,
   });
+  const contactChannels = await getContactChannels(
+    context.organization.id,
+    params.id,
+  );
   const admin = createAdminClient();
   const { data: portalRows } = await admin
     .from("portal_accounts")
@@ -148,6 +154,15 @@ export default async function ContactDetailPage({
             accounts={portalAccounts}
             canManage={canManage}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Messaging</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactChannels channels={contactChannels} />
         </CardContent>
       </Card>
 

@@ -1,6 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/server";
 
-import { MESSAGING_CHANNELS, CHANNEL_HAS_SESSION_WINDOW } from "./channels";
+import {
+  CHANNEL_HAS_SESSION_WINDOW,
+  CHANNEL_LABELS,
+  MESSAGING_CHANNELS,
+} from "./channels";
 import { isChannelConfigured } from "./config";
 import type {
   MessagingChannel,
@@ -256,4 +260,130 @@ export async function getChannelUnreadCount(
 ): Promise<number> {
   const items = await listChannelConversations(organizationId, userId);
   return items.filter((item) => item.unread).length;
+}
+
+// ---- Контекст-экшены: каналы контакта ------------------------
+
+export interface ContactChannelLink {
+  channel: MessagingChannel;
+  label: string;
+  reachable: boolean;
+  conversationId: string | null;
+  /** Deep-link/приглашение для каналов без идентичности. */
+  inviteUrl: string | null;
+}
+
+/** Каналы, на которых достижим контакт (+ приглашение для остальных). */
+export async function getContactChannels(
+  organizationId: string,
+  contactId: string,
+): Promise<ContactChannelLink[]> {
+  const admin = createAdminClient();
+  const [identitiesRes, convsRes, contactRes, connectionsRes] =
+    await Promise.all([
+      admin
+        .from("contact_channel_identities")
+        .select("channel")
+        .eq("organization_id", organizationId)
+        .eq("contact_id", contactId),
+      admin
+        .from("messaging_conversations")
+        .select("id, channel")
+        .eq("organization_id", organizationId)
+        .eq("contact_id", contactId),
+      admin
+        .from("contacts")
+        .select("phone")
+        .eq("id", contactId)
+        .maybeSingle(),
+      admin
+        .from("messaging_connections")
+        .select("channel, bot_username, page_id, status")
+        .eq("organization_id", organizationId)
+        .eq("status", "connected"),
+    ]);
+
+  const reachableChannels = new Set(
+    (identitiesRes.data ?? []).map((row) => row.channel),
+  );
+  const convByChannel = new Map<MessagingChannel, string>();
+  for (const conv of convsRes.data ?? []) {
+    if (!convByChannel.has(conv.channel)) {
+      convByChannel.set(conv.channel, conv.id);
+    }
+  }
+  const connByChannel = new Map(
+    (connectionsRes.data ?? []).map((row) => [row.channel, row]),
+  );
+  const phone = contactRes.data?.phone ?? null;
+  const phoneDigits = phone ? phone.replace(/[^\d]/g, "") : null;
+
+  return MESSAGING_CHANNELS.map((channel) => {
+    const reachable = reachableChannels.has(channel);
+    let inviteUrl: string | null = null;
+    if (!reachable) {
+      if (channel === "whatsapp_cloud" && phoneDigits) {
+        inviteUrl = `https://wa.me/${phoneDigits}`;
+      } else if (channel === "telegram") {
+        const bot = connByChannel.get("telegram")?.bot_username;
+        if (bot) inviteUrl = `https://t.me/${bot}`;
+      } else if (channel === "messenger") {
+        const pageId = connByChannel.get("messenger")?.page_id;
+        if (pageId) inviteUrl = `https://m.me/${pageId}`;
+      }
+    }
+    return {
+      channel,
+      label: CHANNEL_LABELS[channel],
+      reachable,
+      conversationId: convByChannel.get(channel) ?? null,
+      inviteUrl,
+    };
+  });
+}
+
+// ---- Репортинг: статистика по каналам ------------------------
+
+export interface ChannelStat {
+  channel: MessagingChannel;
+  label: string;
+  conversations: number;
+  sent: number;
+  received: number;
+}
+
+/** Счётчики по каналам: диалоги, отправлено/получено сообщений. */
+export async function getMessagingStats(
+  organizationId: string,
+): Promise<ChannelStat[]> {
+  const admin = createAdminClient();
+  const [convsRes, messagesRes] = await Promise.all([
+    admin
+      .from("messaging_conversations")
+      .select("channel")
+      .eq("organization_id", organizationId),
+    admin
+      .from("messaging_messages")
+      .select("channel, direction")
+      .eq("organization_id", organizationId),
+  ]);
+
+  const convCount = new Map<MessagingChannel, number>();
+  for (const row of convsRes.data ?? []) {
+    convCount.set(row.channel, (convCount.get(row.channel) ?? 0) + 1);
+  }
+  const sentCount = new Map<MessagingChannel, number>();
+  const recvCount = new Map<MessagingChannel, number>();
+  for (const row of messagesRes.data ?? []) {
+    const map = row.direction === "outbound" ? sentCount : recvCount;
+    map.set(row.channel, (map.get(row.channel) ?? 0) + 1);
+  }
+
+  return MESSAGING_CHANNELS.map((channel) => ({
+    channel,
+    label: CHANNEL_LABELS[channel],
+    conversations: convCount.get(channel) ?? 0,
+    sent: sentCount.get(channel) ?? 0,
+    received: recvCount.get(channel) ?? 0,
+  }));
 }

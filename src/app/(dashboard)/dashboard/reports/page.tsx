@@ -11,6 +11,7 @@ import {
   getRentalReport,
   getSourceReport,
 } from "@/features/reports/queries";
+import { getMessagingStats } from "@/features/messaging/queries";
 import {
   Card,
   CardContent,
@@ -64,7 +65,7 @@ export default async function ReportsPage() {
   const orgId = context.organization.id;
   const currency = context.organization.default_currency;
 
-  const [funnel, sources, properties, agents, campaigns, rental] =
+  const [funnel, sources, properties, agents, campaigns, rental, messaging] =
     await Promise.all([
       getFunnelReport(orgId, 30),
       getSourceReport(orgId, 30),
@@ -72,7 +73,12 @@ export default async function ReportsPage() {
       getAgentReport(orgId, 30),
       getCampaignReport(orgId, 60),
       getRentalReport(orgId, 30),
+      getMessagingStats(orgId),
     ]);
+  const messagingTotal = messaging.reduce(
+    (sum, row) => sum + row.conversations,
+    0,
+  );
 
   const agentNames = await resolveUserNames(agents.map((row) => row.agentId));
 
@@ -89,6 +95,40 @@ export default async function ReportsPage() {
         </CardHeader>
         <CardContent>
           <FunnelChart data={funnel} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Messaging channels</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {messagingTotal === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No channel conversations yet.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Channel</TableHead>
+                  <TableHead>Conversations</TableHead>
+                  <TableHead>Received</TableHead>
+                  <TableHead>Sent</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messaging.map((row) => (
+                  <TableRow key={row.channel}>
+                    <TableCell className="font-medium">{row.label}</TableCell>
+                    <TableCell>{row.conversations}</TableCell>
+                    <TableCell>{row.received}</TableCell>
+                    <TableCell>{row.sent}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
