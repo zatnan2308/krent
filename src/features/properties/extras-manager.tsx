@@ -267,6 +267,7 @@ export function NearbyPlacesManager({
   const [name, setName] = React.useState("");
   const [category, setCategory] = React.useState("");
   const [distance, setDistance] = React.useState("");
+  const [unit, setUnit] = React.useState<"km" | "mi">("km");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -279,7 +280,7 @@ export function NearbyPlacesManager({
       name: name.trim(),
       category: category.trim() || null,
       distance: distance ? Number(distance) : null,
-      distanceUnit: distance ? "km" : null,
+      distanceUnit: distance ? unit : null,
     });
     setPending(false);
     if (result.ok) {
@@ -345,12 +346,25 @@ export function NearbyPlacesManager({
           onChange={(e) => setCategory(e.target.value)}
           placeholder="Category (school, metro…)"
         />
-        <Input
-          value={distance}
-          onChange={(e) => setDistance(e.target.value)}
-          placeholder="Distance (km)"
-          type="number"
-        />
+        <div className="flex gap-2">
+          <Input
+            value={distance}
+            onChange={(e) => setDistance(e.target.value)}
+            placeholder="Distance"
+            type="number"
+            min="0"
+            className="flex-1"
+          />
+          <select
+            value={unit}
+            onChange={(e) => setUnit(e.target.value as "km" | "mi")}
+            aria-label="Distance unit"
+            className="h-10 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="km">km</option>
+            <option value="mi">mi</option>
+          </select>
+        </div>
         <Button size="sm" type="button" onClick={handleAdd} disabled={pending}>
           Add place
         </Button>
