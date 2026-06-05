@@ -413,6 +413,10 @@ export async function sendFileMessage(
       mime_type: file.type,
     });
   if (attachmentError) {
+    // Без вложения file-сообщение остаётся пустым — откатываем строку
+    // сообщения и загруженный объект в сторадже.
+    await admin.from("chat_messages").delete().eq("id", message.id);
+    await admin.storage.from(ATTACHMENTS_BUCKET).remove([storagePath]);
     return { ok: false, error: "Could not save the attachment." };
   }
 
