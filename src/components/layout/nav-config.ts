@@ -23,9 +23,14 @@ import {
 } from "lucide-react";
 
 import { ROUTES } from "@/lib/constants/routes";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+
+/** Ключ ярлыка навигации админки в словаре (dict.adminNav). */
+export type AdminNavKey = keyof Dictionary["adminNav"];
 
 export interface NavItem {
-  label: string;
+  /** Ключ перевода ярлыка — dict.adminNav[labelKey]. */
+  labelKey: AdminNavKey;
   href: string;
   icon: LucideIcon;
   /** Право, необходимое чтобы видеть пункт (undefined — видно всем). */
@@ -34,8 +39,8 @@ export interface NavItem {
 
 /** Секция навигации с необязательным заголовком. */
 export interface NavSection {
-  /** Заголовок секции; null — без заголовка (Overview/Settings). */
-  label: string | null;
+  /** Ключ заголовка секции; null — без заголовка (Overview/Settings). */
+  labelKey: AdminNavKey | null;
   items: NavItem[];
 }
 
@@ -43,26 +48,30 @@ export interface NavSection {
  * Навигация dashboard, сгруппированная по секциям. Права берутся ровно из
  * redirect-гейтов соответствующих страниц, чтобы видимость пункта совпадала с
  * реальной доступностью. Пункты без `permission` доступны всем (их страницы не
- * гейтятся).
+ * гейтятся). Ярлыки локализуются через dict.adminNav[labelKey].
  */
 export const dashboardNavSections: NavSection[] = [
   {
-    label: null,
+    labelKey: null,
     items: [
-      { label: "Dashboard", href: ROUTES.dashboard.root, icon: LayoutDashboard },
+      {
+        labelKey: "dashboard",
+        href: ROUTES.dashboard.root,
+        icon: LayoutDashboard,
+      },
     ],
   },
   {
-    label: "Sales & CRM",
+    labelKey: "secSalesCrm",
     items: [
       {
-        label: "CRM",
+        labelKey: "crm",
         href: ROUTES.dashboard.crm,
         icon: Users,
         permission: "crm.view",
       },
       {
-        label: "Client portals",
+        labelKey: "clientPortals",
         href: ROUTES.dashboard.clients,
         icon: UserCheck,
         permission: "crm.view",
@@ -70,27 +79,27 @@ export const dashboardNavSections: NavSection[] = [
     ],
   },
   {
-    label: "Properties & rentals",
+    labelKey: "secProperties",
     items: [
       {
-        label: "Properties",
+        labelKey: "properties",
         href: ROUTES.dashboard.properties,
         icon: Building2,
       },
       {
-        label: "Rentals",
+        labelKey: "rentals",
         href: ROUTES.dashboard.rentals,
         icon: KeyRound,
         permission: "rentals.view",
       },
       {
-        label: "Bookings",
+        labelKey: "bookings",
         href: ROUTES.dashboard.bookings,
         icon: CalendarCheck,
         permission: "bookings.view",
       },
       {
-        label: "Calendar",
+        labelKey: "calendar",
         href: ROUTES.dashboard.calendar,
         icon: CalendarDays,
         permission: "calendar.view",
@@ -98,16 +107,16 @@ export const dashboardNavSections: NavSection[] = [
     ],
   },
   {
-    label: "Communication",
+    labelKey: "secCommunication",
     items: [
       {
-        label: "Messages",
+        labelKey: "messages",
         href: ROUTES.dashboard.messages,
         icon: MessageSquare,
         permission: "crm.view",
       },
       {
-        label: "Email",
+        labelKey: "email",
         href: ROUTES.dashboard.email,
         icon: Mail,
         permission: "email.manage",
@@ -115,40 +124,40 @@ export const dashboardNavSections: NavSection[] = [
     ],
   },
   {
-    label: "Growth",
+    labelKey: "secGrowth",
     items: [
       {
-        label: "Marketing",
+        labelKey: "marketing",
         href: ROUTES.dashboard.marketing,
         icon: Megaphone,
         permission: "marketing.manage",
       },
       {
-        label: "SEO",
+        labelKey: "seo",
         href: ROUTES.dashboard.seo,
         icon: Search,
         permission: "seo.manage",
       },
       {
-        label: "Analytics",
+        labelKey: "analytics",
         href: ROUTES.dashboard.analytics,
         icon: TrendingUp,
         permission: "analytics.view",
       },
       {
-        label: "Reports",
+        labelKey: "reports",
         href: ROUTES.dashboard.reports,
         icon: FileText,
         permission: "analytics.view",
       },
       {
-        label: "Integrations",
+        labelKey: "integrations",
         href: ROUTES.dashboard.integrations,
         icon: Plug,
         permission: "analytics.view",
       },
       {
-        label: "Agent Sync",
+        labelKey: "agentSync",
         href: ROUTES.dashboard.agentSync,
         icon: Share2,
         permission: "analytics.view",
@@ -156,23 +165,28 @@ export const dashboardNavSections: NavSection[] = [
     ],
   },
   {
-    label: "Website",
+    labelKey: "secWebsite",
     items: [
-      { label: "Home page", href: ROUTES.dashboard.home, icon: Home, permission: "branding.manage" },
       {
-        label: "Pages",
+        labelKey: "homePage",
+        href: ROUTES.dashboard.home,
+        icon: Home,
+        permission: "branding.manage",
+      },
+      {
+        labelKey: "pages",
         href: ROUTES.dashboard.pages,
         icon: FileText,
         permission: "pages.manage",
       },
       {
-        label: "Navigation",
+        labelKey: "navigation",
         href: ROUTES.dashboard.navigation,
         icon: PanelsTopLeft,
         permission: "navigation.manage",
       },
       {
-        label: "About page",
+        labelKey: "aboutPage",
         href: ROUTES.dashboard.about,
         icon: Info,
         permission: "branding.manage",
@@ -180,10 +194,10 @@ export const dashboardNavSections: NavSection[] = [
     ],
   },
   {
-    label: null,
+    labelKey: null,
     items: [
       {
-        label: "Settings",
+        labelKey: "settings",
         href: ROUTES.dashboard.settings,
         icon: Settings,
         permission: "organization.view",
@@ -194,13 +208,17 @@ export const dashboardNavSections: NavSection[] = [
 
 /** Навигация раздела Super Admin (плоская). */
 export const superAdminNav: NavItem[] = [
-  { label: "Overview", href: ROUTES.superAdmin.root, icon: LayoutDashboard },
+  { labelKey: "overview", href: ROUTES.superAdmin.root, icon: LayoutDashboard },
   {
-    label: "Organizations",
+    labelKey: "organizations",
     href: ROUTES.superAdmin.organizations,
     icon: Building,
   },
-  { label: "Users", href: ROUTES.superAdmin.users, icon: Users },
-  { label: "Licenses", href: ROUTES.superAdmin.licenses, icon: KeyRound },
-  { label: "System health", href: ROUTES.superAdmin.health, icon: TrendingUp },
+  { labelKey: "users", href: ROUTES.superAdmin.users, icon: Users },
+  { labelKey: "licenses", href: ROUTES.superAdmin.licenses, icon: KeyRound },
+  {
+    labelKey: "systemHealth",
+    href: ROUTES.superAdmin.health,
+    icon: TrendingUp,
+  },
 ];

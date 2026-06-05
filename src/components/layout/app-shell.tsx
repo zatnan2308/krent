@@ -7,6 +7,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import type { NotificationItem } from "@/components/layout/notifications-bell";
+import { useI18n } from "@/lib/i18n/provider";
 import type { OrganizationSummary } from "@/server/organization-context";
 
 interface AppShellProps {
@@ -46,6 +47,7 @@ export function AppShell({
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const pathname = usePathname();
+  const { dict } = useI18n();
 
   return (
     <div className="dashboard min-h-screen bg-background lg:grid lg:grid-cols-[16rem_1fr]">
@@ -69,7 +71,7 @@ export function AppShell({
             className="dashboard fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left lg:hidden"
           >
             <DialogPrimitive.Title className="sr-only">
-              Navigation
+              {dict.adminNav.navMenu}
             </DialogPrimitive.Title>
             <AppSidebar
               variant={variant}

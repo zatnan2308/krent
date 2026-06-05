@@ -12,6 +12,7 @@ import {
 } from "@/components/layout/nav-config";
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 /** Карта пункт→модуль: пункт скрывается, если модуль выключен в Settings.
@@ -52,6 +53,7 @@ export function AppSidebar({
   isSuperAdmin = false,
 }: AppSidebarProps) {
   const pathname = usePathname();
+  const { dict } = useI18n();
 
   // Видим ли пункт: проверка права И модуля (super-admin видит всё).
   const canSee = (item: NavItem): boolean => {
@@ -65,7 +67,7 @@ export function AppSidebar({
   // Для dashboard — секции с фильтрацией; для super-admin — плоский список.
   const sections: NavSection[] =
     variant === "super-admin"
-      ? [{ label: null, items: superAdminNav }]
+      ? [{ labelKey: null, items: superAdminNav }]
       : dashboardNavSections
           .map((section) => ({
             ...section,
@@ -88,10 +90,13 @@ export function AppSidebar({
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
         {sections.map((section, sectionIdx) => (
-          <div key={section.label ?? `section-${sectionIdx}`} className="space-y-1">
-            {section.label ? (
+          <div
+            key={section.labelKey ?? `section-${sectionIdx}`}
+            className="space-y-1"
+          >
+            {section.labelKey ? (
               <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
-                {section.label}
+                {dict.adminNav[section.labelKey]}
               </p>
             ) : null}
             {section.items.map((item) => {
@@ -125,7 +130,7 @@ export function AppSidebar({
                       !isActive && "group-hover:translate-x-0.5",
                     )}
                   >
-                    {item.label}
+                    {dict.adminNav[item.labelKey]}
                   </span>
                   {badges && badges[item.href] ? (
                     <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold tabular-nums text-destructive-foreground">
