@@ -217,15 +217,50 @@ export async function startConversationWithAgent(input?: {
   }
   const organizationId = account.organization_id;
 
-  // Переиспользуем уже существующий диалог клиента, чтобы не плодить дубли.
-  const { data: existingParts } = await admin
+  const conversationType =
+    account.portal_type === "seller"
+      ? "seller_agent"
+      : account.portal_type === "guest"
+        ? "guest_manager"
+        : "buyer_agent";
+
+  // Валидируем объект (если передан) — должен принадлежать той же организации.
+  let propertyId: string | null = null;
+  if (input?.propertyId) {
+    const { data: property } = await admin
+      .from("properties")
+      .select("id")
+      .eq("id", input.propertyId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    propertyId = property?.id ?? null;
+  }
+
+  // Переиспользуем существующий диалог ТОГО ЖЕ типа и по ТОМУ ЖЕ объекту
+  // (а не любой) — иначе «Message host» по конкретной броне попадал в чужой тред.
+  const { data: myParts } = await admin
     .from("chat_participants")
     .select("conversation_id")
     .eq("user_id", user.id)
-    .eq("organization_id", organizationId)
-    .limit(1);
-  if (existingParts && existingParts.length > 0 && existingParts[0]) {
-    return { ok: true, conversationId: existingParts[0].conversation_id };
+    .eq("organization_id", organizationId);
+  const myConvIds = (myParts ?? []).map((p) => p.conversation_id);
+  if (myConvIds.length > 0) {
+    let reuse = admin
+      .from("chat_conversations")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("type", conversationType)
+      .in("id", myConvIds);
+    reuse = propertyId
+      ? reuse.eq("property_id", propertyId)
+      : reuse.is("property_id", null);
+    const { data: existing } = await reuse
+      .order("last_message_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing) {
+      return { ok: true, conversationId: existing.id };
+    }
   }
 
   // Получатель: пригласивший агент, иначе любой активный сотрудник организации.
@@ -244,24 +279,6 @@ export async function startConversationWithAgent(input?: {
   if (!agentId) {
     return { ok: false, error: "No agent is available to chat right now." };
   }
-
-  let propertyId: string | null = null;
-  if (input?.propertyId) {
-    const { data: property } = await admin
-      .from("properties")
-      .select("id")
-      .eq("id", input.propertyId)
-      .eq("organization_id", organizationId)
-      .maybeSingle();
-    propertyId = property?.id ?? null;
-  }
-
-  const conversationType =
-    account.portal_type === "seller"
-      ? "seller_agent"
-      : account.portal_type === "guest"
-        ? "guest_manager"
-        : "buyer_agent";
 
   const { data: conversation, error } = await admin
     .from("chat_conversations")
