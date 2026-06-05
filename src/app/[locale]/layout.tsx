@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import {
@@ -30,6 +31,16 @@ function whatsappLink(value: string): string {
   if (value.startsWith("http")) return value;
   const digits = value.replace(/[^\d]/g, "");
   return digits ? `https://wa.me/${digits}` : value;
+}
+
+/**
+ * Site-wide мета: верификация Google Search Console из seo_settings
+ * (наследуется всеми страницами под [locale]; страницы её не переопределяют).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getPublicSiteContext();
+  const google = site?.seo?.google_site_verification?.trim();
+  return google ? { verification: { google } } : {};
 }
 
 export default async function LocaleLayout({
