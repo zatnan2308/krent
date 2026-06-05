@@ -29,16 +29,26 @@ delete-window), **цены — откат при сбое insert**, **generic CM
 **generic CMS мультиязычны** (locale-селектор + буферы), **серверный read_at колокола**
 (таблица `notification_reads`, миграция `20260605140000`).
 
-**ОСТАЛОСЬ ровно 5 пунктов (все требуют схемы/UX-дизайна или рискованны — отложены осознанно):**
-1. **Писать pending-гостю** — `chat_participants.user_id` NOT NULL → нужна схема + флоу активации.
-2. **conversation_type `internal`** (staff-to-staff) — net-new фича, нет входа.
-3. **read-then-write races** (rate-limit/webhook-retry) — атомарный RPC; большой радиус на
-   API-auth, выгода минорна, webhook-retry без крона не актуален.
-4. **TZ-унификация** — рискованная дата-семантика (off-by-one), per-property TZ; выгода крошечная.
-5. **Realtime-чат append-from-payload + fallback-polling** — debounce уже сделан; append рискован.
+**✅ ВСЕ 5 ОТЛОЖЕННЫХ ПУНКТОВ ЗАКРЫТЫ (2026-06-05, коммиты `75980b7..52672e8`):**
+1. **Писать pending-гостю** — ✅ `75980b7`. `chat_participants.user_id` nullable +
+   `portal_account_id` (миграция `20260605180000`); startConversation создаёт участника
+   по portal_account_id, backfill user_id в acceptPortalInvite; pending-клиенты видны в
+   форме нового диалога (помечены), диалог подписан именем контакта. Null-safe резолв.
+2. **conversation_type `internal`** — ✅ `670e60c`. `startInternalConversation`
+   (валидирует активных членов орг) + форма «New internal chat» в инбоксе; бейдж «Team».
+3. **read-then-write races** — ✅ `b69d4fa` (миграция `20260605190000`). Rate-limit —
+   атомарный `api_rate_limit_hit` (insert..on conflict do update returning, unique
+   key+window); webhook-retry — `claim_due_webhook_events` (FOR UPDATE SKIP LOCKED).
+4. **TZ-унификация** — ✅ `6fc79bf`. Booking-календарь получает серверное «сегодня»
+   (`todayIso`), граница прошлого совпадает с серверной доступностью (был off-by-one
+   local↔UTC); task-manager на общий `todayIso`. Кампании не трогали (крон не запущен).
+5. **Realtime-чат fallback-polling** — ✅ `52672e8`. Наблюдаем статус подписки; при
+   CHANNEL_ERROR/TIMED_OUT/CLOSED — поллинг `router.refresh()` 12с, стоп на SUBSCRIBED;
+   disposed-guard. Append-from-payload осознанно НЕ делали (payload без вложений/имён).
 
 **Промокоды — НЕ делаем** (пользователь: не нужны на сайте). Раздел **E** (Cmd-K, тосты, bulk,
 пресеты, тёмная тема, onboarding) — опционал. Кроны не трогаем.
+**🎉 Весь аудит-backlog (B/C/D + отложенная пятёрка) закрыт.**
 
 Ниже — исходный план сессии 2 (исторически, для контекста).
 
