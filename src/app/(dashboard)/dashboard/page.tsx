@@ -17,6 +17,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 
@@ -35,6 +36,7 @@ export default async function DashboardPage() {
   }
   const orgId = context.organization.id;
   const admin = createAdminClient();
+  const t = (await getServerDictionary()).dashOverview;
 
   const now = new Date();
   const todayIso = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -117,25 +119,25 @@ export default async function DashboardPage() {
 
   const metrics = [
     {
-      label: "Active listings",
+      label: t.activeListings,
       value: activeListings.count ?? 0,
       icon: Building2,
       href: ROUTES.dashboard.properties,
     },
     {
-      label: "New leads · 7d",
+      label: t.newLeads7d,
       value: newLeads.count ?? 0,
       icon: Users,
       href: ROUTES.dashboard.crm,
     },
     {
-      label: "Upcoming check-ins",
+      label: t.upcomingCheckins,
       value: upcomingCount.count ?? 0,
       icon: CalendarCheck,
       href: ROUTES.dashboard.bookings,
     },
     {
-      label: "Open tasks",
+      label: t.openTasks,
       value: openTasks.count ?? 0,
       icon: ListTodo,
       href: `${ROUTES.dashboard.crm}/tasks`,
@@ -146,7 +148,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title={context.organization.name}
-        description="Key metrics and what's coming up across your workspace."
+        description={t.description}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -164,13 +166,11 @@ export default async function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Upcoming check-ins</CardTitle>
+            <CardTitle className="text-base">{t.upcomingCheckins}</CardTitle>
           </CardHeader>
           <CardContent>
             {bookingList.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No upcoming check-ins.
-              </p>
+              <p className="text-sm text-muted-foreground">{t.noCheckins}</p>
             ) : (
               <ul className="space-y-1 text-sm">
                 {bookingList.map((booking) => (
@@ -181,10 +181,10 @@ export default async function DashboardPage() {
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium">
-                          {titles.get(booking.property_id) ?? "Property"}
+                          {titles.get(booking.property_id) ?? t.property}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {booking.guest_name ?? "Guest"} · {booking.reference}
+                          {booking.guest_name ?? t.guest} · {booking.reference}
                         </span>
                       </span>
                       <span className="shrink-0 text-right">
@@ -212,11 +212,11 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Recent leads</CardTitle>
+            <CardTitle className="text-base">{t.recentLeads}</CardTitle>
           </CardHeader>
           <CardContent>
             {leadList.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No leads yet.</p>
+              <p className="text-sm text-muted-foreground">{t.noLeads}</p>
             ) : (
               <ul className="space-y-1 text-sm">
                 {leadList.map((lead) => (
@@ -228,7 +228,7 @@ export default async function DashboardPage() {
                       <span className="min-w-0">
                         <span className="block truncate font-medium">
                           {(lead.contact_id && names.get(lead.contact_id)) ||
-                            "Lead"}
+                            t.lead}
                         </span>
                         <span className="text-xs capitalize text-muted-foreground">
                           {lead.type} · {lead.status}

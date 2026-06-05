@@ -8,6 +8,7 @@ import {
   type NotificationItem,
 } from "@/components/layout/notifications-bell";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
+import { PrivateLocaleSwitcher } from "@/components/shared/private-locale-switcher";
 import { Button } from "@/components/ui/button";
 import {
   Dropdown,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dropdown";
 import { signOut } from "@/features/auth/actions";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 import type { OrganizationSummary } from "@/server/organization-context";
 
 interface AppTopbarProps {
@@ -44,6 +46,8 @@ export function AppTopbar({
   publicSiteUrl,
   onMenuClick,
 }: AppTopbarProps) {
+  const { dict, locale } = useI18n();
+  const t = dict.topbar;
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65 lg:px-6">
       <Button
@@ -51,7 +55,7 @@ export function AppTopbar({
         size="icon"
         className="lg:hidden"
         onClick={onMenuClick}
-        aria-label="Open navigation"
+        aria-label={t.openNav}
       >
         <Menu className="h-5 w-5" />
       </Button>
@@ -63,7 +67,7 @@ export function AppTopbar({
         />
       ) : (
         <span className="rounded-md border px-3 py-1.5 text-sm font-medium text-muted-foreground">
-          Platform Admin
+          {t.platformAdmin}
         </span>
       )}
 
@@ -71,14 +75,15 @@ export function AppTopbar({
         {publicSiteUrl ? (
           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
             <a href={publicSiteUrl} target="_blank" rel="noreferrer">
-              <ExternalLink className="mr-1.5 h-4 w-4" /> View site
+              <ExternalLink className="mr-1.5 h-4 w-4" /> {t.viewSite}
             </a>
           </Button>
         ) : null}
+        <PrivateLocaleSwitcher currentLocale={locale} />
         <NotificationsBell items={notifications ?? []} />
         <Dropdown>
           <DropdownTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Account">
+            <Button variant="ghost" size="icon" aria-label={t.account}>
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -93,7 +98,7 @@ export function AppTopbar({
           </DropdownTrigger>
           <DropdownContent align="end" className="w-56">
             <DropdownLabel className="font-medium">
-              {userName ?? "Account"}
+              {userName ?? t.account}
               <p className="truncate text-xs font-normal text-muted-foreground">
                 {userEmail}
               </p>
@@ -101,7 +106,7 @@ export function AppTopbar({
             <DropdownSeparator />
             {variant === "dashboard" ? (
               <DropdownItem asChild>
-                <Link href={ROUTES.dashboard.settings}>Profile & settings</Link>
+                <Link href={ROUTES.dashboard.settings}>{t.profileSettings}</Link>
               </DropdownItem>
             ) : null}
             <DropdownSeparator />
@@ -111,7 +116,7 @@ export function AppTopbar({
                 className="relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {t.signOut}
               </button>
             </form>
           </DropdownContent>

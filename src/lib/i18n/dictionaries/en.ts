@@ -296,6 +296,27 @@ export const en = {
     systemHealth: "System health",
     navMenu: "Navigation",
   },
+  topbar: {
+    openNav: "Open navigation",
+    platformAdmin: "Platform Admin",
+    viewSite: "View site",
+    account: "Account",
+    profileSettings: "Profile & settings",
+    signOut: "Sign out",
+  },
+  dashOverview: {
+    description: "Key metrics and what's coming up across your workspace.",
+    activeListings: "Active listings",
+    newLeads7d: "New leads · 7d",
+    upcomingCheckins: "Upcoming check-ins",
+    openTasks: "Open tasks",
+    noCheckins: "No upcoming check-ins.",
+    recentLeads: "Recent leads",
+    noLeads: "No leads yet.",
+    property: "Property",
+    guest: "Guest",
+    lead: "Lead",
+  },
 };
 
 export type Dictionary = typeof en;
