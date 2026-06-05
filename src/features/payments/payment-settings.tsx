@@ -100,7 +100,9 @@ function ProviderCard({
         <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           {provider === "stripe"
             ? "Set STRIPE_SECRET_KEY (and STRIPE_WEBHOOK_SECRET) in the environment to accept card payments."
-            : "PayPal online checkout is not available yet — the adapter is a placeholder."}
+            : provider === "paypal"
+              ? "Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in the environment to accept PayPal payments."
+              : "This payment provider is not fully configured yet."}
         </p>
       ) : null}
 

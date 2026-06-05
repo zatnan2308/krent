@@ -261,6 +261,14 @@ export async function recordManualPayment(
     return { ok: false, error: "Invalid payment details." };
   }
   const data = parsed.data;
+  // Ручная запись — только для офлайн-способов: банк/наличные (manual) или
+  // crypto. Запись под stripe/paypal без реального гейтвея исказила бы отчёты.
+  if (data.provider !== "manual" && data.provider !== "crypto") {
+    return {
+      ok: false,
+      error: "Offline payments can only be recorded as bank transfer or crypto.",
+    };
+  }
   const access = await requirePaymentAccess();
   if (!access.ok) {
     return access;
