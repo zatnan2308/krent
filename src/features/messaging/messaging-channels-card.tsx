@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import {
+  connectMessenger,
   connectTelegram,
   connectWhatsApp,
   disconnectChannel,
@@ -47,6 +48,7 @@ export function MessagingChannelsCard({
     {
       telegram: connectTelegram,
       whatsapp_cloud: connectWhatsApp,
+      messenger: connectMessenger,
     };
 
   async function handleConnect(channel: MessagingChannel) {

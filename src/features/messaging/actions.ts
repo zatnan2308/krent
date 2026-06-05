@@ -8,12 +8,20 @@ import type { TablesUpdate } from "@/types/database";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
+import {
+  messengerGetPageInfo,
+  messengerSubscribeApp,
+} from "./adapters/messenger";
 import { telegramGetMe, telegramSetWebhook } from "./adapters/telegram";
 import {
   whatsappGetPhoneInfo,
   whatsappSubscribeApp,
 } from "./adapters/whatsapp";
-import { getTelegramConfig, getWhatsAppConfig } from "./config";
+import {
+  getMessengerConfig,
+  getTelegramConfig,
+  getWhatsAppConfig,
+} from "./config";
 import type { ActionResult } from "./schema";
 import type { MessagingChannel } from "./types";
 
@@ -136,6 +144,40 @@ export async function connectWhatsApp(): Promise<ActionResult> {
     waba_id: config.wabaId,
     phone_display: info.displayPhone,
     display_name: info.verifiedName ?? info.displayPhone ?? "WhatsApp",
+    status: "connected",
+    error_message: null,
+    created_by: access.userId,
+  });
+  revalidatePath(INTEGRATIONS_PATH);
+  return { ok: true };
+}
+
+/**
+ * Подключает Facebook Messenger: Page id/token + app secret/verify token
+ * покупателя из env. Тянет имя страницы, подписывает приложение на вебхуки
+ * страницы (messages, messaging_postbacks) и помечает подключение connected.
+ */
+export async function connectMessenger(): Promise<ActionResult> {
+  const access = await requireChannelAccess();
+  if (!access.ok) {
+    return access;
+  }
+  const config = getMessengerConfig();
+  if (!config) {
+    return {
+      ok: false,
+      error:
+        "Set MESSENGER_PAGE_ID and MESSENGER_PAGE_ACCESS_TOKEN in the environment first (see SETUP.md).",
+    };
+  }
+  const info = await messengerGetPageInfo(config);
+  await messengerSubscribeApp(config);
+
+  const admin = createAdminClient();
+  await upsertConnection(admin, access.organizationId, "messenger", {
+    page_id: config.pageId,
+    page_name: info.name,
+    display_name: info.name ?? "Messenger",
     status: "connected",
     error_message: null,
     created_by: access.userId,
