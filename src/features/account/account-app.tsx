@@ -12,18 +12,24 @@ import type {
   AccountTrip,
   TripStatus,
 } from "@/features/account/queries";
+import { useI18n } from "@/lib/i18n/provider";
 
 const MONO = "'Geist Mono', ui-monospace, monospace";
 
 type SectionKey = "trips" | "saved" | "messages" | "payments" | "profile";
 
-type PillStyle = { label: string; fg: string; bg: string };
+type AccountStatusKey =
+  | "statusConfirmed"
+  | "statusPaymentDue"
+  | "statusCompleted"
+  | "statusCancelled";
+type PillStyle = { labelKey: AccountStatusKey; fg: string; bg: string };
 
 const STATUS_STYLE: Record<string, PillStyle> = {
-  confirmed: { label: "Confirmed", fg: "#2f6b3a", bg: "rgba(125,195,131,0.16)" },
-  pending: { label: "Payment due", fg: "#8a6d1f", bg: "rgba(201,169,97,0.18)" },
-  past: { label: "Completed", fg: "var(--text-tertiary)", bg: "var(--bg-tertiary)" },
-  cancelled: { label: "Cancelled", fg: "#9a4b40", bg: "rgba(154,75,64,0.14)" },
+  confirmed: { labelKey: "statusConfirmed", fg: "#2f6b3a", bg: "rgba(125,195,131,0.16)" },
+  pending: { labelKey: "statusPaymentDue", fg: "#8a6d1f", bg: "rgba(201,169,97,0.18)" },
+  past: { labelKey: "statusCompleted", fg: "var(--text-tertiary)", bg: "var(--bg-tertiary)" },
+  cancelled: { labelKey: "statusCancelled", fg: "#9a4b40", bg: "rgba(154,75,64,0.14)" },
 };
 
 function tripPill(trip: AccountTrip): PillStyle {
@@ -33,6 +39,7 @@ function tripPill(trip: AccountTrip): PillStyle {
 }
 
 function Pill({ style }: { style: PillStyle }) {
+  const { dict } = useI18n();
   return (
     <span
       style={{
@@ -47,7 +54,7 @@ function Pill({ style }: { style: PillStyle }) {
         whiteSpace: "nowrap",
       }}
     >
-      {style.label}
+      {dict.account[style.labelKey]}
     </span>
   );
 }
@@ -73,6 +80,8 @@ export function AccountApp({ data }: { data: AccountData }) {
   const upcoming = data.trips.filter((t) => t.status === "upcoming");
   const unread = data.conversations.filter((c) => c.hasUnread).length;
   const firstName = data.profile.name.split(/\s+/)[0] ?? data.profile.name;
+  const { dict } = useI18n();
+  const t = dict.account;
 
   const views: Record<SectionKey, React.ReactNode> = {
     trips: <TripsView trips={data.trips} />,
@@ -95,7 +104,7 @@ export function AccountApp({ data }: { data: AccountData }) {
         >
           <div style={{ padding: "8px 0 12px" }}>
             <span className="eyebrow" style={{ color: "var(--accent)" }}>
-              <span className="dot" /> Client account
+              <span className="dot" /> {t.eyebrow}
             </span>
             <h1
               className="serif"
@@ -107,7 +116,7 @@ export function AccountApp({ data }: { data: AccountData }) {
                 lineHeight: 1,
               }}
             >
-              Welcome back,{" "}
+              {t.welcome}{" "}
               <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
                 {firstName}.
               </em>
@@ -116,8 +125,8 @@ export function AccountApp({ data }: { data: AccountData }) {
               className="tnum"
               style={{ marginTop: 12, fontSize: 14, color: "var(--text-secondary)" }}
             >
-              {upcoming.length} upcoming {upcoming.length === 1 ? "trip" : "trips"} ·{" "}
-              {data.saved.length} saved · {unread} unread
+              {upcoming.length} {t.summaryTrips} ·{" "}
+              {data.saved.length} {t.summarySaved} · {unread} {t.summaryUnread}
             </p>
           </div>
 
@@ -195,11 +204,13 @@ function StatStrip({
   unread: number;
   setActive: (k: SectionKey) => void;
 }) {
+  const { dict } = useI18n();
+  const t = dict.account;
   const stats: { key: SectionKey; label: string; value: string; sub: string }[] = [
-    { key: "trips", label: "Upcoming trips", value: String(upcoming), sub: upcoming ? "View itinerary" : "Nothing booked" },
-    { key: "saved", label: "Saved", value: String(saved), sub: saved ? "Your shortlist" : "Nothing saved yet" },
-    { key: "payments", label: "Payments", value: String(payments), sub: payments ? "View history" : "No payments yet" },
-    { key: "messages", label: "Unread", value: String(unread), sub: unread ? "New messages" : "All caught up" },
+    { key: "trips", label: t.statUpcoming, value: String(upcoming), sub: upcoming ? t.statViewItinerary : t.statNothingBooked },
+    { key: "saved", label: t.statSaved, value: String(saved), sub: saved ? t.statShortlist : t.statNothingSaved },
+    { key: "payments", label: t.statPayments, value: String(payments), sub: payments ? t.statViewHistory : t.statNoPayments },
+    { key: "messages", label: t.statUnread, value: String(unread), sub: unread ? t.statNewMessages : t.statAllCaughtUp },
   ];
   return (
     <div
@@ -273,12 +284,14 @@ function AcctSidebar({
   upcoming: number;
   unread: number;
 }) {
+  const { dict } = useI18n();
+  const t = dict.account;
   const items: [SectionKey, string, number | null][] = [
-    ["trips", "Trips", upcoming || null],
-    ["saved", "Saved", null],
-    ["messages", "Messages", unread || null],
-    ["payments", "Payments", null],
-    ["profile", "Account", null],
+    ["trips", t.navTrips, upcoming || null],
+    ["saved", t.navSaved, null],
+    ["messages", t.navMessages, unread || null],
+    ["payments", t.navPayments, null],
+    ["profile", t.navAccount, null],
   ];
   return (
     <aside className="acct-side" style={{ position: "sticky", top: 104, alignSelf: "start" }}>
@@ -365,7 +378,7 @@ function AcctSidebar({
             fontFamily: "inherit",
           }}
         >
-          ← Sign out
+          ← {t.signOut}
         </button>
       </form>
     </aside>
@@ -381,17 +394,19 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
     .sort((a, b) => a.checkIn.localeCompare(b.checkIn));
   const next = upcoming[0];
   const list = trips.filter((t) => t.status === tab);
+  const { dict } = useI18n();
+  const ui = dict.account;
   const tabs: [TripStatus, string][] = [
-    ["upcoming", "Upcoming"],
-    ["past", "Past"],
-    ["cancelled", "Cancelled"],
+    ["upcoming", ui.tabUpcoming],
+    ["past", ui.tabPast],
+    ["cancelled", ui.tabCancelled],
   ];
 
   return (
     <div>
       {next ? (
         <div style={{ marginBottom: 40 }}>
-          <SectionLabel>Your next stay</SectionLabel>
+          <SectionLabel>{ui.nextStay}</SectionLabel>
           <div
             className="acct-hero"
             style={{
@@ -432,7 +447,10 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
                   letterSpacing: "0.04em",
                 }}
               >
-                Check-in in {daysAway(next.checkIn)} days
+                {ui.checkInDays.replace(
+                  "{days}",
+                  String(daysAway(next.checkIn)),
+                )}
               </div>
             </div>
             <div style={{ padding: "clamp(22px, 3vw, 34px)", display: "flex", flexDirection: "column" }}>
@@ -464,10 +482,13 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
                 </div>
               ) : null}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 24 }}>
-                <Field label="Check-in" value={fmtDate(next.checkIn)} />
-                <Field label="Checkout" value={fmtDate(next.checkOut)} />
-                <Field label="Guests" value={`${next.guests} guests`} />
-                <Field label="Total" value={next.totalText} gold />
+                <Field label={ui.checkIn} value={fmtDate(next.checkIn)} />
+                <Field label={ui.checkout} value={fmtDate(next.checkOut)} />
+                <Field
+                  label={ui.guests}
+                  value={ui.guestsCount.replace("{n}", String(next.guests))}
+                />
+                <Field label={ui.total} value={next.totalText} gold />
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: "auto", paddingTop: 26, flexWrap: "wrap" }}>
                 <Link
@@ -475,10 +496,10 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
                   className="btn-solid"
                   style={{ padding: "12px 20px", borderRadius: 10, fontSize: 12.5, letterSpacing: "0.04em", display: "flex" }}
                 >
-                  View property
+                  {ui.viewProperty}
                 </Link>
                 <AccountMessageButton
-                  label="Message host"
+                  label={ui.messageHost}
                   className="btn btn-primary"
                   style={{ padding: "11px 18px", borderRadius: 10 }}
                 />
@@ -488,7 +509,7 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
         </div>
       ) : null}
 
-      <SectionLabel>All bookings</SectionLabel>
+      <SectionLabel>{ui.allBookings}</SectionLabel>
       <div style={{ display: "flex", gap: 24, borderBottom: "1px solid var(--border-subtle)", marginBottom: 22 }}>
         {tabs.map(([k, l]) => {
           const on = tab === k;
@@ -528,7 +549,7 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
         {list.length ? (
           list.map((t) => <TripRow key={t.id} trip={t} />)
         ) : (
-          <Empty label="Nothing here yet." />
+          <Empty label={ui.nothingHere} />
         )}
       </div>
     </div>
@@ -536,6 +557,8 @@ function TripsView({ trips }: { trips: AccountTrip[] }) {
 }
 
 function TripRow({ trip }: { trip: AccountTrip }) {
+  const { dict } = useI18n();
+  const t = dict.account;
   return (
     <Link
       href={propertyHref(trip.propertySlug)}
@@ -572,7 +595,10 @@ function TripRow({ trip }: { trip: AccountTrip }) {
           {trip.propertyTitle}
         </h4>
         <div className="tnum" style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 5 }}>
-          {fmtDate(trip.checkIn)} → {fmtDate(trip.checkOut)} · {trip.nights} nights · {trip.guests} guests
+          {fmtDate(trip.checkIn)} → {fmtDate(trip.checkOut)} ·{" "}
+          {t.nightsGuests
+            .replace("{nights}", String(trip.nights))
+            .replace("{guests}", String(trip.guests))}
         </div>
       </div>
       <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
@@ -580,7 +606,7 @@ function TripRow({ trip }: { trip: AccountTrip }) {
           {trip.totalText}
         </span>
         <span className="btn-text" style={{ fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-          View →
+          {t.view} →
         </span>
       </div>
     </Link>
@@ -590,11 +616,13 @@ function TripRow({ trip }: { trip: AccountTrip }) {
 // ---------------- Saved ----------------
 
 function SavedView({ saved }: { saved: AccountSaved[] }) {
+  const { dict } = useI18n();
+  const t = dict.account;
   return (
     <div>
-      <SectionLabel>Saved properties</SectionLabel>
+      <SectionLabel>{t.savedTitle}</SectionLabel>
       {saved.length === 0 ? (
-        <Empty label="No saved properties yet." />
+        <Empty label={t.savedEmpty} />
       ) : (
         <div
           className="saved-grid"
@@ -673,14 +701,16 @@ function MessagesView({
 }: {
   conversations: AccountData["conversations"];
 }) {
+  const { dict } = useI18n();
+  const t = dict.account;
   return (
     <div>
-      <SectionLabel>Messages</SectionLabel>
+      <SectionLabel>{t.messagesTitle}</SectionLabel>
       {conversations.length === 0 ? (
         <div style={{ display: "grid", gap: 16, justifyItems: "start" }}>
-          <Empty label="No conversations yet." />
+          <Empty label={t.messagesEmpty} />
           <AccountMessageButton
-            label="Message your agent"
+            label={t.messageAgent}
             className="btn btn-primary"
             style={{ padding: "11px 18px", borderRadius: 10 }}
           />
@@ -757,7 +787,7 @@ function MessagesView({
                     fontWeight: c.hasUnread ? 500 : 400,
                   }}
                 >
-                  {c.lastMessage ?? "Open in messages →"}
+                  {c.lastMessage ?? `${t.openInMessages} →`}
                 </div>
               </div>
               {c.hasUnread ? (
@@ -774,17 +804,19 @@ function MessagesView({
 // ---------------- Payments ----------------
 
 function PaymentsView({ payments }: { payments: AccountPayment[] }) {
+  const { dict } = useI18n();
+  const t = dict.account;
   if (payments.length === 0) {
     return (
       <div>
-        <SectionLabel>Payment history</SectionLabel>
-        <Empty label="No payments yet." />
+        <SectionLabel>{t.paymentsTitle}</SectionLabel>
+        <Empty label={t.paymentsEmpty} />
       </div>
     );
   }
   return (
     <div>
-      <SectionLabel>Payment history</SectionLabel>
+      <SectionLabel>{t.paymentsTitle}</SectionLabel>
       <div
         className="acct-card"
         style={{
@@ -809,10 +841,10 @@ function PaymentsView({ payments }: { payments: AccountPayment[] }) {
             color: "var(--text-tertiary)",
           }}
         >
-          <span>Date</span>
-          <span>Description</span>
-          <span>Method</span>
-          <span style={{ textAlign: "right" }}>Amount</span>
+          <span>{t.colDate}</span>
+          <span>{t.colDescription}</span>
+          <span>{t.colMethod}</span>
+          <span style={{ textAlign: "right" }}>{t.colAmount}</span>
         </div>
         {payments.map((p, i) => (
           <div
@@ -848,9 +880,11 @@ function PaymentsView({ payments }: { payments: AccountPayment[] }) {
 
 function ProfileView({ data }: { data: AccountData }) {
   const c = data.profile;
+  const { dict } = useI18n();
+  const t = dict.account;
   return (
     <div>
-      <SectionLabel>Account details</SectionLabel>
+      <SectionLabel>{t.profileTitle}</SectionLabel>
       <div
         className="acct-card"
         style={{
@@ -885,16 +919,16 @@ function ProfileView({ data }: { data: AccountData }) {
             </h3>
             {c.memberSince ? (
               <div style={{ fontSize: 12.5, color: "var(--text-tertiary)", marginTop: 3 }}>
-                Member since {c.memberSince}
+                {t.memberSince} {c.memberSince}
               </div>
             ) : null}
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22, marginTop: 24 }}>
-          <Field label="Full name" value={c.name} />
-          <Field label="Email" value={c.email ?? "—"} />
-          <Field label="Phone" value={c.phone ?? "—"} />
-          <Field label="Organization" value={data.organizationName ?? "—"} />
+          <Field label={t.fullName} value={c.name} />
+          <Field label={t.email} value={c.email ?? "—"} />
+          <Field label={t.phone} value={c.phone ?? "—"} />
+          <Field label={t.organization} value={data.organizationName ?? "—"} />
         </div>
       </div>
 
@@ -913,12 +947,10 @@ function ProfileView({ data }: { data: AccountData }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
           <div>
             <h4 className="serif" style={{ fontSize: "1.125rem", letterSpacing: "-0.01em", fontWeight: 400, color: "#9a4b40" }}>
-              Delete account
+              {t.deleteTitle}
             </h4>
             <p style={{ marginTop: 6, fontSize: 13, color: "var(--text-secondary)", maxWidth: "46ch", lineHeight: 1.5 }}>
-              Requests permanent removal of your profile and saved data. Active
-              bookings cannot be deleted automatically — your agent confirms the
-              request first.
+              {t.deleteBlurb}
             </p>
           </div>
           <DeleteAccount disabled={!data.hasClientAccount} />
@@ -933,6 +965,8 @@ function DeleteAccount({ disabled }: { disabled: boolean }) {
   const [pending, setPending] = React.useState(false);
   const [done, setDone] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const { dict } = useI18n();
+  const t = dict.account;
 
   if (done) {
     return (
@@ -963,7 +997,7 @@ function DeleteAccount({ disabled }: { disabled: boolean }) {
             fontFamily: "inherit",
           }}
         >
-          Delete account
+          {t.deleteTitle}
         </button>
         {error ? <span style={{ fontSize: 11.5, color: "#9a4b40" }}>{error}</span> : null}
       </div>
@@ -972,7 +1006,7 @@ function DeleteAccount({ disabled }: { disabled: boolean }) {
 
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-      <span style={{ fontSize: 12.5, color: "#9a4b40" }}>Sure?</span>
+      <span style={{ fontSize: 12.5, color: "#9a4b40" }}>{t.sure}</span>
       <button
         type="button"
         disabled={pending}
@@ -982,9 +1016,9 @@ function DeleteAccount({ disabled }: { disabled: boolean }) {
           const result = await requestAccountDeletion();
           setPending(false);
           if (result.ok) {
-            setDone(result.message ?? "Request submitted.");
+            setDone(result.message ?? t.requestSubmitted);
           } else {
-            setError(result.error ?? "Could not submit.");
+            setError(result.error ?? t.couldNotSubmit);
             setConfirming(false);
           }
         }}
@@ -1002,7 +1036,7 @@ function DeleteAccount({ disabled }: { disabled: boolean }) {
           opacity: pending ? 0.7 : 1,
         }}
       >
-        {pending ? "Sending…" : "Yes, request"}
+        {pending ? t.sending : t.yesRequest}
       </button>
       <button
         type="button"
@@ -1018,7 +1052,7 @@ function DeleteAccount({ disabled }: { disabled: boolean }) {
           fontFamily: "inherit",
         }}
       >
-        Cancel
+        {t.cancel}
       </button>
     </div>
   );
