@@ -276,12 +276,31 @@ export async function updateProperty(
     .filter((p): p is NonNullable<typeof p> => p !== null)
     .map(toPriceRow);
 
+  // Снимок прежних цен для отката: delete-then-insert идёт без транзакции
+  // (supabase-js не умеет клиентские транзакции), поэтому при сбое insert
+  // восстанавливаем старые строки, чтобы у объекта не осталось 0 цен.
+  const { data: priorPrices } = await supabase
+    .from("property_prices")
+    .select(
+      "amount, currency, price_period, display_type, old_amount, security_deposit, cleaning_fee, taxes",
+    )
+    .eq("property_id", data.id);
+
   await supabase.from("property_prices").delete().eq("property_id", data.id);
   if (priceRows.length > 0) {
     const { error: priceError } = await supabase
       .from("property_prices")
       .insert(priceRows);
     if (priceError) {
+      if (priorPrices && priorPrices.length > 0) {
+        await supabase.from("property_prices").insert(
+          priorPrices.map((row) => ({
+            ...row,
+            property_id: data.id,
+            organization_id: organizationId,
+          })),
+        );
+      }
       return { ok: false, error: "Could not save the price." };
     }
   }
