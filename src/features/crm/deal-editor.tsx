@@ -8,6 +8,7 @@ import type { DealDetail } from "@/features/crm/queries";
 import type { DealStage } from "@/features/crm/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CURRENCIES } from "@/lib/currency/config";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -79,10 +80,17 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
         </label>
         <label className="block space-y-1">
           <span className="text-sm font-medium">Currency</span>
-          <Input
+          <select
+            className={FIELD_CLASS}
             value={form.currency}
             onChange={(e) => setForm({ ...form, currency: e.target.value })}
-          />
+          >
+            {CURRENCIES.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="block space-y-1">
           <span className="text-sm font-medium">Expected close date</span>

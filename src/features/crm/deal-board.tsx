@@ -39,12 +39,20 @@ interface DealBoardProps {
 export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
   const router = useRouter();
   const [pending, setPending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   async function handleMove(dealId: string, stageId: string) {
     setPending(true);
-    await moveDeal(dealId, stageId);
+    setError(null);
+    const result = await moveDeal(dealId, stageId);
     setPending(false);
-    router.refresh();
+    if (result.ok) {
+      router.refresh();
+    } else {
+      // Перенос не прошёл — показываем причину; select откатится на refresh.
+      setError(result.error);
+      router.refresh();
+    }
   }
 
   if (deals.length === 0) {
@@ -57,8 +65,14 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-2">
-      {stages.map((stage) => {
+    <div className="space-y-2">
+      {error ? (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {stages.map((stage) => {
         const stageDeals = deals.filter((deal) => deal.stageId === stage.id);
         return (
           <div
@@ -122,7 +136,8 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
             ) : null}
           </div>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }

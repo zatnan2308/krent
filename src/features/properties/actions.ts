@@ -33,9 +33,10 @@ function slugify(value: string): string {
     .replace(/-+$/g, "");
 }
 
-/** Короткий случайный суффикс — гарантирует уникальность slug при создании. */
+/** Короткий случайный суффикс — гарантирует уникальность slug при создании.
+ *  Берём crypto-энтропию (не Math.random) — меньше шанс коллизии. */
 function randomSlugSuffix(): string {
-  return `${Math.random().toString(36).slice(2)}000000`.slice(0, 6);
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 6);
 }
 
 /** Создаёт объект с минимальными данными и переводом на язык по умолчанию. */
@@ -79,6 +80,13 @@ export async function createProperty(
     .single();
 
   if (error || !created) {
+    // Маловероятная коллизия slug — честно просим повторить, а не «не удалось».
+    if (error?.code === "23505") {
+      return {
+        ok: false,
+        error: "A property with a similar name already exists. Please try again.",
+      };
+    }
     return { ok: false, error: "Could not create the property." };
   }
 

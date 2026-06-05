@@ -211,7 +211,7 @@ export function DocumentsManager({
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="file"
-            accept=".pdf,.doc,.docx,image/*"
+            accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="text-sm"
           />
