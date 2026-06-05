@@ -186,8 +186,20 @@ export default async function LocaleHomePage({
         { items: [] as PublicPropertyCard[] },
       ];
 
-  const { hero, about, markets, testimonials, trust, sections, intent, reasons, stats } =
-    content;
+  const {
+    hero,
+    about,
+    cta,
+    markets,
+    process: processSteps,
+    testimonials,
+    trust,
+    press,
+    sections,
+    intent,
+    reasons,
+    stats,
+  } = content;
 
   const featured = catalog.items.slice(0, 6);
   const heroBg = hero?.background_image_url || DEFAULT_HERO_IMG;
@@ -206,6 +218,11 @@ export default async function LocaleHomePage({
     eyebrow: "The difference",
     lead: "Why work with",
     accent: "Alexey",
+  });
+  const processCopy = sectionCopy(sections, "process", {
+    eyebrow: "How it works",
+    lead: "A clear",
+    accent: "process",
   });
   const communitiesCopy = sectionCopy(sections, "communities", {
     eyebrow: "Where I work",
@@ -721,6 +738,73 @@ export default async function LocaleHomePage({
       ) : null}
 
       {/* ============================================================
+          5b · PROCESS — этапы работы (нумерованные карточки)
+          ============================================================ */}
+      {processSteps.length > 0 ? (
+        <section
+          style={{ background: "var(--bg-primary)", padding: "clamp(72px, 8vw, 110px) 0" }}
+        >
+          <div
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
+          >
+            <SectionTitle copy={processCopy} />
+            <div
+              className="v3-process"
+              style={{
+                marginTop: "clamp(44px, 5vw, 72px)",
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.min(processSteps.length, 4)}, 1fr)`,
+                gap: "clamp(28px, 3vw, 44px)",
+              }}
+            >
+              {processSteps.map((step) => (
+                <div
+                  key={step.id}
+                  style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 22 }}
+                >
+                  <div
+                    className="serif tnum"
+                    style={{ fontSize: 13, color: "var(--accent)", marginBottom: 18 }}
+                  >
+                    {step.step_number}
+                  </div>
+                  <h3
+                    className="serif"
+                    style={{
+                      fontSize: "1.375rem",
+                      letterSpacing: "-0.02em",
+                      fontWeight: 400,
+                      lineHeight: 1.1,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {step.title}
+                  </h3>
+                  {step.body ? (
+                    <p
+                      style={{
+                        marginTop: 14,
+                        fontSize: 14.5,
+                        lineHeight: 1.6,
+                        color: "var(--text-secondary)",
+                        textWrap: "pretty",
+                      }}
+                    >
+                      {step.body}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+          <style>{`
+            @media (max-width: 860px) { .v3-process { grid-template-columns: 1fr 1fr !important; } }
+            @media (max-width: 480px) { .v3-process { grid-template-columns: 1fr !important; } }
+          `}</style>
+        </section>
+      ) : null}
+
+      {/* ============================================================
           6 · ADVANTAGE — крупные цифры + строка партнёров
           ============================================================ */}
       {stats.length > 0 || trust.length > 0 ? (
@@ -806,6 +890,71 @@ export default async function LocaleHomePage({
           <style>{`
             @media (max-width: 680px) { .v3-stats { grid-template-columns: 1fr 1fr !important; gap: 36px !important; } }
           `}</style>
+        </section>
+      ) : null}
+
+      {/* ============================================================
+          6b · PRESS — логотипы/имена изданий ("As featured in")
+          ============================================================ */}
+      {press.length > 0 ? (
+        <section
+          style={{ background: "var(--bg-primary)", padding: "clamp(48px, 6vw, 72px) 0" }}
+        >
+          <div
+            style={{ maxWidth: "var(--max-w)", margin: "0 auto", padding: "0 var(--edge-d)" }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                color: "var(--text-tertiary)",
+                textAlign: "center",
+                marginBottom: "clamp(28px, 3.5vw, 44px)",
+              }}
+            >
+              As featured in
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "clamp(32px, 5vw, 72px)",
+                flexWrap: "wrap",
+              }}
+            >
+              {press.map((logo) =>
+                logo.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={logo.id}
+                    src={logo.logo_url}
+                    alt={logo.name}
+                    style={{
+                      height: "clamp(22px, 2.4vw, 32px)",
+                      width: "auto",
+                      objectFit: "contain",
+                      opacity: 0.6,
+                      filter: "grayscale(1)",
+                    }}
+                  />
+                ) : (
+                  <span
+                    key={logo.id}
+                    className="serif"
+                    style={{
+                      fontSize: "clamp(1.125rem, 1.6vw, 1.5rem)",
+                      color: "var(--text-tertiary)",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {logo.name}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
         </section>
       ) : null}
 
@@ -953,6 +1102,108 @@ export default async function LocaleHomePage({
           >
             <SectionTitle copy={storiesCopy} />
             <TestimonialsCarousel items={testimonials} />
+          </div>
+        </section>
+      ) : null}
+
+      {/* ============================================================
+          8b · CTA — тёмный финальный призыв к действию
+          ============================================================ */}
+      {cta ? (
+        <section
+          className="on-dark"
+          style={{
+            background: "#131311",
+            color: "#F5F4EE",
+            padding: "clamp(80px, 10vw, 140px) 0",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "var(--max-w)",
+              margin: "0 auto",
+              padding: "0 var(--edge-d)",
+              textAlign: "center",
+            }}
+          >
+            {cta.eyebrow_text ? (
+              <div
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.32em",
+                  textTransform: "uppercase",
+                  color: "var(--accent)",
+                  marginBottom: 22,
+                  fontWeight: 500,
+                }}
+              >
+                {cta.eyebrow_text}
+              </div>
+            ) : null}
+            <h2
+              className="serif"
+              style={{
+                fontSize: "clamp(2.25rem, 5vw, 4rem)",
+                letterSpacing: "-0.03em",
+                lineHeight: 1.02,
+                fontWeight: 400,
+                color: "#F5F4EE",
+                maxWidth: "20ch",
+                margin: "0 auto",
+                textWrap: "balance",
+              }}
+            >
+              {cta.headline_left}
+              {cta.headline_italic ? (
+                <>
+                  {" "}
+                  <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
+                    {cta.headline_italic}
+                  </em>
+                </>
+              ) : null}
+              {cta.headline_right ? <> {cta.headline_right}</> : null}
+            </h2>
+            {cta.subtitle ? (
+              <p
+                style={{
+                  marginTop: 24,
+                  fontSize: "clamp(1rem, 1.4vw, 1.125rem)",
+                  color: "rgba(245,244,238,0.72)",
+                  maxWidth: "48ch",
+                  margin: "24px auto 0",
+                  lineHeight: 1.6,
+                }}
+              >
+                {cta.subtitle}
+              </p>
+            ) : null}
+            <div
+              style={{
+                marginTop: 40,
+                display: "flex",
+                gap: 14,
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
+              {cta.primary_cta_label ? (
+                <Link
+                  href={localize(cta.primary_cta_href, locale)}
+                  className="btn btn-solid"
+                >
+                  {cta.primary_cta_label} <span className="arrow">→</span>
+                </Link>
+              ) : null}
+              {cta.secondary_cta_label ? (
+                <Link
+                  href={localize(cta.secondary_cta_href, locale)}
+                  className="btn btn-ghost"
+                >
+                  {cta.secondary_cta_label}
+                </Link>
+              ) : null}
+            </div>
           </div>
         </section>
       ) : null}
