@@ -13,6 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 interface NotesPanelProps {
   notes: NoteItem[];
   canManage: boolean;
+  /** Текущий пользователь — для показа Delete только своих заметок. */
+  currentUserId: string;
+  /** crm.manage_all — может удалять любые заметки. */
+  canManageAll: boolean;
   leadId?: string | null;
   contactId?: string | null;
   dealId?: string | null;
@@ -22,6 +26,8 @@ interface NotesPanelProps {
 export function NotesPanel({
   notes,
   canManage,
+  currentUserId,
+  canManageAll,
   leadId = null,
   contactId = null,
   dealId = null,
@@ -96,7 +102,8 @@ export function NotesPanel({
             <li key={note.id} className="rounded-md border p-3">
               <div className="flex items-start justify-between gap-3">
                 <p className="whitespace-pre-line text-sm">{note.body}</p>
-                {canManage ? (
+                {canManage &&
+                (canManageAll || note.authorId === currentUserId) ? (
                   <Button
                     type="button"
                     variant="ghost"

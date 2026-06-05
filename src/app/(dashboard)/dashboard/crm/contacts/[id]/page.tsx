@@ -184,6 +184,8 @@ export default async function ContactDetailPage({
           <NotesPanel
             notes={notes}
             canManage={canManage}
+            currentUserId={context.user.id}
+            canManageAll={hasPermission(context, "crm.manage_all")}
             contactId={contact.id}
           />
         </CardContent>

@@ -40,6 +40,7 @@ export interface LeadDetail {
 export interface NoteItem {
   id: string;
   body: string;
+  authorId: string | null;
   authorName: string | null;
   createdAt: string;
 }
@@ -315,6 +316,7 @@ export async function listNotes(
   return rows.map((note) => ({
     id: note.id,
     body: note.body,
+    authorId: note.author_id,
     authorName: note.author_id
       ? (authorNames.get(note.author_id) ?? null)
       : null,

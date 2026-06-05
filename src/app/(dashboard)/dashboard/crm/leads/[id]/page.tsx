@@ -247,7 +247,13 @@ export default async function LeadDetailPage({
           <CardTitle className="text-base">Notes</CardTitle>
         </CardHeader>
         <CardContent>
-          <NotesPanel notes={notes} canManage={canManage} leadId={lead.id} />
+          <NotesPanel
+            notes={notes}
+            canManage={canManage}
+            currentUserId={context.user.id}
+            canManageAll={hasPermission(context, "crm.manage_all")}
+            leadId={lead.id}
+          />
         </CardContent>
       </Card>
 

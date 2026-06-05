@@ -111,7 +111,13 @@ export default async function DealDetailPage({
           <CardTitle className="text-base">Notes</CardTitle>
         </CardHeader>
         <CardContent>
-          <NotesPanel notes={notes} canManage={canManage} dealId={deal.id} />
+          <NotesPanel
+            notes={notes}
+            canManage={canManage}
+            currentUserId={context.user.id}
+            canManageAll={hasPermission(context, "crm.manage_all")}
+            dealId={deal.id}
+          />
         </CardContent>
       </Card>
 
