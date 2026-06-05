@@ -5,20 +5,13 @@ import * as React from "react";
 import { track } from "@/features/analytics/track";
 import { readAttribution } from "@/features/crm/attribution";
 import { submitLead } from "@/features/crm/lead-actions";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface Props {
   locale: string;
   /** Районы для выпадающего списка — настраиваются страницей. */
   areaOptions?: string[];
 }
-
-const INQUIRY_OPTIONS = [
-  "Buy",
-  "Long-term rent",
-  "Vacation",
-  "Investment",
-  "Off-market",
-];
 
 const DEFAULT_AREAS = [
   "Palm Jumeirah",
@@ -43,11 +36,20 @@ export function EditorialContactForm({
   locale,
   areaOptions = DEFAULT_AREAS,
 }: Props) {
+  const { dict } = useI18n();
+  const t = dict.contact;
+  const inquiryOptions = [
+    t.inqBuy,
+    t.inqRent,
+    t.inqVacation,
+    t.inqInvestment,
+    t.inqOffMarket,
+  ];
   const [data, setData] = React.useState<FormState>({
     name: "",
     email: "",
     area: "",
-    inquiry: "Buy",
+    inquiry: t.inqBuy,
     message: "",
   });
   const [sent, setSent] = React.useState(false);
@@ -61,7 +63,7 @@ export function EditorialContactForm({
     event.preventDefault();
     setError(null);
     if (!data.name.trim() || !data.email.trim()) {
-      setError("Name and email are required.");
+      setError(t.nameEmailRequired);
       return;
     }
     setPending(true);
@@ -121,7 +123,7 @@ export function EditorialContactForm({
     >
       {sent ? (
         <div style={{ padding: "40px 0", textAlign: "center" }}>
-          <span className="eyebrow gold">Sent</span>
+          <span className="eyebrow gold">{t.sent}</span>
           <h2
             className="serif"
             style={{
@@ -132,9 +134,10 @@ export function EditorialContactForm({
               lineHeight: 1.1,
             }}
           >
-            Thank you{firstName ? `, ${firstName}` : ""}.
+            {t.thankYou}
+            {firstName ? `, ${firstName}` : ""}.
             <br />
-            I&apos;ll reply within the hour.
+            {t.replyHour}
           </h2>
           <p
             style={{
@@ -144,8 +147,7 @@ export function EditorialContactForm({
               margin: "0 auto",
             }}
           >
-            If it&apos;s urgent, WhatsApp or call me directly — details on the
-            left.
+            {t.urgentNote}
           </p>
         </div>
       ) : (
@@ -162,7 +164,7 @@ export function EditorialContactForm({
                 fontWeight: 400,
               }}
             >
-              Send a message
+              {t.sendMessage}
             </h2>
             <p
               style={{
@@ -171,7 +173,7 @@ export function EditorialContactForm({
                 marginTop: 6,
               }}
             >
-              Fields marked * are required.
+              {t.requiredNote}
             </p>
           </div>
 
@@ -184,16 +186,16 @@ export function EditorialContactForm({
             }}
           >
             <CField
-              label="Name *"
-              placeholder="Your name"
+              label={t.name}
+              placeholder={t.namePlaceholder}
               value={data.name}
               onChange={upd("name")}
               required
             />
             <CField
-              label="Email *"
+              label={t.email}
               type="email"
-              placeholder="you@example.com"
+              placeholder={t.emailPlaceholder}
               value={data.email}
               onChange={upd("email")}
               required
@@ -201,24 +203,24 @@ export function EditorialContactForm({
           </div>
 
           <CSelect
-            label="Area of interest"
+            label={t.areaOfInterest}
             value={data.area}
             onChange={upd("area")}
-            placeholder="Select a district (optional)"
+            placeholder={t.areaPlaceholder}
             options={areaOptions}
           />
 
           <CPills
-            label="I'm interested in"
+            label={t.interestedIn}
             value={data.inquiry}
             onChange={upd("inquiry")}
-            options={INQUIRY_OPTIONS}
+            options={inquiryOptions}
           />
 
           <CField
-            label="Message"
+            label={t.message}
             textarea
-            placeholder="What are you looking for? The more specific, the better."
+            placeholder={t.messagePlaceholder}
             value={data.message}
             onChange={upd("message")}
           />
@@ -247,7 +249,7 @@ export function EditorialContactForm({
               opacity: pending ? 0.7 : 1,
             }}
           >
-            {pending ? "Sending…" : "Send message"}
+            {pending ? t.sending : t.send}
             <span style={{ marginLeft: 8 }}>→</span>
           </button>
           <p
@@ -259,7 +261,7 @@ export function EditorialContactForm({
               margin: 0,
             }}
           >
-            Contacted only by Alexey. Never shared, never resold.
+            {t.privacyNote}
           </p>
         </form>
       )}

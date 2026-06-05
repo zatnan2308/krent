@@ -234,6 +234,35 @@ export const en = {
     noMatches: "No matches",
     resetFilters: "Reset filters",
   },
+  contact: {
+    sent: "Sent",
+    thankYou: "Thank you",
+    replyHour: "I'll reply within the hour.",
+    urgentNote:
+      "If it's urgent, WhatsApp or call me directly — details on the left.",
+    sendMessage: "Send a message",
+    requiredNote: "Fields marked * are required.",
+    name: "Name *",
+    namePlaceholder: "Your name",
+    email: "Email *",
+    emailPlaceholder: "you@example.com",
+    areaOfInterest: "Area of interest",
+    areaPlaceholder: "Select a district (optional)",
+    interestedIn: "I'm interested in",
+    message: "Message",
+    messagePlaceholder:
+      "What are you looking for? The more specific, the better.",
+    sending: "Sending…",
+    send: "Send message",
+    privacyNote:
+      "We'll only contact you about this enquiry. Never shared, never resold.",
+    nameEmailRequired: "Name and email are required.",
+    inqBuy: "Buy",
+    inqRent: "Long-term rent",
+    inqVacation: "Vacation",
+    inqInvestment: "Investment",
+    inqOffMarket: "Off-market",
+  },
 };
 
 export type Dictionary = typeof en;
