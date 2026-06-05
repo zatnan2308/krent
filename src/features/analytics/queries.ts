@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 
+import { CHANNEL_LABELS } from "@/features/messaging/channels";
 import { createAdminClient } from "@/lib/supabase/server";
 
 import type { TrackingSettings } from "./types";
@@ -119,6 +120,7 @@ export async function getAnalyticsOverview(
     bookingsResult,
     utmResult,
     attributionResult,
+    channelsResult,
   ] = await Promise.all([
     admin
       .from("analytics_sessions")
@@ -148,6 +150,11 @@ export async function getAnalyticsOverview(
     admin
       .from("lead_attribution")
       .select("utm_source")
+      .eq("organization_id", organizationId)
+      .gte("created_at", since),
+    admin
+      .from("messaging_conversations")
+      .select("channel")
       .eq("organization_id", organizationId)
       .gte("created_at", since),
   ]);
@@ -203,7 +210,8 @@ export async function getAnalyticsOverview(
     .slice(0, 8)
     .map(([source, count]) => ({ source, count }));
 
-  // Lead sources из lead_attribution.
+  // Lead sources из lead_attribution + входящие из каналов мессенджеров
+  // (каждый новый канальный диалог за окно — отдельный источник привлечения).
   const leadSourceCounts = new Map<string, number>();
   for (const row of attributionResult.data ?? []) {
     const source = (row.utm_source ?? "").trim() || "direct";
@@ -211,6 +219,10 @@ export async function getAnalyticsOverview(
       source,
       (leadSourceCounts.get(source) ?? 0) + 1,
     );
+  }
+  for (const row of channelsResult.data ?? []) {
+    const source = CHANNEL_LABELS[row.channel] ?? row.channel;
+    leadSourceCounts.set(source, (leadSourceCounts.get(source) ?? 0) + 1);
   }
   const leadSources = [...leadSourceCounts.entries()]
     .sort((left, right) => right[1] - left[1])
