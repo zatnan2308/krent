@@ -25,3 +25,10 @@ export const en = {
 };
 
 export type Dictionary = typeof en;
+
+/** Глубоко-частичный словарь: перевод локали может быть НЕполным —
+ *  недостающие ключи берутся из английского (см. getDictionary / mergeDict).
+ *  Это позволяет наполнять ru/uk/fr/de постепенно, не ломая typecheck. */
+export type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};

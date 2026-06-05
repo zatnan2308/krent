@@ -1,6 +1,6 @@
-import type { Dictionary } from "./en";
+import type { DeepPartial, Dictionary } from "./en";
 
-export const ru: Dictionary = {
+export const ru: DeepPartial<Dictionary> = {
   common: {
     signIn: "Войти",
     openDashboard: "Открыть панель",

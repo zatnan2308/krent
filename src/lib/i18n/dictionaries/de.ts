@@ -1,7 +1,7 @@
-import type { Dictionary } from "./en";
+import type { DeepPartial, Dictionary } from "./en";
 
-/** Немецкий словарь UI. Структура повторяет эталонный en. */
-export const de: Dictionary = {
+/** Немецкий словарь UI. Может быть частичным — недостающее берётся из en. */
+export const de: DeepPartial<Dictionary> = {
   common: {
     signIn: "Anmelden",
     openDashboard: "Dashboard öffnen",
