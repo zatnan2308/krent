@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { getUnreadMessagesCount } from "@/features/chat/unread-queries";
+import { getChannelUnreadCount } from "@/features/messaging/queries";
 import { listRecentNotificationsForBell } from "@/features/notifications/queries-bell";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -72,13 +73,15 @@ export default async function DashboardGroupLayout({
     .maybeSingle();
   const publicSiteUrl = primary?.domain ? `https://${primary.domain}` : null;
 
-  const [notifications, unreadMessages] = await Promise.all([
+  const [notifications, unreadMessages, unreadChannels] = await Promise.all([
     listRecentNotificationsForBell(context.organization.id, context.user.id),
     getUnreadMessagesCount(context.organization.id, context.user.id),
+    getChannelUnreadCount(context.organization.id, context.user.id),
   ]);
   const sidebarBadges: Record<string, number> = {};
-  if (unreadMessages > 0) {
-    sidebarBadges[ROUTES.dashboard.messages] = unreadMessages;
+  const totalUnread = unreadMessages + unreadChannels;
+  if (totalUnread > 0) {
+    sidebarBadges[ROUTES.dashboard.messages] = totalUnread;
   }
 
   return (

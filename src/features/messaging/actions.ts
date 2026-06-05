@@ -17,13 +17,18 @@ import {
   whatsappGetPhoneInfo,
   whatsappSubscribeApp,
 } from "./adapters/whatsapp";
+import { getMessageAdapter } from "./adapters/registry";
 import {
   getMessengerConfig,
   getTelegramConfig,
   getWhatsAppConfig,
 } from "./config";
+import { CHANNEL_HAS_SESSION_WINDOW } from "./channels";
+import { recordOutboundMessage } from "./store";
 import type { ActionResult } from "./schema";
 import type { MessagingChannel } from "./types";
+
+const SESSION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const INTEGRATIONS_PATH = "/dashboard/integrations";
 
@@ -183,6 +188,118 @@ export async function connectMessenger(): Promise<ActionResult> {
     created_by: access.userId,
   });
   revalidatePath(INTEGRATIONS_PATH);
+  return { ok: true };
+}
+
+const MESSAGES_PATH = "/dashboard/messages";
+
+/**
+ * Отправляет исходящее сообщение в канал из инбокса. Уважает 24ч-окно
+ * (WhatsApp/Messenger): вне окна свободный текст запрещён (нужен шаблон/tag).
+ * Telegram — без окна. Никогда не шлём платное автоматически.
+ */
+export async function sendChannelMessage(input: {
+  conversationId: string;
+  text: string;
+}): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to send messages." };
+  }
+  const text = input.text.trim();
+  if (!text) {
+    return { ok: false, error: "Message is empty." };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  const { data: conversation } = await admin
+    .from("messaging_conversations")
+    .select("id, channel, channel_identity_id, connection_id, last_inbound_at")
+    .eq("organization_id", organizationId)
+    .eq("id", input.conversationId)
+    .maybeSingle();
+  if (!conversation || !conversation.channel_identity_id) {
+    return { ok: false, error: "Conversation not found." };
+  }
+
+  // 24ч-окно для WA/Messenger.
+  if (CHANNEL_HAS_SESSION_WINDOW[conversation.channel]) {
+    const open =
+      conversation.last_inbound_at &&
+      Date.now() - new Date(conversation.last_inbound_at).getTime() <
+        SESSION_WINDOW_MS;
+    if (!open) {
+      return {
+        ok: false,
+        error:
+          "The 24-hour window is closed — an approved template/tag is required.",
+      };
+    }
+  }
+
+  const { data: identity } = await admin
+    .from("contact_channel_identities")
+    .select("external_id")
+    .eq("id", conversation.channel_identity_id)
+    .maybeSingle();
+  if (!identity?.external_id) {
+    return { ok: false, error: "Recipient identity not found." };
+  }
+
+  const { data: connection } = await admin
+    .from("messaging_connections")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("channel", conversation.channel)
+    .maybeSingle();
+  if (!connection || connection.status !== "connected") {
+    return { ok: false, error: "This channel is not connected." };
+  }
+
+  const adapter = getMessageAdapter(conversation.channel);
+  const result = await adapter.sendText(connection, {
+    to: identity.external_id,
+    text,
+  });
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the message." };
+  }
+
+  await recordOutboundMessage(admin, {
+    organizationId,
+    channel: conversation.channel,
+    conversationId: conversation.id,
+    senderUserId: context.user.id,
+    body: text,
+    externalMessageId: result.externalMessageId ?? null,
+    status: "sent",
+  });
+  revalidatePath(MESSAGES_PATH);
+  return { ok: true };
+}
+
+/** Отмечает канальный диалог прочитанным для текущего пользователя. */
+export async function markChannelConversationRead(
+  conversationId: string,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  const admin = createAdminClient();
+  await admin.from("messaging_read_state").upsert(
+    {
+      conversation_id: conversationId,
+      organization_id: context.organization.id,
+      user_id: context.user.id,
+      last_read_at: new Date().toISOString(),
+    },
+    { onConflict: "conversation_id,user_id" },
+  );
   return { ok: true };
 }
 
