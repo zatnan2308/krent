@@ -70,8 +70,25 @@ export default async function CmsPage({
   }
 
   return (
-    <article className="container py-16">
-      <h1 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
+    <article
+      style={{
+        maxWidth: "var(--max-w)",
+        margin: "0 auto",
+        padding: "clamp(48px, 7vw, 96px) var(--edge-d)",
+      }}
+    >
+      <h1
+        className="serif"
+        style={{
+          fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
+          letterSpacing: "-0.02em",
+          lineHeight: 1.05,
+          fontWeight: 400,
+          color: "var(--text-primary)",
+          marginBottom: "clamp(28px, 4vw, 44px)",
+          textWrap: "balance",
+        }}
+      >
         {page.translation.title}
       </h1>
       <PageRenderer content={page.content} />
