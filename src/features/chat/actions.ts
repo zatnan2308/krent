@@ -115,6 +115,35 @@ export async function startConversation(
     }
   }
 
+  // Привязка к лиду/брони — только при ОДНОЗНАЧНОМ совпадении контакта клиента
+  // и объекта (без догадок: если кандидатов несколько, оставляем null).
+  let leadId: string | null = null;
+  let bookingId: string | null = null;
+  if (propertyId) {
+    const [leadMatch, bookingMatch] = await Promise.all([
+      admin
+        .from("leads")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("contact_id", portalAccount.contact_id)
+        .eq("property_id", propertyId)
+        .limit(2),
+      admin
+        .from("rental_bookings")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("guest_contact_id", portalAccount.contact_id)
+        .eq("property_id", propertyId)
+        .limit(2),
+    ]);
+    if (leadMatch.data?.length === 1 && leadMatch.data[0]) {
+      leadId = leadMatch.data[0].id;
+    }
+    if (bookingMatch.data?.length === 1 && bookingMatch.data[0]) {
+      bookingId = bookingMatch.data[0].id;
+    }
+  }
+
   const conversationType =
     portalAccount.portal_type === "seller"
       ? "seller_agent"
@@ -127,6 +156,8 @@ export async function startConversation(
     .insert({
       organization_id: organizationId,
       property_id: propertyId,
+      lead_id: leadId,
+      booking_id: bookingId,
       type: conversationType,
       created_by: context.user.id,
     })
