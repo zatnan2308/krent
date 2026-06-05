@@ -352,8 +352,27 @@ export async function issueRefund(
   if (!payment) {
     return { ok: false, error: "No completed payment to refund." };
   }
-  if (data.amount > payment.amount) {
-    return { ok: false, error: "Refund exceeds the payment amount." };
+
+  // Сумма уже оформленных возвратов по этому платежу (всё, кроме проваленных):
+  // несколько частичных возвратов вместе не должны превысить captured-сумму.
+  const { data: priorRefunds } = await admin
+    .from("refunds")
+    .select("amount")
+    .eq("rental_payment_id", payment.id)
+    .neq("status", "failed");
+  const alreadyRefunded = (priorRefunds ?? []).reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  const refundable = payment.amount - alreadyRefunded;
+  if (data.amount > refundable) {
+    return {
+      ok: false,
+      error:
+        refundable > 0
+          ? `Refund exceeds the refundable amount (${refundable.toFixed(2)} ${payment.currency} left).`
+          : "This payment has already been fully refunded.",
+    };
   }
 
   const { data: charge } = await admin
@@ -419,7 +438,9 @@ export async function issueRefund(
   });
 
   if (refundStatus === "succeeded") {
-    const fullRefund = data.amount >= payment.amount;
+    // Полный возврат — когда этот возврат вместе с ранее оформленными
+    // покрывает всю captured-сумму (а не только относительно одного платежа).
+    const fullRefund = alreadyRefunded + data.amount >= payment.amount;
     await admin
       .from("rental_bookings")
       .update({
