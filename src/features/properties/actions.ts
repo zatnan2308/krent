@@ -157,10 +157,51 @@ export async function updateProperty(
     .limit(1)
     .maybeSingle();
 
+  // ---- Назначение агентов (только при properties.manage_all) --
+  // Обычный агент не может переназначать объект — поля игнорируются.
+  let agentFields:
+    | { assigned_agent_id: string | null; co_agent_ids: string[] }
+    | null = null;
+  if (hasPermission(context, "properties.manage_all")) {
+    const coAgents = [...new Set(data.coAgentIds)].filter(
+      (id) => id !== data.assignedAgentId,
+    );
+    const requestedIds = [
+      ...(data.assignedAgentId ? [data.assignedAgentId] : []),
+      ...coAgents,
+    ];
+    if (requestedIds.length > 0) {
+      const { data: members } = await supabase
+        .from("organization_members")
+        .select("user_id")
+        .eq("organization_id", organizationId)
+        .eq("status", "active")
+        .in("user_id", requestedIds);
+      const validIds = new Set((members ?? []).map((m) => m.user_id));
+      if (data.assignedAgentId && !validIds.has(data.assignedAgentId)) {
+        return {
+          ok: false,
+          error: "Assigned agent is not a member of this organization.",
+        };
+      }
+      if (coAgents.some((id) => !validIds.has(id))) {
+        return {
+          ok: false,
+          error: "A selected co-agent is not a member of this organization.",
+        };
+      }
+    }
+    agentFields = {
+      assigned_agent_id: data.assignedAgentId,
+      co_agent_ids: coAgents,
+    };
+  }
+
   // ---- properties --------------------------------------------
   const { error: propertyError } = await supabase
     .from("properties")
     .update({
+      ...(agentFields ?? {}),
       title: data.title,
       slug: data.slug,
       property_type: data.propertyType,

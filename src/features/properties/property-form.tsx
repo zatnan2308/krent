@@ -198,6 +198,9 @@ interface PropertyFormProps {
   amenityCatalog: AmenityCatalog;
   currentUserId: string;
   canDelete: boolean;
+  /** Агенты организации — для пикера назначения (только при manage_all). */
+  agents: { id: string; name: string }[];
+  canManageAll: boolean;
   videos: React.ComponentProps<typeof VideosManager>["videos"];
   documents: React.ComponentProps<typeof DocumentsManager>["documents"];
   nearbyPlaces: React.ComponentProps<typeof NearbyPlacesManager>["places"];
@@ -209,6 +212,8 @@ export function PropertyForm({
   amenityCatalog,
   currentUserId,
   canDelete,
+  agents,
+  canManageAll,
   videos,
   documents,
   nearbyPlaces,
@@ -274,6 +279,12 @@ export function PropertyForm({
   const [amenityIds, setAmenityIds] = React.useState<Set<string>>(
     () => new Set(initial.amenityIds),
   );
+  const [assignedAgentId, setAssignedAgentId] = React.useState<string>(
+    initial.property.assigned_agent_id ?? "",
+  );
+  const [coAgentIds, setCoAgentIds] = React.useState<string[]>(
+    initial.property.co_agent_ids ?? [],
+  );
   const [error, setError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -298,6 +309,15 @@ export function PropertyForm({
       }
       return next;
     });
+    setSaved(false);
+  }
+
+  function toggleCoAgent(agentId: string) {
+    setCoAgentIds((prev) =>
+      prev.includes(agentId)
+        ? prev.filter((id) => id !== agentId)
+        : [...prev, agentId],
+    );
     setSaved(false);
   }
 
@@ -375,6 +395,8 @@ export function PropertyForm({
         exactAddressVisibility: form.exactAddressVisibility,
       },
       amenityIds: [...amenityIds],
+      assignedAgentId: assignedAgentId || null,
+      coAgentIds: coAgentIds.filter((id) => id !== assignedAgentId),
     };
   }
 
@@ -1275,6 +1297,67 @@ export function PropertyForm({
               </p>
             </CardContent>
           </Card>
+          {canManageAll ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Assignment</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Field
+                  label="Lead agent"
+                  htmlFor="assigned-agent"
+                  hint="The agent responsible for this listing."
+                >
+                  <select
+                    id="assigned-agent"
+                    className={FIELD_CLASS}
+                    value={assignedAgentId}
+                    onChange={(event) => {
+                      setAssignedAgentId(event.target.value);
+                      setSaved(false);
+                    }}
+                  >
+                    <option value="">Unassigned</option>
+                    {agents.map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.name}
+                        {agent.id === currentUserId ? " (you)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Co-agents</p>
+                  {agents.filter((agent) => agent.id !== assignedAgentId)
+                    .length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No other agents to add.
+                    </p>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {agents
+                        .filter((agent) => agent.id !== assignedAgentId)
+                        .map((agent) => (
+                          <label
+                            key={agent.id}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Checkbox
+                              checked={coAgentIds.includes(agent.id)}
+                              onCheckedChange={() => toggleCoAgent(agent.id)}
+                            />
+                            <span>
+                              {agent.name}
+                              {agent.id === currentUserId ? " (you)" : ""}
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
           {canDelete ? (
             <Card>
               <CardHeader>

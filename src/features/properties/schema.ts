@@ -112,6 +112,9 @@ export const updatePropertySchema = z.object({
   rentPrice: priceSchema.nullable().default(null),
   location: locationSchema,
   amenityIds: z.array(z.guid()),
+  /** Назначение объекта — применяется только при properties.manage_all. */
+  assignedAgentId: z.guid().nullable(),
+  coAgentIds: z.array(z.guid()).max(10),
 });
 export type UpdatePropertyInput = z.infer<typeof updatePropertySchema>;
 

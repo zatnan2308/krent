@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { getOrgAgents } from "@/features/crm/queries";
 import {
   getAmenityCatalog,
   getPropertyForEdit,
@@ -28,13 +29,17 @@ export default async function EditPropertyPage({
     redirect(ROUTES.dashboard.root);
   }
 
-  const [property, amenityCatalog] = await Promise.all([
+  const canManageAll = hasPermission(context, "properties.manage_all");
+  const [property, amenityCatalog, agents] = await Promise.all([
     getPropertyForEdit(
       context.organization.id,
       params.id,
       context.organization.default_language,
     ),
     getAmenityCatalog(context.organization.id),
+    canManageAll
+      ? getOrgAgents(context.organization.id)
+      : Promise.resolve([]),
   ]);
   if (!property) {
     notFound();
@@ -102,6 +107,8 @@ export default async function EditPropertyPage({
         amenityCatalog={amenityCatalog}
         currentUserId={context.user.id}
         canDelete={hasPermission(context, "properties.delete")}
+        agents={agents}
+        canManageAll={canManageAll}
         videos={videos ?? []}
         documents={docs ?? []}
         nearbyPlaces={nearbyPlaces}
