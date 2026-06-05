@@ -144,10 +144,32 @@ export function ChatThread({
 
   // Realtime: новое сообщение -> обновляем серверные данные ленты.
   // Пачку INSERT'ов схлопываем в один router.refresh() (дебаунс), иначе при
-  // всплеске сообщений шёл полный refresh на каждую строку.
+  // всплеске сообщений шёл полный refresh на каждую строку. Если подписка
+  // оборвалась/недоступна — включаем периодический fallback-поллинг, чтобы
+  // сообщения не «терялись» при молчаливом сбое realtime.
   React.useEffect(() => {
+    let disposed = false;
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const refresh = () => {
+      router.refresh();
+      void markConversationRead(conversationId);
+    };
+    const startPolling = () => {
+      if (disposed || pollTimer) {
+        return;
+      }
+      pollTimer = setInterval(refresh, 12_000);
+    };
+    const stopPolling = () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+
     let cleanup = () => {};
-    let timer: ReturnType<typeof setTimeout> | null = null;
     try {
       const supabase = createClient();
       const channel = supabase
@@ -161,20 +183,36 @@ export function ChatThread({
             filter: `conversation_id=eq.${conversationId}`,
           },
           () => {
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(() => {
-              router.refresh();
-              void markConversationRead(conversationId);
-            }, 300);
+            if (debounce) clearTimeout(debounce);
+            debounce = setTimeout(refresh, 300);
           },
         )
-        .subscribe();
+        .subscribe((status) => {
+          // Подписка жива — поллинг не нужен; при ошибке/таймауте/закрытии
+          // переходим на fallback-поллинг.
+          if (status === "SUBSCRIBED") {
+            stopPolling();
+          } else if (
+            status === "CHANNEL_ERROR" ||
+            status === "TIMED_OUT" ||
+            status === "CLOSED"
+          ) {
+            startPolling();
+          }
+        });
       cleanup = () => {
-        if (timer) clearTimeout(timer);
+        disposed = true;
+        if (debounce) clearTimeout(debounce);
+        stopPolling();
         void supabase.removeChannel(channel);
       };
     } catch {
-      // Realtime недоступен — лента обновляется при отправке сообщений.
+      // Realtime недоступен вовсе — сразу периодический поллинг.
+      startPolling();
+      cleanup = () => {
+        disposed = true;
+        stopPolling();
+      };
     }
     return cleanup;
   }, [conversationId, router]);
