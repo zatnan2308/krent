@@ -85,6 +85,20 @@ async function processProviderWebhook(
   let organizationId: string | null = result.metadata.organization_id ?? null;
   let processingError: string | null = null;
 
+  // Идемпотентность: повторная доставка того же события — выходим без повторной
+  // обработки и без конфликта по unique-индексу (provider, external_event_id).
+  if (result.eventId) {
+    const { data: existing } = await admin
+      .from("payment_webhooks")
+      .select("id")
+      .eq("provider", type)
+      .eq("external_event_id", result.eventId)
+      .maybeSingle();
+    if (existing) {
+      return { status: 200, body: "Already processed." };
+    }
+  }
+
   if (result.outcome === "payment_succeeded") {
     const payment = await findPayment(admin, result);
     if (!payment) {

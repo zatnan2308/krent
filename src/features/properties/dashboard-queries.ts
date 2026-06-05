@@ -111,19 +111,23 @@ export async function getPropertyForEdit(
       .eq("property_id", propertyId),
   ]);
 
-  // price = sale-строка (период 'sale') либо единственная цена;
-  // rentPrice — rent-строка, выдаём только когда есть обе (mixed).
   const allPrices = price.data ?? [];
   const saleRow =
     allPrices.find((row) => row.price_period === "sale") ?? null;
   const rentRow =
     allPrices.find((row) => row.price_period !== "sale") ?? null;
+  // Для mixed раскладываем СТРОГО по периоду: sale-строка → слот sale,
+  // rent-строка → слот rent (любая может быть null). Иначе (sale-only /
+  // rent-only purpose) единственная цена идёт в основной слот. Без этого
+  // rent-only mixed загружался в sale-слот и при сейве (период форсится в
+  // 'sale') аренда молча превращалась в продажу.
+  const isMixed = property.purpose === "mixed";
 
   return {
     property,
     translation: translation.data,
-    price: saleRow ?? rentRow,
-    rentPrice: saleRow && rentRow ? rentRow : null,
+    price: isMixed ? saleRow : (saleRow ?? rentRow),
+    rentPrice: isMixed ? rentRow : null,
     location: location.data,
     media: media.data ?? [],
     amenityIds: (amenities.data ?? []).map((row) => row.amenity_id),
