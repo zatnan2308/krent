@@ -61,7 +61,15 @@ export async function middleware(request: NextRequest) {
     hasPrefix(pathname, PROTECTED_PREFIXES) || pathname === ROUTES.auth.signIn;
 
   if (!needsAuth) {
-    return localeRedirect(request) ?? NextResponse.next();
+    const redirectResponse = localeRedirect(request);
+    if (redirectResponse) {
+      return redirectResponse;
+    }
+    // Прокидываем текущий путь в RSC через заголовок (без сетевых вызовов) —
+    // нужен [locale]/layout для path-preserving редиректа с выключенных языков.
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-pathname", pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // --- Защищённые маршруты / вход: рефреш сессии + проверка пользователя ---

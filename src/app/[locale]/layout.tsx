@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 
 import {
   PublicLayout,
@@ -17,7 +18,7 @@ import {
 } from "@/features/cms/navigation-queries";
 import { AttributionTracker } from "@/features/crm/attribution-tracker";
 import { DEFAULT_BRANDING } from "@/lib/branding";
-import { isLocale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { buildLocalizedPath } from "@/lib/seo";
 import { getCurrentUserShallow } from "@/server/auth";
@@ -64,16 +65,43 @@ export default async function LocaleLayout({
   children: ReactNode;
   params: { locale: string };
 }) {
-  const locale = params.locale;
-  if (!isLocale(locale)) {
+  const localeParam = params.locale;
+  if (!isLocale(localeParam)) {
     notFound();
   }
 
-  const dictionary = getDictionary(locale);
   const [site, user] = await Promise.all([
     getPublicSiteContext(),
     getCurrentUserShallow(),
   ]);
+
+  // Языки, реально включённые в организации (fallback — весь каталог, если
+  // организация не резолвится: неизвестный домен / локальная разработка).
+  const enabledLocales = (site?.organization.enabled_languages ?? []).filter(
+    isLocale,
+  );
+  const availableLocales: Locale[] =
+    enabledLocales.length > 0 ? enabledLocales : [...LOCALES];
+  const defaultLang: Locale =
+    site && isLocale(site.organization.default_language)
+      ? site.organization.default_language
+      : DEFAULT_LOCALE;
+  // Основной язык ОБЯЗАН быть среди доступных — иначе редирект ниже зациклится
+  // (страховка от рассинхрона default_language ∉ enabled_languages в данных).
+  const primaryLocale: Locale = availableLocales.includes(defaultLang)
+    ? defaultLang
+    : availableLocales[0] ?? DEFAULT_LOCALE;
+
+  // Запрошенный язык выключен в организации → редирект на основной язык,
+  // сохраняя остаток пути (x-pathname проставляет middleware).
+  if (enabledLocales.length > 0 && !availableLocales.includes(localeParam)) {
+    const pathname = headers().get("x-pathname") ?? `/${localeParam}`;
+    const rest = pathname.replace(/^\/[^/]+/, "");
+    redirect(`/${primaryLocale}${rest}`);
+  }
+
+  const locale = localeParam;
+  const dictionary = getDictionary(locale);
   const siteName = site?.organization.name ?? DEFAULT_BRANDING.appName;
   const logoUrl = site?.brand?.logo_url ?? null;
 
@@ -181,6 +209,7 @@ export default async function LocaleLayout({
         footerBrowseNav={browseNav}
         footerAreasNav={areasNav}
         footerLegalNav={legalNav}
+        availableLocales={availableLocales}
         footerLocales={site?.organization.enabled_languages}
         footerCurrencies={site?.organization.enabled_currencies}
         currentUserName={userName}

@@ -14,6 +14,8 @@ import { buildLocalizedPath } from "@/lib/seo";
 
 interface PublicHeaderProps {
   locale: Locale;
+  /** Включённые языки организации — для переключателя языка. */
+  availableLocales: Locale[];
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
@@ -74,6 +76,7 @@ function Monogram({
 
 export function PublicHeader({
   locale,
+  availableLocales,
   dictionary,
   siteName,
   logoUrl,
@@ -299,7 +302,11 @@ export function PublicHeader({
               {supportPhone}
             </a>
           ) : null}
-          <LanguageSwitcher currentLocale={locale} label={dictionary.common.language} />
+          <LanguageSwitcher
+            currentLocale={locale}
+            availableLocales={availableLocales}
+            label={dictionary.common.language}
+          />
           <CurrencySwitcher label={dictionary.common.currency} />
           <span style={{ color: "var(--border-medium)" }}>·</span>
 
@@ -616,6 +623,7 @@ export function PublicHeader({
         >
           <LanguageSwitcher
             currentLocale={locale}
+            availableLocales={availableLocales}
             label={dictionary.common.language}
           />
           <CurrencySwitcher label={dictionary.common.currency} />

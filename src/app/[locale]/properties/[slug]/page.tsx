@@ -42,10 +42,10 @@ import { formatCurrency, formatPrice } from "@/lib/currency/format";
 import { isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import {
   buildCanonicalUrl,
-  buildLocaleAlternates,
   buildLocalizedPath,
   type LocalizedSlugs,
 } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 export const dynamic = "force-dynamic";
@@ -137,7 +137,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: buildLocaleAlternates(locale, path, slugMap),
+    alternates: await buildLocaleAlternates(locale, path, slugMap),
     openGraph: {
       title,
       description,

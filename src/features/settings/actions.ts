@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { LOCALES } from "@/lib/i18n";
 import { logAudit } from "@/server/audit";
 import {
   ORG_CONTEXT_TAG,
@@ -243,15 +244,32 @@ export async function updateSiteContact(
 
 // ---- Localization ------------------------------------------------
 
-const localizationSchema = z.object({
-  organizationName: z.string().trim().min(1).max(120),
-  defaultLanguage: z.string().trim().min(2).max(10),
-  defaultCurrency: z.string().trim().min(3).max(10),
-  enabledLanguages: z.array(z.string().trim().min(2).max(10)).min(1),
-  enabledCurrencies: z.array(z.string().trim().min(3).max(10)).min(1),
-  timezone: z.string().trim().min(3).max(60),
-  measurementSystem: z.enum(["metric", "imperial"]),
-});
+const localizationSchema = z
+  .object({
+    organizationName: z.string().trim().min(1).max(120),
+    defaultLanguage: z.string().trim().min(2).max(10),
+    defaultCurrency: z.string().trim().min(3).max(10),
+    // Основной + до 5 дополнительных = максимум 6 языков на сайт.
+    enabledLanguages: z.array(z.string().trim().min(2).max(10)).min(1).max(6),
+    enabledCurrencies: z.array(z.string().trim().min(3).max(10)).min(1).max(10),
+    timezone: z.string().trim().min(3).max(60),
+    measurementSystem: z.enum(["metric", "imperial"]),
+  })
+  .refine(
+    (d) =>
+      d.enabledLanguages.every((l) =>
+        (LOCALES as readonly string[]).includes(l),
+      ),
+    { message: "Unknown language code.", path: ["enabledLanguages"] },
+  )
+  .refine((d) => d.enabledLanguages.includes(d.defaultLanguage), {
+    message: "Primary language must be among the enabled languages.",
+    path: ["defaultLanguage"],
+  })
+  .refine((d) => d.enabledCurrencies.includes(d.defaultCurrency), {
+    message: "Default currency must be among the enabled currencies.",
+    path: ["defaultCurrency"],
+  });
 export type LocalizationInput = z.infer<typeof localizationSchema>;
 
 export async function updateLocalization(
@@ -259,7 +277,10 @@ export async function updateLocalization(
 ): Promise<ActionResult> {
   const parsed = localizationSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: "Please check the localization form." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Please check the localization form.",
+    };
   }
   const context = await requireOrganizationContext();
   if (!context.organization) return { ok: false, error: "No organization." };

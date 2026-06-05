@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import type { Locale } from "@/lib/i18n";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import type { PublicSiteContext } from "@/server/public-site";
 
 import type { ResolvedPage } from "./queries";
@@ -10,12 +10,12 @@ import type { ResolvedPage } from "./queries";
  * Строит метаданные страницы из перевода и SEO-настроек организации.
  * Приоритет: поля перевода -> дефолты seo_settings -> без значения.
  */
-export function buildPageMetadata(
+export async function buildPageMetadata(
   resolved: ResolvedPage,
   site: PublicSiteContext,
   locale: Locale,
   path: string,
-): Metadata {
+): Promise<Metadata> {
   const baseTitle =
     resolved.translation.seo_title ?? resolved.translation.title;
   const suffix = site.seo?.title_suffix ?? "";
@@ -34,7 +34,7 @@ export function buildPageMetadata(
   return {
     title,
     description,
-    alternates: buildLocaleAlternates(locale, path),
+    alternates: await buildLocaleAlternates(locale, path),
     openGraph: {
       title,
       description,

@@ -5,7 +5,7 @@ import { LeadForm } from "@/features/crm/lead-form";
 import { getPageIntro } from "@/features/page-intros/queries";
 import { ROUTES } from "@/lib/constants/routes";
 import { isLocale, type Locale } from "@/lib/i18n";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ export async function generateMetadata({
       ? `Sell your property — ${site.organization.name}`
       : "Sell your property",
     description: "Request a free, no-obligation valuation of your property.",
-    alternates: buildLocaleAlternates(locale, ROUTES.public.sell),
+    alternates: await buildLocaleAlternates(locale, ROUTES.public.sell),
   };
 }
 

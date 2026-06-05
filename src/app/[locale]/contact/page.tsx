@@ -4,7 +4,7 @@ import { EditorialContactForm } from "@/features/contact/editorial-contact-form"
 import { getHomeContent } from "@/features/home/queries";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +53,7 @@ export async function generateMetadata({
     title: baseTitle,
     description:
       "Direct line, WhatsApp, email. Replies within an hour from a person — not an assistant.",
-    alternates: buildLocaleAlternates(locale, "/contact"),
+    alternates: await buildLocaleAlternates(locale, "/contact"),
   };
 }
 

@@ -20,7 +20,8 @@ import type {
 import { shouldNoindexSearch } from "@/features/seo/noindex";
 import { ROUTES } from "@/lib/constants/routes";
 import { isLocale, type Locale } from "@/lib/i18n";
-import { buildLocaleAlternates, buildLocalizedPath } from "@/lib/seo";
+import { buildLocalizedPath } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 /** Вариант каталога — задаёт начальную сделку, заголовок метаданных и путь. */
@@ -123,7 +124,7 @@ export async function buildCatalogMetadata(
   return {
     title,
     description: config.description,
-    alternates: buildLocaleAlternates(locale, config.path),
+    alternates: await buildLocaleAlternates(locale, config.path),
     robots: shouldNoindexSearch(searchParams)
       ? { index: false, follow: true }
       : undefined,

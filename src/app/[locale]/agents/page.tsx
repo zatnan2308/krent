@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { listPublicAgents } from "@/features/agents/queries";
 import { getPageIntro } from "@/features/page-intros/queries";
 import { isLocale, type Locale } from "@/lib/i18n";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export async function generateMetadata({
     description: site
       ? `Meet the property experts at ${site.organization.name}.`
       : undefined,
-    alternates: buildLocaleAlternates(locale, "/agents"),
+    alternates: await buildLocaleAlternates(locale, "/agents"),
   };
 }
 

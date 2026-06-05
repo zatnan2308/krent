@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * SEO-хелперы для мультиязычных URL.
@@ -41,38 +41,10 @@ export function buildCanonicalUrl(locale: Locale, path = "/"): string {
 }
 
 /**
- * Карта hreflang для metadata.alternates.languages — все локали и x-default.
- * `slugs` позволяет подставить переведённый слаг для конкретной локали.
+ * hreflang-карта вынесена в server-only модуль `@/lib/seo/alternates`
+ * (`buildLocaleAlternates`, async): она читает enabled_languages организации
+ * из request-кэшированного контекста, поэтому зависит от `next/headers` и
+ * admin-клиента. Держим её ОТДЕЛЬНО от этого модуля — он импортируется
+ * клиентскими компонентами (public-header/footer) ради `buildLocalizedPath`,
+ * и серверные импорты сюда тянуть нельзя.
  */
-export function buildAlternateLanguages(
-  path = "/",
-  slugs?: LocalizedSlugs,
-): Record<string, string> {
-  const alternates: Record<string, string> = {};
-
-  for (const locale of LOCALES) {
-    const localizedPath = slugs?.[locale] ?? path;
-    alternates[locale] = buildCanonicalUrl(locale, localizedPath);
-  }
-
-  const defaultPath = slugs?.[DEFAULT_LOCALE] ?? path;
-  alternates["x-default"] = buildCanonicalUrl(DEFAULT_LOCALE, defaultPath);
-
-  return alternates;
-}
-
-/**
- * Готовый блок metadata.alternates для страницы:
- * canonical + языковые версии.
- */
-export function buildLocaleAlternates(
-  locale: Locale,
-  path = "/",
-  slugs?: LocalizedSlugs,
-): { canonical: string; languages: Record<string, string> } {
-  const canonicalPath = slugs?.[locale] ?? path;
-  return {
-    canonical: buildCanonicalUrl(locale, canonicalPath),
-    languages: buildAlternateLanguages(path, slugs),
-  };
-}

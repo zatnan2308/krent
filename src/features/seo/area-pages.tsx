@@ -13,7 +13,8 @@ import type {
 } from "@/features/properties/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { isLocale, type Locale } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalUrl } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 import { JsonLd } from "./json-ld";
@@ -140,7 +141,7 @@ export async function buildAreaMetadata(
   return {
     title,
     description,
-    alternates: buildLocaleAlternates(locale, path),
+    alternates: await buildLocaleAlternates(locale, path),
     openGraph: { title, description },
   };
 }

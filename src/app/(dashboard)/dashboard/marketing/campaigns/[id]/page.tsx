@@ -75,6 +75,7 @@ export default async function CampaignPage({
         segments={data.segments}
         properties={data.properties}
         companyName={context.organization.name}
+        availableLocales={context.organization.enabled_languages}
       />
 
       <Card>

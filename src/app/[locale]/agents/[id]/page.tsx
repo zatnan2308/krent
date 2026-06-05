@@ -12,7 +12,8 @@ import {
 } from "@/features/seo/jsonld";
 import { Card, CardContent } from "@/components/ui/card";
 import { isLocale, type Locale } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalUrl } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export async function generateMetadata({
   return {
     title,
     description: `Property listings by ${agent.name} at ${site.organization.name}.`,
-    alternates: buildLocaleAlternates(locale, `/agents/${agent.id}`),
+    alternates: await buildLocaleAlternates(locale, `/agents/${agent.id}`),
     openGraph: { title },
   };
 }

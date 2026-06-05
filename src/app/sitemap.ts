@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { slugifyLocation } from "@/features/seo/area-pages";
 import { getSitemapData } from "@/features/seo/queries";
-import { DEFAULT_LOCALE, LOCALES } from "@/lib/i18n";
+import { DEFAULT_LOCALE, isLocale, LOCALES } from "@/lib/i18n";
 import { getSiteUrl } from "@/lib/seo";
 import { resolvePublicOrganization } from "@/server/public-site";
 
@@ -24,17 +24,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const entries: MetadataRoute.Sitemap = [];
 
+  // hreflang только по включённым языкам организации (fallback — весь каталог);
+  // основной URL записи указывает на основной язык организации.
+  const organization = await resolvePublicOrganization();
+  const enabledLocales = (organization?.enabled_languages ?? []).filter(
+    isLocale,
+  );
+  const localesList: readonly string[] =
+    enabledLocales.length > 0 ? enabledLocales : LOCALES;
+  const primaryLocale =
+    organization && isLocale(organization.default_language)
+      ? organization.default_language
+      : DEFAULT_LOCALE;
+
   const addPage = (
     path: string,
     priority: number,
     lastModified?: string,
   ): void => {
     const languages: Record<string, string> = {};
-    for (const locale of LOCALES) {
+    for (const locale of localesList) {
       languages[locale] = `${siteUrl}/${locale}${path}`;
     }
     entries.push({
-      url: `${siteUrl}/${DEFAULT_LOCALE}${path}`,
+      url: `${siteUrl}/${primaryLocale}${path}`,
       lastModified: lastModified ? new Date(lastModified) : new Date(),
       changeFrequency: "weekly",
       priority,
@@ -54,7 +67,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     addPage(path, 0.7);
   }
 
-  const organization = await resolvePublicOrganization();
   if (organization) {
     const data = await getSitemapData(organization.id);
 

@@ -44,6 +44,8 @@ interface CampaignEditorProps {
   segments: { id: string; name: string }[];
   properties: PropertyEmailData[];
   companyName: string;
+  /** Включённые языки организации — для выбора языка рассылки. */
+  availableLocales: string[];
 }
 
 /** Строковое поле контента блока. */
@@ -67,8 +69,12 @@ export function CampaignEditor({
   segments,
   properties,
   companyName,
+  availableLocales,
 }: CampaignEditorProps) {
   const router = useRouter();
+  // Языки рассылки — только включённые в организации (fallback — каталог).
+  const localeOptions =
+    availableLocales.length > 0 ? availableLocales : LOCALES;
   const keyCounter = React.useRef(0);
   const nextKey = React.useCallback(() => {
     keyCounter.current += 1;
@@ -311,7 +317,7 @@ export function CampaignEditor({
                   value={language}
                   onChange={(event) => setLanguage(event.target.value)}
                 >
-                  {LOCALES.map((locale) => (
+                  {localeOptions.map((locale) => (
                     <option key={locale} value={locale}>
                       {locale}
                     </option>

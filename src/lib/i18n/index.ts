@@ -1,5 +1,7 @@
-/** Поддерживаемые локали мультиязычной платформы. Список расширяемый. */
-export const LOCALES = ["en", "fr", "es", "uk", "ru"] as const;
+/** Поддерживаемые локали мультиязычной платформы (каталог). Список расширяемый.
+ * Это набор языков, ИЗ которого организация выбирает включённые (enabled_languages).
+ * Не путать: какие языки реально показывает сайт — задаёт организация. */
+export const LOCALES = ["en", "fr", "es", "uk", "ru", "de"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
@@ -15,6 +17,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   es: "Español",
   uk: "Українська",
   ru: "Русский",
+  de: "Deutsch",
 };
 
 /** Система мер. Совпадает с enum measurement_system в БД. */

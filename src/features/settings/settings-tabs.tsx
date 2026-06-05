@@ -27,6 +27,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CURRENCIES, CURRENCY_CONFIG } from "@/lib/currency/config";
+import { LOCALE_LABELS, LOCALES } from "@/lib/i18n";
 
 type Tab =
   | "profile"
@@ -634,6 +636,48 @@ function LocalizationSection({ initial }: { initial: LocalizationInput }) {
   const { msg, setMsg } = useToast();
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<LocalizationInput>({ ...initial });
+
+  // --- Языки: чекбокс = включён, радио = основной (всегда включён + fallback) ---
+  function toggleLanguage(code: string, on: boolean) {
+    setForm((f) => {
+      let enabled = on
+        ? Array.from(new Set([...f.enabledLanguages, code]))
+        : f.enabledLanguages.filter((c) => c !== code);
+      if (enabled.length === 0) enabled = [f.defaultLanguage];
+      const def = enabled.includes(f.defaultLanguage)
+        ? f.defaultLanguage
+        : enabled[0]!;
+      return { ...f, enabledLanguages: enabled, defaultLanguage: def };
+    });
+  }
+  function setPrimaryLanguage(code: string) {
+    setForm((f) => ({
+      ...f,
+      defaultLanguage: code,
+      enabledLanguages: Array.from(new Set([...f.enabledLanguages, code])),
+    }));
+  }
+  // --- Валюты: аналогично (чекбокс = включена, радио = валюта по умолчанию) ---
+  function toggleCurrency(code: string, on: boolean) {
+    setForm((f) => {
+      let enabled = on
+        ? Array.from(new Set([...f.enabledCurrencies, code]))
+        : f.enabledCurrencies.filter((c) => c !== code);
+      if (enabled.length === 0) enabled = [f.defaultCurrency];
+      const def = enabled.includes(f.defaultCurrency)
+        ? f.defaultCurrency
+        : enabled[0]!;
+      return { ...f, enabledCurrencies: enabled, defaultCurrency: def };
+    });
+  }
+  function setPrimaryCurrency(code: string) {
+    setForm((f) => ({
+      ...f,
+      defaultCurrency: code,
+      enabledCurrencies: Array.from(new Set([...f.enabledCurrencies, code])),
+    }));
+  }
+
   return (
     <form
       className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
@@ -654,51 +698,87 @@ function LocalizationSection({ initial }: { initial: LocalizationInput }) {
           }
         />
       </Field>
+      <Field label="Languages">
+        <p className="mb-2 text-xs text-muted-foreground">
+          Tick the languages the site offers (up to 6). The radio marks the
+          primary language — it stays on and is the fallback when a translation
+          is missing.
+        </p>
+        <div className="space-y-1.5">
+          {LOCALES.map((code) => {
+            const on = form.enabledLanguages.includes(code);
+            const isPrimary = form.defaultLanguage === code;
+            const atMax = form.enabledLanguages.length >= 6;
+            return (
+              <div
+                key={code}
+                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+              >
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    disabled={isPrimary || (!on && atMax)}
+                    onChange={(e) => toggleLanguage(code, e.target.checked)}
+                  />
+                  <span>{LOCALE_LABELS[code]}</span>
+                  <code className="text-xs text-muted-foreground">{code}</code>
+                </label>
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <input
+                    type="radio"
+                    name="primary-language"
+                    checked={isPrimary}
+                    onChange={() => setPrimaryLanguage(code)}
+                  />
+                  Primary
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </Field>
+      <Field label="Currencies">
+        <p className="mb-2 text-xs text-muted-foreground">
+          Tick the currencies shown on the site. The radio marks the default
+          currency.
+        </p>
+        <div className="space-y-1.5">
+          {CURRENCIES.map((code) => {
+            const on = form.enabledCurrencies.includes(code);
+            const isPrimary = form.defaultCurrency === code;
+            return (
+              <div
+                key={code}
+                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+              >
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    disabled={isPrimary}
+                    onChange={(e) => toggleCurrency(code, e.target.checked)}
+                  />
+                  <span>
+                    {CURRENCY_CONFIG[code].symbol} {CURRENCY_CONFIG[code].name}
+                  </span>
+                  <code className="text-xs text-muted-foreground">{code}</code>
+                </label>
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <input
+                    type="radio"
+                    name="primary-currency"
+                    checked={isPrimary}
+                    onChange={() => setPrimaryCurrency(code)}
+                  />
+                  Default
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </Field>
       <div className="grid gap-2 sm:grid-cols-2">
-        <Field label="Default language">
-          <Input
-            value={form.defaultLanguage}
-            onChange={(e) =>
-              setForm({ ...form, defaultLanguage: e.target.value })
-            }
-          />
-        </Field>
-        <Field label="Default currency">
-          <Input
-            value={form.defaultCurrency}
-            onChange={(e) =>
-              setForm({ ...form, defaultCurrency: e.target.value })
-            }
-          />
-        </Field>
-        <Field label="Enabled languages (CSV)">
-          <Input
-            value={form.enabledLanguages.join(",")}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                enabledLanguages: e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              })
-            }
-          />
-        </Field>
-        <Field label="Enabled currencies (CSV)">
-          <Input
-            value={form.enabledCurrencies.join(",")}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                enabledCurrencies: e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              })
-            }
-          />
-        </Field>
         <Field label="Timezone">
           <Input
             value={form.timezone}

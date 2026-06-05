@@ -42,6 +42,8 @@ export interface NavLinkNode {
 
 interface PublicLayoutProps {
   locale: Locale;
+  /** Включённые языки организации — для переключателя языка в хедере. */
+  availableLocales: Locale[];
   dictionary: Dictionary;
   siteName: string;
   logoUrl: string | null;
@@ -65,6 +67,7 @@ interface PublicLayoutProps {
 
 export function PublicLayout({
   locale,
+  availableLocales,
   dictionary,
   siteName,
   logoUrl,
@@ -86,6 +89,7 @@ export function PublicLayout({
       <div className="grain" />
       <PublicHeader
         locale={locale}
+        availableLocales={availableLocales}
         dictionary={dictionary}
         siteName={siteName}
         logoUrl={logoUrl}

@@ -5,7 +5,8 @@ import { getAboutContent } from "@/features/about/queries";
 import { getHomeContent } from "@/features/home/queries";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { buildLocaleAlternates, buildLocalizedPath } from "@/lib/seo";
+import { buildLocalizedPath } from "@/lib/seo";
+import { buildLocaleAlternates } from "@/lib/seo/alternates";
 import { getPublicSiteContext } from "@/server/public-site";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export async function generateMetadata({
     title: baseTitle,
     description:
       "One person, twelve clients, one city. A RERA-licensed Dubai realtor who walks every building before listing it.",
-    alternates: buildLocaleAlternates(locale, "/about"),
+    alternates: await buildLocaleAlternates(locale, "/about"),
   };
 }
 

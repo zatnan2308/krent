@@ -16,15 +16,19 @@ import { LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n";
 
 interface LanguageSwitcherProps {
   currentLocale: Locale;
+  /** Языки для показа (включённые в организации). По умолчанию — весь каталог. */
+  availableLocales?: Locale[];
   label: string;
 }
 
 export function LanguageSwitcher({
   currentLocale,
+  availableLocales,
   label,
 }: LanguageSwitcherProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const locales = availableLocales ?? LOCALES;
 
   async function handleSelect(locale: Locale) {
     if (locale === currentLocale) {
@@ -56,7 +60,7 @@ export function LanguageSwitcher({
       >
         <DropdownLabel>{label}</DropdownLabel>
         <DropdownSeparator />
-        {LOCALES.map((locale) => (
+        {locales.map((locale) => (
           <DropdownItem
             key={locale}
             onSelect={() => handleSelect(locale)}
