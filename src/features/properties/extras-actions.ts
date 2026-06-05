@@ -222,6 +222,42 @@ export async function reorderPropertyVideo(
   return { ok: true };
 }
 
+const updateVideoSchema = z.object({
+  id: z.guid(),
+  title: z.string().trim().max(200).nullable(),
+  type: z.enum([
+    "tour",
+    "realtor_review",
+    "virtual_tour",
+  ] as const satisfies readonly Enums<"video_type">[]),
+});
+export type UpdateVideoInput = z.infer<typeof updateVideoSchema>;
+
+/** Редактирует название и тип видео. */
+export async function updatePropertyVideo(
+  input: UpdateVideoInput,
+): Promise<ActionResult> {
+  const parsed = updateVideoSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid video." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: video } = await supabase
+    .from("property_videos")
+    .select("id, property_id")
+    .eq("organization_id", context.organization.id)
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+  if (!video) return { ok: false, error: "Video not found." };
+  const { error } = await supabase
+    .from("property_videos")
+    .update({ title: parsed.data.title, type: parsed.data.type })
+    .eq("id", parsed.data.id);
+  if (error) return { ok: false, error: "Could not update video." };
+  revalidatePath(editPath(video.property_id));
+  return { ok: true };
+}
+
 // ---- Documents --------------------------------------------------
 
 const documentSchema = z.object({
@@ -331,6 +367,41 @@ export async function reorderPropertyDocument(
     .update({ sort_order: current.sort_order })
     .eq("id", swap.id);
   revalidatePath(editPath(current.property_id));
+  return { ok: true };
+}
+
+const updateDocumentSchema = z.object({
+  id: z.guid(),
+  name: z.string().trim().min(1).max(200),
+  type: z.enum([
+    "brochure",
+    "other",
+  ] as const satisfies readonly Enums<"document_type">[]),
+});
+export type UpdateDocumentInput = z.infer<typeof updateDocumentSchema>;
+
+/** Редактирует название и тип документа. */
+export async function updatePropertyDocument(
+  input: UpdateDocumentInput,
+): Promise<ActionResult> {
+  const parsed = updateDocumentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid document." };
+  const context = await requireOrganizationContext();
+  if (!context.organization) return { ok: false, error: "No organization." };
+  const supabase = createClient();
+  const { data: doc } = await supabase
+    .from("property_documents")
+    .select("id, property_id")
+    .eq("organization_id", context.organization.id)
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+  if (!doc) return { ok: false, error: "Document not found." };
+  const { error } = await supabase
+    .from("property_documents")
+    .update({ name: parsed.data.name, type: parsed.data.type })
+    .eq("id", parsed.data.id);
+  if (error) return { ok: false, error: "Could not update document." };
+  revalidatePath(editPath(doc.property_id));
   return { ok: true };
 }
 

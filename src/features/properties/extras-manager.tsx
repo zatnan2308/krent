@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Pencil, Trash2, X } from "lucide-react";
 
 import {
   addNearbyPlace,
@@ -13,6 +13,8 @@ import {
   deletePropertyVideo,
   reorderPropertyDocument,
   reorderPropertyVideo,
+  updatePropertyDocument,
+  updatePropertyVideo,
   uploadPropertyDocument,
 } from "@/features/properties/extras-actions";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,11 @@ export function VideosManager({
   );
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [editId, setEditId] = React.useState<string | null>(null);
+  const [editTitle, setEditTitle] = React.useState("");
+  const [editType, setEditType] = React.useState<
+    "tour" | "realtor_review" | "virtual_tour"
+  >("tour");
 
   async function handleAdd() {
     if (!url.trim()) return;
@@ -78,6 +85,34 @@ export function VideosManager({
     router.refresh();
   }
 
+  function startEdit(v: VideoRow) {
+    setEditId(v.id);
+    setEditTitle(v.title ?? "");
+    setEditType(
+      v.type === "realtor_review" || v.type === "virtual_tour"
+        ? v.type
+        : "tour",
+    );
+    setError(null);
+  }
+
+  async function handleSaveEdit(id: string) {
+    setPending(true);
+    setError(null);
+    const result = await updatePropertyVideo({
+      id,
+      title: editTitle.trim() || null,
+      type: editType,
+    });
+    setPending(false);
+    if (result.ok) {
+      setEditId(null);
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
   return (
     <div className="space-y-3 rounded-md border p-3">
       <p className="text-sm font-semibold">Videos</p>
@@ -86,39 +121,89 @@ export function VideosManager({
       ) : (
         <ul className="space-y-1 text-sm">
           {videos.map((v, i) => (
-            <li key={v.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
-              <a href={v.url} target="_blank" rel="noreferrer" className="truncate underline">
-                {v.title ?? v.url}
-              </a>
-              <div className="flex items-center gap-0.5">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={i === 0}
-                  onClick={() => handleMove(v.id, "up")}
-                  aria-label="Move video up"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={i === videos.length - 1}
-                  onClick={() => handleMove(v.id, "down")}
-                  aria-label="Move video down"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive"
-                  onClick={() => handleDelete(v.id)}
-                  aria-label="Delete video"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+            <li key={v.id} className="rounded-md border p-2">
+              {editId === v.id ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Title (optional)"
+                  />
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="h-9 flex-1 rounded-md border bg-background px-2 text-sm"
+                      value={editType}
+                      onChange={(e) =>
+                        setEditType(e.target.value as typeof editType)
+                      }
+                    >
+                      <option value="tour">Tour</option>
+                      <option value="virtual_tour">Virtual tour</option>
+                      <option value="realtor_review">Realtor review</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={pending}
+                      onClick={() => handleSaveEdit(v.id)}
+                      aria-label="Save video"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditId(null)}
+                      aria-label="Cancel edit"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <a href={v.url} target="_blank" rel="noreferrer" className="truncate underline">
+                    {v.title ?? v.url}
+                  </a>
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === 0}
+                      onClick={() => handleMove(v.id, "up")}
+                      aria-label="Move video up"
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === videos.length - 1}
+                      onClick={() => handleMove(v.id, "down")}
+                      aria-label="Move video down"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => startEdit(v)}
+                      aria-label="Edit video"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => handleDelete(v.id)}
+                      aria-label="Delete video"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -159,6 +244,11 @@ export function DocumentsManager({
   const [uploading, setUploading] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [editId, setEditId] = React.useState<string | null>(null);
+  const [editName, setEditName] = React.useState("");
+  const [editType, setEditType] = React.useState<"brochure" | "other">(
+    "brochure",
+  );
 
   async function handleAdd() {
     if (!name.trim() || !url.trim()) return;
@@ -210,6 +300,31 @@ export function DocumentsManager({
     router.refresh();
   }
 
+  function startEdit(d: DocumentRow) {
+    setEditId(d.id);
+    setEditName(d.name);
+    setEditType(d.type === "other" ? "other" : "brochure");
+    setError(null);
+  }
+
+  async function handleSaveEdit(id: string) {
+    if (!editName.trim()) return;
+    setPending(true);
+    setError(null);
+    const result = await updatePropertyDocument({
+      id,
+      name: editName.trim(),
+      type: editType,
+    });
+    setPending(false);
+    if (result.ok) {
+      setEditId(null);
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
   return (
     <div className="space-y-3 rounded-md border p-3">
       <p className="text-sm font-semibold">Documents</p>
@@ -218,39 +333,88 @@ export function DocumentsManager({
       ) : (
         <ul className="space-y-1 text-sm">
           {documents.map((d, i) => (
-            <li key={d.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
-              <a href={d.url} target="_blank" rel="noreferrer" className="truncate underline">
-                {d.name}
-              </a>
-              <div className="flex items-center gap-0.5">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={i === 0}
-                  onClick={() => handleMove(d.id, "up")}
-                  aria-label="Move document up"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={i === documents.length - 1}
-                  onClick={() => handleMove(d.id, "down")}
-                  aria-label="Move document down"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive"
-                  onClick={() => handleDelete(d.id)}
-                  aria-label="Delete document"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+            <li key={d.id} className="rounded-md border p-2">
+              {editId === d.id ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Document name"
+                  />
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="h-9 flex-1 rounded-md border bg-background px-2 text-sm"
+                      value={editType}
+                      onChange={(e) =>
+                        setEditType(e.target.value as typeof editType)
+                      }
+                    >
+                      <option value="brochure">Brochure</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={pending}
+                      onClick={() => handleSaveEdit(d.id)}
+                      aria-label="Save document"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditId(null)}
+                      aria-label="Cancel edit"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <a href={d.url} target="_blank" rel="noreferrer" className="truncate underline">
+                    {d.name}
+                  </a>
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === 0}
+                      onClick={() => handleMove(d.id, "up")}
+                      aria-label="Move document up"
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === documents.length - 1}
+                      onClick={() => handleMove(d.id, "down")}
+                      aria-label="Move document down"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => startEdit(d)}
+                      aria-label="Edit document"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => handleDelete(d.id)}
+                      aria-label="Delete document"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
