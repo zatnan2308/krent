@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import {
   markChannelConversationRead,
+  sendChannelMedia,
   sendChannelMessage,
   sendChannelProperty,
 } from "@/features/messaging/actions";
@@ -38,6 +39,8 @@ export function MessagingThread({
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [propertyId, setPropertyId] = React.useState("");
+  const [file, setFile] = React.useState<File | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -116,6 +119,32 @@ export function MessagingThread({
     setPending(false);
     if (result.ok) {
       setPropertyId("");
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleSendFile() {
+    if (!file) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const formData = new FormData();
+    formData.set("conversationId", view.id);
+    formData.set("file", file);
+    if (text.trim()) {
+      formData.set("caption", text.trim());
+    }
+    const result = await sendChannelMedia(formData);
+    setPending(false);
+    if (result.ok) {
+      setFile(null);
+      setText("");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       router.refresh();
     } else {
       setError(result.error);
@@ -250,6 +279,45 @@ export function MessagingThread({
             >
               Send listing
             </Button>
+          </div>
+        ) : null}
+        {!composerDisabled ? (
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+              className="hidden"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 justify-start truncate"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {file ? `📎 ${file.name}` : "Attach a file…"}
+            </Button>
+            {file ? (
+              <>
+                <Button size="sm" disabled={pending} onClick={handleSendFile}>
+                  Send file
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => {
+                    setFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                >
+                  Clear
+                </Button>
+              </>
+            ) : null}
           </div>
         ) : null}
         {error ? (

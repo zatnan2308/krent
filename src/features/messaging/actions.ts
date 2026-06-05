@@ -25,11 +25,29 @@ import {
   getWhatsAppConfig,
 } from "./config";
 import { CHANNEL_HAS_SESSION_WINDOW } from "./channels";
-import { recordOutboundMessage } from "./store";
+import {
+  createMessagingMediaSignedUrl,
+  insertMessagingAttachment,
+  recordOutboundMessage,
+  uploadMessagingMedia,
+} from "./store";
 import type { ActionResult } from "./schema";
 import type { MessagingChannel } from "./types";
 
 const SESSION_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MAX_MEDIA_SIZE = 20 * 1024 * 1024;
+const ALLOWED_MEDIA_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+]);
 
 const INTEGRATIONS_PATH = "/dashboard/integrations";
 
@@ -402,6 +420,143 @@ export async function sendChannelProperty(input: {
     externalMessageId: result.externalMessageId ?? null,
     status: "sent",
   });
+  revalidatePath(MESSAGES_PATH);
+  return { ok: true };
+}
+
+/**
+ * Отправляет файл/изображение из composer: загружает в приватный бакет,
+ * подписывает URL (канал скачает), шлёт через adapter.sendMedia, пишет
+ * исходящее + вложение. Уважает то же 24ч-окно. Запись — service-role.
+ */
+export async function sendChannelMedia(
+  formData: FormData,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to send messages." };
+  }
+
+  const conversationId = formData.get("conversationId");
+  const file = formData.get("file");
+  const captionValue = formData.get("caption");
+  const caption =
+    typeof captionValue === "string" ? captionValue.trim() : "";
+  if (typeof conversationId !== "string" || !(file instanceof File)) {
+    return { ok: false, error: "Invalid upload." };
+  }
+  if (file.size === 0 || file.size > MAX_MEDIA_SIZE) {
+    return { ok: false, error: "File must be between 1 byte and 20MB." };
+  }
+  if (!ALLOWED_MEDIA_MIME.has(file.type)) {
+    return { ok: false, error: "This file type is not allowed." };
+  }
+
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  const { data: conversation } = await admin
+    .from("messaging_conversations")
+    .select("id, channel, channel_identity_id, contact_id, last_inbound_at")
+    .eq("organization_id", organizationId)
+    .eq("id", conversationId)
+    .maybeSingle();
+  if (!conversation || !conversation.channel_identity_id) {
+    return { ok: false, error: "Conversation not found." };
+  }
+  if (CHANNEL_HAS_SESSION_WINDOW[conversation.channel]) {
+    const open =
+      conversation.last_inbound_at &&
+      Date.now() - new Date(conversation.last_inbound_at).getTime() <
+        SESSION_WINDOW_MS;
+    if (!open) {
+      return {
+        ok: false,
+        error: "The 24-hour window is closed — a template/tag is required.",
+      };
+    }
+  }
+
+  const { data: identity } = await admin
+    .from("contact_channel_identities")
+    .select("external_id")
+    .eq("id", conversation.channel_identity_id)
+    .maybeSingle();
+  if (!identity?.external_id) {
+    return { ok: false, error: "Recipient identity not found." };
+  }
+  const { data: connection } = await admin
+    .from("messaging_connections")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("channel", conversation.channel)
+    .maybeSingle();
+  if (!connection || connection.status !== "connected") {
+    return { ok: false, error: "This channel is not connected." };
+  }
+
+  const data = await file.arrayBuffer();
+  const storagePath = await uploadMessagingMedia(admin, {
+    organizationId,
+    conversationId: conversation.id,
+    fileName: file.name,
+    mimeType: file.type,
+    data,
+  });
+  if (!storagePath) {
+    return { ok: false, error: "Could not upload the file." };
+  }
+  const signedUrl = await createMessagingMediaSignedUrl(admin, storagePath);
+  if (!signedUrl) {
+    return { ok: false, error: "Could not prepare the file for sending." };
+  }
+
+  const kind = file.type.startsWith("image/") ? "image" : "document";
+  const adapter = getMessageAdapter(conversation.channel);
+  const result = await adapter.sendMedia(connection, {
+    to: identity.external_id,
+    mediaUrl: signedUrl,
+    kind,
+    caption: caption || undefined,
+    fileName: file.name,
+  });
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the file." };
+  }
+
+  const messageId = await recordOutboundMessage(admin, {
+    organizationId,
+    channel: conversation.channel,
+    conversationId: conversation.id,
+    senderUserId: context.user.id,
+    body: caption,
+    externalMessageId: result.externalMessageId ?? null,
+    status: "sent",
+  });
+  if (messageId) {
+    await insertMessagingAttachment(admin, {
+      organizationId,
+      conversationId: conversation.id,
+      messageId,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      storagePath,
+    });
+  }
+  if (conversation.contact_id) {
+    await logAudit({
+      organizationId,
+      userId: context.user.id,
+      action: "messaging.sent",
+      entityType: "contact",
+      entityId: conversation.contact_id,
+      metadata: { channel: conversation.channel, attachment: true },
+    });
+  }
   revalidatePath(MESSAGES_PATH);
   return { ok: true };
 }

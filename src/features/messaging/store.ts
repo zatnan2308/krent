@@ -286,8 +286,74 @@ export async function recordInboundMessage(
 }
 
 /**
- * Сохраняет входящее медиа в приватный бакет messaging-media и создаёт строку
- * вложения. Файл скачивает вызывающий код канала (у него есть токен/URL).
+ * Загружает медиа в приватный бакет messaging-media. Возвращает storage path
+ * (или null при ошибке). Используется и входящими, и исходящими.
+ */
+export async function uploadMessagingMedia(
+  admin: Admin,
+  params: {
+    organizationId: string;
+    conversationId: string;
+    fileName: string;
+    mimeType: string;
+    data: ArrayBuffer;
+  },
+): Promise<string | null> {
+  const safeExt =
+    params.fileName.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+    "bin";
+  const storagePath = `${params.organizationId}/${params.conversationId}/${crypto.randomUUID()}.${safeExt}`;
+  const { error } = await admin.storage
+    .from(MESSAGING_BUCKET)
+    .upload(storagePath, params.data, {
+      contentType: params.mimeType,
+      upsert: false,
+    });
+  return error ? null : storagePath;
+}
+
+/** Подписанный URL уже загруженного медиа — канал скачает по нему. */
+export async function createMessagingMediaSignedUrl(
+  admin: Admin,
+  storagePath: string,
+  ttlSeconds = 60 * 60,
+): Promise<string | null> {
+  const { data } = await admin.storage
+    .from(MESSAGING_BUCKET)
+    .createSignedUrl(storagePath, ttlSeconds);
+  return data?.signedUrl ?? null;
+}
+
+/** Создаёт строку вложения для уже загруженного файла. */
+export async function insertMessagingAttachment(
+  admin: Admin,
+  params: {
+    organizationId: string;
+    conversationId: string;
+    messageId: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    storagePath: string;
+    externalMediaId?: string | null;
+  },
+): Promise<void> {
+  await admin.from("messaging_attachments").insert({
+    organization_id: params.organizationId,
+    message_id: params.messageId,
+    conversation_id: params.conversationId,
+    file_name: params.fileName,
+    file_size: params.fileSize,
+    file_type: attachmentTypeFromMime(params.mimeType),
+    file_url: params.storagePath,
+    mime_type: params.mimeType,
+    external_media_id: params.externalMediaId ?? null,
+  });
+}
+
+/**
+ * Сохраняет входящее медиа в приватный бакет и создаёт строку вложения.
+ * Файл скачивает вызывающий код канала (у него есть токен/URL).
  */
 export async function attachInboundMedia(
   admin: Admin,
@@ -301,29 +367,25 @@ export async function attachInboundMedia(
     externalMediaId?: string | null;
   },
 ): Promise<void> {
-  const safeExt =
-    params.fileName.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
-    "bin";
-  const storagePath = `${params.organizationId}/${params.conversationId}/${crypto.randomUUID()}.${safeExt}`;
-  const { error: uploadError } = await admin.storage
-    .from(MESSAGING_BUCKET)
-    .upload(storagePath, params.data, {
-      contentType: params.mimeType,
-      upsert: false,
-    });
-  if (uploadError) {
+  const storagePath = await uploadMessagingMedia(admin, {
+    organizationId: params.organizationId,
+    conversationId: params.conversationId,
+    fileName: params.fileName,
+    mimeType: params.mimeType,
+    data: params.data,
+  });
+  if (!storagePath) {
     return;
   }
-  await admin.from("messaging_attachments").insert({
-    organization_id: params.organizationId,
-    message_id: params.messageId,
-    conversation_id: params.conversationId,
-    file_name: params.fileName,
-    file_size: params.data.byteLength,
-    file_type: attachmentTypeFromMime(params.mimeType),
-    file_url: storagePath,
-    mime_type: params.mimeType,
-    external_media_id: params.externalMediaId ?? null,
+  await insertMessagingAttachment(admin, {
+    organizationId: params.organizationId,
+    conversationId: params.conversationId,
+    messageId: params.messageId,
+    fileName: params.fileName,
+    fileSize: params.data.byteLength,
+    mimeType: params.mimeType,
+    storagePath,
+    externalMediaId: params.externalMediaId ?? null,
   });
 }
 
