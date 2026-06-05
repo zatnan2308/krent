@@ -21,19 +21,26 @@ reorder, account+sidebar chat preview, realtime-чат debounce, **онлайн-
 
 **Пропущены осознанно** (false-positive): email `queued`-ярлык; Settings Team N+1.
 
-**Осталось — ТОЛЬКО крупное/нужен продукт-ввод или RPC, или опц.-полировка:**
-- **Промокоды** — `bookings/pricing.ts` `resolvePromo` это заглушка (`return null`).
-  Нужны: таблица `promo_codes` (миграция) + admin-CRUD + валидация (даты/лимиты/min-nights)
-  + ввод кода в `booking-widget-editorial.tsx` (сейчас шлёт `promoCode: null`).
-- **Generic CMS pages моноязычны** / **два CMS-контура** — нужны переводы/слияние, крупно.
-- **Транзакционность** delete-then-insert цен (`properties/actions.ts`) и iCal
-  (`rental-calendar/sync.ts`) — нужен атомарный RPC (SECURITY/RLS аккуратно). Опц.
-- **read-then-write races** (`agency-api/auth.ts` rate-limit, `webhooks.ts` retry) — RPC. Низкий.
-- **TZ-унификация** (bookings/queries todayIso, task-manager, кампании) — multi-file, опц.
-- **bell серверный read_at** — нужна таблица/колонка, опц. (сейчас localStorage).
-- Раздел **E** (Cmd-K, тосты, bulk-действия, пресеты фильтров, тёмная тема…) — опционал.
+### Третий заход (коммиты `d4eca6a..b6902b3`, 13 шт.) — закрыты быстрые+средние+CMS+полировка:
+PayPal-текст/ручная оплата manual-crypto, .ics только реальная недоступность, chat TTL 24ч,
+delete заметки только автору, EDIT видео/документов, chat reuse по type+property, super-admin
+health users (distinct members+portal), nav-guard грязной формы, **iCal upsert** (без
+delete-window), **цены — откат при сбое insert**, **generic CMS в editorial-стиле**,
+**generic CMS мультиязычны** (locale-селектор + буферы), **серверный read_at колокола**
+(таблица `notification_reads`, миграция `20260605140000`).
 
-Кроны не трогаем. Ниже — исходный план сессии 2 (исторически, для контекста).
+**ОСТАЛОСЬ ровно 5 пунктов (все требуют схемы/UX-дизайна или рискованны — отложены осознанно):**
+1. **Писать pending-гостю** — `chat_participants.user_id` NOT NULL → нужна схема + флоу активации.
+2. **conversation_type `internal`** (staff-to-staff) — net-new фича, нет входа.
+3. **read-then-write races** (rate-limit/webhook-retry) — атомарный RPC; большой радиус на
+   API-auth, выгода минорна, webhook-retry без крона не актуален.
+4. **TZ-унификация** — рискованная дата-семантика (off-by-one), per-property TZ; выгода крошечная.
+5. **Realtime-чат append-from-payload + fallback-polling** — debounce уже сделан; append рискован.
+
+**Промокоды — НЕ делаем** (пользователь: не нужны на сайте). Раздел **E** (Cmd-K, тосты, bulk,
+пресеты, тёмная тема, onboarding) — опционал. Кроны не трогаем.
+
+Ниже — исходный план сессии 2 (исторически, для контекста).
 
 ---
 
