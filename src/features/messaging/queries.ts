@@ -390,3 +390,67 @@ export async function getMessagingStats(
     received: recvCount.get(channel) ?? 0,
   }));
 }
+
+// ---- Публичные deep-link кнопки объекта -----------------------
+
+export interface PropertyChannelLink {
+  channel: MessagingChannel;
+  label: string;
+  url: string;
+}
+
+/**
+ * Deep-link «написать про объект» для публичной страницы. Входящий чат
+ * привяжется к объекту: вебхуки парсят Telegram `start=p_<id>` и Messenger
+ * `ref=p_<id>`. WhatsApp без ref — предзаполняем текст (контекст для агента).
+ * Возвращает только подключённые каналы (порядок — как в инбоксе).
+ */
+export async function getPropertyMessagingLinks(
+  organizationId: string,
+  propertyId: string,
+  prefillText?: string,
+): Promise<PropertyChannelLink[]> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("messaging_connections")
+    .select("channel, bot_username, page_id, phone_display")
+    .eq("organization_id", organizationId)
+    .eq("status", "connected");
+
+  const byChannel = new Map((data ?? []).map((row) => [row.channel, row]));
+  const links: PropertyChannelLink[] = [];
+
+  for (const channel of MESSAGING_CHANNELS) {
+    const row = byChannel.get(channel);
+    if (!row) {
+      continue;
+    }
+    if (channel === "telegram" && row.bot_username) {
+      links.push({
+        channel,
+        label: CHANNEL_LABELS.telegram,
+        url: `https://t.me/${row.bot_username}?start=p_${propertyId}`,
+      });
+    } else if (channel === "messenger" && row.page_id) {
+      links.push({
+        channel,
+        label: CHANNEL_LABELS.messenger,
+        url: `https://m.me/${row.page_id}?ref=p_${propertyId}`,
+      });
+    } else if (channel === "whatsapp_cloud" && row.phone_display) {
+      const digits = row.phone_display.replace(/[^\d]/g, "");
+      if (digits) {
+        const query = prefillText
+          ? `?text=${encodeURIComponent(prefillText)}`
+          : "";
+        links.push({
+          channel,
+          label: CHANNEL_LABELS.whatsapp_cloud,
+          url: `https://wa.me/${digits}${query}`,
+        });
+      }
+    }
+  }
+
+  return links;
+}

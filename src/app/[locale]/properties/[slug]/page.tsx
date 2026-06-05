@@ -16,6 +16,8 @@ import {
   getPropertyMinStay,
 } from "@/features/bookings/queries";
 import { getEnabledPaymentOptions } from "@/features/payments/queries";
+import { getPropertyMessagingLinks } from "@/features/messaging/queries";
+import { PropertyChannelLinks } from "@/features/messaging/property-channel-links";
 import { MortgageCalculator } from "@/features/properties/mortgage-calculator";
 import { PropertyHeroGallery } from "@/features/properties/property-hero-gallery";
 import { PropertyViewingForm } from "@/features/properties/property-viewing-form";
@@ -431,6 +433,13 @@ export default async function PropertyDetailPage({
 
   const canonicalPath = `/properties/${view.localizedSlugs[locale] ?? view.baseSlug}`;
   const canonicalUrl = buildCanonicalUrl(locale, canonicalPath);
+
+  // Deep-link кнопки мессенджеров — входящий чат привяжется к этому объекту.
+  const channelLinks = await getPropertyMessagingLinks(
+    site.organization.id,
+    property.id,
+    `${view.title} — ${canonicalUrl}`,
+  );
   const jsonLd = [
     realEstateListingJsonLd({
       name: view.title,
@@ -1443,6 +1452,7 @@ export default async function PropertyDetailPage({
                 >
                   Direct line & WhatsApp →
                 </Link>
+                <PropertyChannelLinks links={channelLinks} />
               </div>
             </div>
 
