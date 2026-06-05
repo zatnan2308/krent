@@ -16,6 +16,7 @@ import {
   shiftMonth,
 } from "@/features/rental-calendar/date-utils";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -86,6 +87,8 @@ export default async function CalendarOverviewPage({
   ]);
   const propList = props ?? [];
   const eventList = events ?? [];
+  const dict = await getServerDictionary();
+  const t = dict.dashCalendar;
 
   function eventForDay(propertyId: string, dayIso: string) {
     return eventList.find(
@@ -110,13 +113,13 @@ export default async function CalendarOverviewPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Calendar"
-        description="Occupancy across all rentable properties."
+        title={dict.adminNav.calendar}
+        description={t.description}
         actions={
           <>
             <Link
               href={`${ROUTES.dashboard.calendar}?m=${offset - 1}`}
-              aria-label="Previous month"
+              aria-label={t.prevMonth}
               className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -126,7 +129,7 @@ export default async function CalendarOverviewPage({
             </span>
             <Link
               href={`${ROUTES.dashboard.calendar}?m=${offset + 1}`}
-              aria-label="Next month"
+              aria-label={t.nextMonth}
               className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent"
             >
               <ChevronRight className="h-4 w-4" />
@@ -136,7 +139,7 @@ export default async function CalendarOverviewPage({
                 href={ROUTES.dashboard.calendar}
                 className="text-sm text-muted-foreground hover:underline"
               >
-                Today
+                {t.today}
               </Link>
             ) : null}
           </>
@@ -145,11 +148,11 @@ export default async function CalendarOverviewPage({
 
       <div className="flex flex-wrap items-center gap-3 text-xs">
         {[
-          { label: "Booked", status: "booked" },
-          { label: "Pending", status: "pending" },
-          { label: "Blocked", status: "blocked" },
-          { label: "Maintenance", status: "maintenance" },
-          { label: "Cleaning", status: "cleaning" },
+          { label: t.legendBooked, status: "booked" },
+          { label: t.legendPending, status: "pending" },
+          { label: t.legendBlocked, status: "blocked" },
+          { label: t.legendMaintenance, status: "maintenance" },
+          { label: t.legendCleaning, status: "cleaning" },
         ].map((item) => (
           <span key={item.status} className="inline-flex items-center gap-1">
             <span className={`h-3 w-3 rounded-sm ${colorFor(item.status)}`} />
@@ -160,20 +163,18 @@ export default async function CalendarOverviewPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Occupancy grid</CardTitle>
+          <CardTitle className="text-base">{t.occupancyGrid}</CardTitle>
         </CardHeader>
         <CardContent>
           {propList.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No rentable properties yet.
-            </p>
+            <p className="text-sm text-muted-foreground">{t.noRentable}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-0 text-xs">
                 <thead>
                   <tr>
                     <th className="sticky left-0 z-10 border-b bg-background p-1 text-left">
-                      Property
+                      {t.property}
                     </th>
                     <th className="border-b p-1 text-center font-normal">%</th>
                     {days.map((day) => (

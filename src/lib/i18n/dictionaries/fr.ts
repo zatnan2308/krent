@@ -383,4 +383,18 @@ export const fr: DeepPartial<Dictionary> = {
     emptyDefault: "Les demandes de réservation de votre site apparaîtront ici.",
     paymentProviders: "Fournisseurs de paiement",
   },
+  dashCalendar: {
+    description: "Taux d'occupation de tous les biens à louer.",
+    prevMonth: "Mois précédent",
+    nextMonth: "Mois suivant",
+    today: "Aujourd'hui",
+    legendBooked: "Réservé",
+    legendPending: "En attente",
+    legendBlocked: "Bloqué",
+    legendMaintenance: "Maintenance",
+    legendCleaning: "Ménage",
+    occupancyGrid: "Grille d'occupation",
+    property: "Bien",
+    noRentable: "Aucun bien à louer pour l'instant.",
+  },
 };

@@ -380,4 +380,18 @@ export const ru: DeepPartial<Dictionary> = {
     emptyDefault: "Запросы на бронирование с сайта появятся здесь.",
     paymentProviders: "Платёжные провайдеры",
   },
+  dashCalendar: {
+    description: "Загрузка по всем сдаваемым объектам.",
+    prevMonth: "Предыдущий месяц",
+    nextMonth: "Следующий месяц",
+    today: "Сегодня",
+    legendBooked: "Забронировано",
+    legendPending: "Ожидает",
+    legendBlocked: "Заблокировано",
+    legendMaintenance: "Обслуживание",
+    legendCleaning: "Уборка",
+    occupancyGrid: "Сетка загрузки",
+    property: "Объект",
+    noRentable: "Сдаваемых объектов пока нет.",
+  },
 };

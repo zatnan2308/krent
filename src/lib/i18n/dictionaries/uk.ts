@@ -380,4 +380,18 @@ export const uk: DeepPartial<Dictionary> = {
     emptyDefault: "Запити на бронювання з сайту з'являться тут.",
     paymentProviders: "Платіжні провайдери",
   },
+  dashCalendar: {
+    description: "Завантаженість по всіх орендних об'єктах.",
+    prevMonth: "Попередній місяць",
+    nextMonth: "Наступний місяць",
+    today: "Сьогодні",
+    legendBooked: "Заброньовано",
+    legendPending: "Очікує",
+    legendBlocked: "Заблоковано",
+    legendMaintenance: "Обслуговування",
+    legendCleaning: "Прибирання",
+    occupancyGrid: "Сітка завантаженості",
+    property: "Об'єкт",
+    noRentable: "Орендних об'єктів поки немає.",
+  },
 };

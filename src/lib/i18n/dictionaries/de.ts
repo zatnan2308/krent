@@ -383,4 +383,18 @@ export const de: DeepPartial<Dictionary> = {
     emptyDefault: "Buchungsanfragen von Ihrer Website erscheinen hier.",
     paymentProviders: "Zahlungsanbieter",
   },
+  dashCalendar: {
+    description: "Auslastung aller vermietbaren Objekte.",
+    prevMonth: "Voriger Monat",
+    nextMonth: "Nächster Monat",
+    today: "Heute",
+    legendBooked: "Gebucht",
+    legendPending: "Ausstehend",
+    legendBlocked: "Blockiert",
+    legendMaintenance: "Wartung",
+    legendCleaning: "Reinigung",
+    occupancyGrid: "Auslastungsraster",
+    property: "Objekt",
+    noRentable: "Noch keine vermietbaren Objekte.",
+  },
 };

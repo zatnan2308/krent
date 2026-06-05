@@ -382,6 +382,20 @@ export const en = {
     emptyDefault: "Booking requests from your website will appear here.",
     paymentProviders: "Payment providers",
   },
+  dashCalendar: {
+    description: "Occupancy across all rentable properties.",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    today: "Today",
+    legendBooked: "Booked",
+    legendPending: "Pending",
+    legendBlocked: "Blocked",
+    legendMaintenance: "Maintenance",
+    legendCleaning: "Cleaning",
+    occupancyGrid: "Occupancy grid",
+    property: "Property",
+    noRentable: "No rentable properties yet.",
+  },
 };
 
 export type Dictionary = typeof en;

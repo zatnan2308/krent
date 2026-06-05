@@ -381,4 +381,18 @@ export const es: DeepPartial<Dictionary> = {
     emptyDefault: "Las solicitudes de reserva de su sitio aparecerán aquí.",
     paymentProviders: "Proveedores de pago",
   },
+  dashCalendar: {
+    description: "Ocupación de todas las propiedades en alquiler.",
+    prevMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
+    today: "Hoy",
+    legendBooked: "Reservado",
+    legendPending: "Pendiente",
+    legendBlocked: "Bloqueado",
+    legendMaintenance: "Mantenimiento",
+    legendCleaning: "Limpieza",
+    occupancyGrid: "Cuadrícula de ocupación",
+    property: "Propiedad",
+    noRentable: "Aún no hay propiedades en alquiler.",
+  },
 };
