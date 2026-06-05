@@ -52,11 +52,14 @@ export async function GET(
     .update({ last_accessed_at: new Date().toISOString() })
     .eq("id", tokenRow.id);
 
+  // Экспортируем только реальную недоступность: подтверждённые брони, ручные
+  // блокировки и операционные блоки (уборка/обслуживание). pending НЕ
+  // экспортируем — заброшенные заявки иначе навсегда блокируют внешние площадки.
   const { data: events } = await admin
     .from("rental_calendar_events")
     .select("id, status, start_date, end_date, title")
     .eq("calendar_id", calendar.id)
-    .neq("status", "available");
+    .in("status", ["booked", "blocked", "maintenance", "cleaning"]);
 
   const ics = serializeCalendar(
     (events ?? []).map((event) => ({
