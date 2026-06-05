@@ -290,6 +290,29 @@ export function PropertyForm({
   const [pending, setPending] = React.useState(false);
   const [deletePending, setDeletePending] = React.useState(false);
 
+  // Несохранённые правки: snapshot полей формы vs baseline. Медиа-менеджеры
+  // сохраняются сами и в snapshot не входят — ложных «грязно» не будет.
+  const dirtySnapshot = JSON.stringify({
+    form,
+    amenityIds: [...amenityIds].sort(),
+    assignedAgentId,
+    coAgentIds: [...coAgentIds].sort(),
+  });
+  const baselineRef = React.useRef(dirtySnapshot);
+  const dirty = dirtySnapshot !== baselineRef.current;
+
+  // Предупреждаем при закрытии/перезагрузке вкладки с несохранёнными правками.
+  React.useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (dirty) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => {
       const next: FormState = { ...prev };
@@ -408,6 +431,8 @@ export function PropertyForm({
     setPending(false);
     if (result.ok) {
       setSaved(true);
+      // Сохранили — сдвигаем baseline, форма больше не «грязная».
+      baselineRef.current = dirtySnapshot;
       router.refresh();
     } else {
       setError(result.error);
@@ -1390,7 +1415,17 @@ export function PropertyForm({
           type="button"
           variant="outline"
           disabled={pending}
-          onClick={() => router.push(ROUTES.dashboard.properties)}
+          onClick={() => {
+            if (
+              dirty &&
+              !window.confirm(
+                "You have unsaved changes. Leave without saving?",
+              )
+            ) {
+              return;
+            }
+            router.push(ROUTES.dashboard.properties);
+          }}
         >
           Back to list
         </Button>
