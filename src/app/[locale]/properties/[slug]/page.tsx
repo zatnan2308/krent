@@ -16,6 +16,7 @@ import {
   getPropertyMinStay,
 } from "@/features/bookings/queries";
 import { getEnabledPaymentOptions } from "@/features/payments/queries";
+import { todayIso } from "@/features/rental-calendar/date-utils";
 import { getPropertyMessagingLinks } from "@/features/messaging/queries";
 import { PropertyChannelLinks } from "@/features/messaging/property-channel-links";
 import { MortgageCalculator } from "@/features/properties/mortgage-calculator";
@@ -519,6 +520,7 @@ export default async function PropertyDetailPage({
                 minNights={minStay}
                 maxGuests={property.guest_capacity}
                 bookedDates={bookedDates}
+                today={todayIso()}
                 paymentOptions={paymentOptions}
               />
             ) : (

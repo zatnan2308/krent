@@ -25,6 +25,9 @@ interface Props {
   reviews?: number | null;
   /** Занятые ISO-даты — дизейблятся в календаре. */
   bookedDates?: string[];
+  /** «Сегодня» по версии сервера (UTC, YYYY-MM-DD) — единый источник для
+   *  дизейбла прошлого: клиентский календарь не расходится с доступностью. */
+  today?: string;
   /** Включённые платёжные способы организации (онлайн-оплата). */
   paymentOptions?: PaymentOptionView[];
 }
@@ -55,6 +58,7 @@ export function BookingWidgetEditorial({
   rating,
   reviews,
   bookedDates = [],
+  today,
   paymentOptions = [],
 }: Props) {
   const [start, setStart] = React.useState<Date | null>(null);
@@ -406,6 +410,7 @@ export function BookingWidgetEditorial({
                 end={end}
                 onPick={pick}
                 bookedDates={bookedDates}
+                serverToday={today}
               />
               <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
                 Minimum stay {minNights} night{minNights > 1 ? "s" : ""}
@@ -544,18 +549,28 @@ function Calendar({
   end,
   onPick,
   bookedDates,
+  serverToday,
 }: {
   start: Date | null;
   end: Date | null;
   onPick: (d: Date) => void;
   bookedDates: string[];
+  serverToday?: string;
 }) {
   const bookedSet = React.useMemo(() => new Set(bookedDates), [bookedDates]);
+  // «Сегодня» берём из сервера (UTC-дата как календарный день), чтобы граница
+  // прошлого совпадала с серверной доступностью; иначе — локальная дата.
   const today = React.useMemo(() => {
+    if (serverToday) {
+      const [yy, mm, dd] = serverToday.split("-").map(Number);
+      if (yy && mm && dd) {
+        return new Date(yy, mm - 1, dd);
+      }
+    }
     const t = new Date();
     t.setHours(0, 0, 0, 0);
     return t;
-  }, []);
+  }, [serverToday]);
   const [view, setView] = React.useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
   );

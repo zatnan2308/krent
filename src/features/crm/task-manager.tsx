@@ -7,6 +7,7 @@ import { Trash2 } from "lucide-react";
 
 import { createTask, deleteTask, setTaskStatus } from "@/features/crm/actions";
 import { TASK_PRIORITY_OPTIONS } from "@/features/crm/constants";
+import { todayIso } from "@/features/rental-calendar/date-utils";
 import type { TaskItem } from "@/features/crm/queries";
 import type { TaskPriority } from "@/features/crm/types";
 import { Badge } from "@/components/ui/badge";
@@ -61,10 +62,8 @@ export function TaskManager({
   const [assignedAgentId, setAssignedAgentId] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const todayStr = React.useMemo(
-    () => new Date().toISOString().slice(0, 10),
-    [],
-  );
+  // Единый источник «сегодня» (UTC-дата), как и на сервере (todayIso).
+  const todayStr = React.useMemo(() => todayIso(), []);
 
   async function handleCreate() {
     if (!title.trim()) {
