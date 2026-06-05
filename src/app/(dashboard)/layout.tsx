@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants/routes";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { I18nProvider } from "@/lib/i18n/provider";
+import { getRequestLocale } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 
 // Зависит от сессии и активной организации — всегда динамический рендер.
@@ -84,21 +87,26 @@ export default async function DashboardGroupLayout({
     sidebarBadges[ROUTES.dashboard.messages] = totalUnread;
   }
 
+  const locale = await getRequestLocale();
+  const dictionary = getDictionary(locale);
+
   return (
-    <DashboardLayout
-      organizations={context.organizations}
-      activeOrganizationId={context.organization.id}
-      userEmail={context.user.email ?? ""}
-      userName={userName}
-      avatarUrl={avatarUrl}
-      notifications={notifications}
-      publicSiteUrl={publicSiteUrl}
-      sidebarBadges={sidebarBadges}
-      permissions={context.permissions}
-      modules={context.modules}
-      isSuperAdmin={context.isSuperAdmin}
-    >
-      {children}
-    </DashboardLayout>
+    <I18nProvider locale={locale} dictionary={dictionary}>
+      <DashboardLayout
+        organizations={context.organizations}
+        activeOrganizationId={context.organization.id}
+        userEmail={context.user.email ?? ""}
+        userName={userName}
+        avatarUrl={avatarUrl}
+        notifications={notifications}
+        publicSiteUrl={publicSiteUrl}
+        sidebarBadges={sidebarBadges}
+        permissions={context.permissions}
+        modules={context.modules}
+        isSuperAdmin={context.isSuperAdmin}
+      >
+        {children}
+      </DashboardLayout>
+    </I18nProvider>
   );
 }

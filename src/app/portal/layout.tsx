@@ -2,8 +2,12 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Building2, LogOut } from "lucide-react";
 
+import { PrivateLocaleSwitcher } from "@/components/shared/private-locale-switcher";
 import { signOut } from "@/features/auth/actions";
 import { ROUTES } from "@/lib/constants/routes";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { I18nProvider } from "@/lib/i18n/provider";
+import { getRequestLocale } from "@/lib/i18n/runtime";
 import { requireUser } from "@/server/auth";
 
 // Зависит от сессии — всегда динамический рендер.
@@ -15,8 +19,11 @@ export default async function PortalLayout({
   children: ReactNode;
 }) {
   const user = await requireUser();
+  const locale = await getRequestLocale();
+  const dictionary = getDictionary(locale);
 
   return (
+    <I18nProvider locale={locale} dictionary={dictionary}>
     <div className="flex min-h-screen flex-col bg-muted/30">
       <header className="border-b bg-background">
         <div className="container flex h-16 items-center justify-between gap-4">
@@ -44,6 +51,7 @@ export default async function PortalLayout({
             </Link>
           </nav>
           <div className="flex items-center gap-3">
+            <PrivateLocaleSwitcher currentLocale={locale} />
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {user.email}
             </span>
@@ -61,5 +69,6 @@ export default async function PortalLayout({
       </header>
       <main className="container flex-1 py-8">{children}</main>
     </div>
+    </I18nProvider>
   );
 }

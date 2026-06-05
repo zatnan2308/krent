@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { PrivateLocaleSwitcher } from "@/components/shared/private-locale-switcher";
 import { ROUTES } from "@/lib/constants/routes";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { I18nProvider } from "@/lib/i18n/provider";
+import { getRequestLocale } from "@/lib/i18n/runtime";
 import { requireUser } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
@@ -29,8 +33,11 @@ export default async function AccountLayout({
     (typeof meta.full_name === "string" && meta.full_name.trim()) ||
     (user.email ? user.email.split("@")[0]! : "Account");
   const initials = initialsOf(name);
+  const locale = await getRequestLocale();
+  const dictionary = getDictionary(locale);
 
   return (
+    <I18nProvider locale={locale} dictionary={dictionary}>
     <div className="editorial" style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
       <div className="grain" />
 
@@ -91,6 +98,7 @@ export default async function AccountLayout({
           </Link>
 
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <PrivateLocaleSwitcher currentLocale={locale} />
             <span
               style={{
                 display: "inline-flex",
@@ -170,5 +178,6 @@ export default async function AccountLayout({
         </div>
       </footer>
     </div>
+    </I18nProvider>
   );
 }
