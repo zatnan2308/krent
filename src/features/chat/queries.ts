@@ -84,9 +84,11 @@ export async function listMyConversations(): Promise<ConversationListItem[]> {
   const previews = new Map(previewEntries);
 
   const names = await resolveUserNames(
-    participants
-      .filter((participant) => participant.user_id !== user.id)
-      .map((participant) => participant.user_id),
+    participants.flatMap((participant) =>
+      participant.user_id && participant.user_id !== user.id
+        ? [participant.user_id]
+        : [],
+    ),
   );
 
   return rows.map((conversation) => {
@@ -96,7 +98,11 @@ export async function listMyConversations(): Promise<ConversationListItem[]> {
           participant.conversation_id === conversation.id &&
           participant.user_id !== user.id,
       )
-      .map((participant) => names.get(participant.user_id) ?? "Participant");
+      .map((participant) =>
+        participant.user_id
+          ? (names.get(participant.user_id) ?? "Participant")
+          : "Pending client",
+      );
     const read = reads.find(
       (item) => item.conversation_id === conversation.id,
     );
@@ -189,7 +195,7 @@ export async function getConversationView(
 
   const names = await resolveUserNames([
     ...new Set([
-      ...participants.map((participant) => participant.user_id),
+      ...participants.map((participant) => participant.user_id).filter(notNull),
       ...messages.map((message) => message.sender_id).filter(notNull),
     ]),
   ]);
@@ -239,7 +245,11 @@ export async function getConversationView(
 
   const otherNames = participants
     .filter((participant) => participant.user_id !== user.id)
-    .map((participant) => names.get(participant.user_id) ?? "Participant");
+    .map((participant) =>
+      participant.user_id
+        ? (names.get(participant.user_id) ?? "Participant")
+        : "Pending client",
+    );
 
   return {
     conversation,

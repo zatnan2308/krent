@@ -1348,21 +1348,24 @@ export type Database = {
           created_at: string
           id: string
           organization_id: string
-          user_id: string
+          portal_account_id: string | null
+          user_id: string | null
         }
         Insert: {
           conversation_id: string
           created_at?: string
           id?: string
           organization_id: string
-          user_id: string
+          portal_account_id?: string | null
+          user_id?: string | null
         }
         Update: {
           conversation_id?: string
           created_at?: string
           id?: string
           organization_id?: string
-          user_id?: string
+          portal_account_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

@@ -45,10 +45,15 @@ export default async function MessagesPage({
     listProperties(context.organization.id),
   ]);
   const portalAccounts = accounts
-    .filter((account) => account.status === "active")
+    .filter(
+      (account) =>
+        account.status === "active" || account.status === "pending",
+    )
     .map((account) => ({
       id: account.id,
-      label: `${account.contactName} · ${PORTAL_TYPE_LABELS[account.portalType]}`,
+      label:
+        `${account.contactName} · ${PORTAL_TYPE_LABELS[account.portalType]}` +
+        (account.status === "pending" ? " · pending" : ""),
     }));
 
   const filterParam =

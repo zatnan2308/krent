@@ -95,10 +95,13 @@ export async function startConversation(
   if (!portalAccount) {
     return { ok: false, error: "Client not found." };
   }
-  if (portalAccount.status !== "active" || !portalAccount.user_id) {
+  // Разрешаем писать и ещё не активировавшему портал клиенту (pending):
+  // он подключается участником по portal_account_id, а user_id проставится
+  // при активации (backfill). Блокируем только revoked/expired.
+  if (portalAccount.status !== "active" && portalAccount.status !== "pending") {
     return {
       ok: false,
-      error: "The client has not activated their portal yet.",
+      error: "This client's portal access is not available.",
     };
   }
 
@@ -151,6 +154,18 @@ export async function startConversation(
         ? "guest_manager"
         : "buyer_agent";
 
+  // У pending-клиента ещё нет имени в auth — подписываем диалог именем
+  // контакта, чтобы агент видел, с кем переписка.
+  let title: string | null = null;
+  if (!portalAccount.user_id && portalAccount.contact_id) {
+    const { data: contact } = await admin
+      .from("contacts")
+      .select("full_name")
+      .eq("id", portalAccount.contact_id)
+      .maybeSingle();
+    title = contact?.full_name ?? null;
+  }
+
   const { data: conversation, error } = await admin
     .from("chat_conversations")
     .insert({
@@ -159,6 +174,7 @@ export async function startConversation(
       lead_id: leadId,
       booking_id: bookingId,
       type: conversationType,
+      title,
       created_by: context.user.id,
     })
     .select("id")
@@ -167,6 +183,17 @@ export async function startConversation(
     return { ok: false, error: "Could not start the conversation." };
   }
 
+  const guestParticipant = portalAccount.user_id
+    ? {
+        conversation_id: conversation.id,
+        organization_id: organizationId,
+        user_id: portalAccount.user_id,
+      }
+    : {
+        conversation_id: conversation.id,
+        organization_id: organizationId,
+        portal_account_id: portalAccount.id,
+      };
   const { error: participantsError } = await admin
     .from("chat_participants")
     .insert([
@@ -175,11 +202,7 @@ export async function startConversation(
         organization_id: organizationId,
         user_id: context.user.id,
       },
-      {
-        conversation_id: conversation.id,
-        organization_id: organizationId,
-        user_id: portalAccount.user_id,
-      },
+      guestParticipant,
     ]);
   if (participantsError) {
     return { ok: false, error: "Could not add conversation participants." };

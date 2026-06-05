@@ -23,9 +23,11 @@ async function dispatchMessageEmails(
     .from("chat_participants")
     .select("user_id")
     .eq("conversation_id", event.conversationId);
+  // Отсекаем pending-участников (user_id IS NULL) — у них ещё нет аккаунта
+  // и почты; они увидят сообщения после активации портала.
   const others = (participants ?? [])
     .map((row) => row.user_id)
-    .filter((id) => id !== event.senderId);
+    .filter((id): id is string => id !== null && id !== event.senderId);
   if (others.length === 0) {
     return;
   }

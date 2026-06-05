@@ -204,6 +204,14 @@ export async function acceptPortalInvite(
     return { ok: false, error: "Could not accept the invitation." };
   }
 
+  // Привязываем pending-участника чата к активированному пользователю —
+  // диалоги, начатые агентом до активации, становятся видны клиенту.
+  await admin
+    .from("chat_participants")
+    .update({ user_id: user.id })
+    .eq("portal_account_id", account.id)
+    .is("user_id", null);
+
   redirect(`/portal/${account.portal_type}`);
 }
 
