@@ -3,6 +3,10 @@
 import * as React from "react";
 import { Bell } from "lucide-react";
 
+import {
+  getNotificationsLastSeen,
+  markNotificationsSeen,
+} from "@/features/notifications/bell-actions";
 import { Button } from "@/components/ui/button";
 import {
   Dropdown,
@@ -19,8 +23,6 @@ export interface NotificationItem {
   status: string;
   recipient: string;
 }
-
-const SEEN_KEY = "krent_notif_seen";
 
 /** Человекочитаемые ярлыки типов уведомлений. */
 const EVENT_LABELS: Record<string, string> = {
@@ -46,12 +48,19 @@ function labelFor(eventType: string): string {
 export function NotificationsBell({ items }: { items: NotificationItem[] }) {
   const [lastSeen, setLastSeen] = React.useState<string | null>(null);
 
+  // Серверная отметка просмотра (кросс-девайс, вместо localStorage).
   React.useEffect(() => {
-    try {
-      setLastSeen(localStorage.getItem(SEEN_KEY));
-    } catch {
-      // localStorage недоступен — считаем всё непрочитанным.
-    }
+    let active = true;
+    getNotificationsLastSeen()
+      .then((value) => {
+        if (active) setLastSeen(value);
+      })
+      .catch(() => {
+        // Недоступно — считаем всё непрочитанным.
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const unread = lastSeen
@@ -59,13 +68,9 @@ export function NotificationsBell({ items }: { items: NotificationItem[] }) {
     : items.length;
 
   function markSeen() {
-    const now = new Date().toISOString();
-    try {
-      localStorage.setItem(SEEN_KEY, now);
-    } catch {
-      // игнорируем
-    }
-    setLastSeen(now);
+    // Оптимистично гасим бейдж, затем фиксируем на сервере.
+    setLastSeen(new Date().toISOString());
+    void markNotificationsSeen();
   }
 
   return (

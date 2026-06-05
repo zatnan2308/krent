@@ -3763,6 +3763,24 @@ export type Database = {
           },
         ]
       }
+      notification_reads: {
+        Row: {
+          last_seen_at: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
