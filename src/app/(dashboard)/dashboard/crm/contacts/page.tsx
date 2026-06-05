@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 
 import { ContactsCsvImport } from "@/features/crm/contacts-csv-import";
 import { CrmNav } from "@/features/crm/crm-nav";
-import { listContacts } from "@/features/crm/queries";
+import { listContactsPage } from "@/features/crm/queries";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -39,9 +40,32 @@ export default async function CrmContactsPage({
   }
 
   const q = typeof searchParams.q === "string" ? searchParams.q : "";
-  const contacts = await listContacts(context.organization.id, {
+  const pageParam = Number(
+    typeof searchParams.page === "string" ? searchParams.page : "1",
+  );
+  const requestedPage =
+    Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1;
+  const {
+    items: contacts,
+    total,
+    pageSize,
+  } = await listContactsPage(context.organization.id, {
     q: q || undefined,
+    page: requestedPage,
   });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+
+  // Сохраняем поиск при переходе между страницами.
+  const buildPageHref = (target: number): string => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (target > 1) params.set("page", String(target));
+    const qs = params.toString();
+    return qs
+      ? `${ROUTES.dashboard.crmContacts}?${qs}`
+      : ROUTES.dashboard.crmContacts;
+  };
 
   return (
     <div className="space-y-6">
@@ -73,7 +97,12 @@ export default async function CrmContactsPage({
       </form>
 
       {contacts.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {total} contact{total === 1 ? "" : "s"}
+            {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+          </p>
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -107,6 +136,12 @@ export default async function CrmContactsPage({
               ))}
             </TableBody>
           </Table>
+          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            getHref={buildPageHref}
+          />
         </div>
       ) : (
         <EmptyState

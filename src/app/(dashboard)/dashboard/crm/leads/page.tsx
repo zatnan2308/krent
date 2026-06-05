@@ -11,7 +11,7 @@ import { CrmNav } from "@/features/crm/crm-nav";
 import {
   getLeadSourceBreakdown,
   listLeadSources,
-  listLeads,
+  listLeadsPage,
   type LeadListItem,
 } from "@/features/crm/queries";
 import type { LeadStatus } from "@/features/crm/types";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -62,7 +63,7 @@ function parseType(
 export default async function CrmLeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; type?: string; source?: string };
+  searchParams: { status?: string; type?: string; source?: string; page?: string };
 }) {
   const context = await requireOrganizationContext();
   if (!context.organization) {
@@ -84,12 +85,35 @@ export default async function CrmLeadsPage({
     sources.some((item) => item.key === searchParams.source)
       ? searchParams.source
       : undefined;
-  const leads = await listLeads(orgId, {
+  const pageParam = Number(searchParams.page ?? "1");
+  const requestedPage =
+    Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1;
+  const {
+    items: leads,
+    total,
+    pageSize,
+  } = await listLeadsPage(orgId, {
     ...(status ? { status } : {}),
     ...(type ? { type } : {}),
     ...(source ? { source } : {}),
+    page: requestedPage,
   });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
   const totalLeads = breakdown.reduce((sum, row) => sum + row.count, 0);
+
+  // Сохраняем активные фильтры при переходе между страницами.
+  const buildPageHref = (target: number): string => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (type) params.set("type", type);
+    if (source) params.set("source", source);
+    if (target > 1) params.set("page", String(target));
+    const qs = params.toString();
+    return qs
+      ? `${ROUTES.dashboard.crmLeads}?${qs}`
+      : ROUTES.dashboard.crmLeads;
+  };
 
   return (
     <div className="space-y-6">
@@ -197,7 +221,12 @@ export default async function CrmLeadsPage({
       ) : null}
 
       {leads.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {total} lead{total === 1 ? "" : "s"}
+            {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+          </p>
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -246,6 +275,12 @@ export default async function CrmLeadsPage({
               ))}
             </TableBody>
           </Table>
+          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            getHref={buildPageHref}
+          />
         </div>
       ) : (
         <EmptyState

@@ -101,42 +101,26 @@ function notNull(value: string | null): value is string {
 // ---- Лиды -----------------------------------------------------
 
 /** Список лидов организации. RLS ограничивает выборку правами агента. */
-export async function listLeads(
-  organizationId: string,
-  options: {
-    status?: LeadStatus;
-    type?: LeadListItem["type"];
-    source?: string;
-    contactId?: string;
-    limit?: number;
-  } = {},
+/** Размер страницы списков лидов/контактов в dashboard. */
+export const LEADS_PAGE_SIZE = 20;
+export const CONTACTS_PAGE_SIZE = 20;
+
+/** Страница лидов с общим числом совпадений для пагинации. */
+export interface LeadListResult {
+  items: LeadListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/** Обогащает строки лидов именами контакта/объекта/агента. */
+async function enrichLeadRows(
+  supabase: ReturnType<typeof createClient>,
+  rows: Lead[],
 ): Promise<LeadListItem[]> {
-  const supabase = createClient();
-  let query = supabase
-    .from("leads")
-    .select("*")
-    .eq("organization_id", organizationId);
-  if (options.status) {
-    query = query.eq("status", options.status);
-  }
-  if (options.type) {
-    query = query.eq("type", options.type);
-  }
-  if (options.source) {
-    query = query.eq("source", options.source);
-  }
-  if (options.contactId) {
-    query = query.eq("contact_id", options.contactId);
-  }
-  const ordered = query.order("created_at", { ascending: false });
-  const { data } = await (options.limit
-    ? ordered.limit(options.limit)
-    : ordered);
-  const rows = data ?? [];
   if (rows.length === 0) {
     return [];
   }
-
   const contactIds = [...new Set(rows.map((row) => row.contact_id))];
   const propertyIds = [
     ...new Set(rows.map((row) => row.property_id).filter(notNull)),
@@ -171,6 +155,78 @@ export async function listLeads(
       createdAt: lead.created_at,
     };
   });
+}
+
+export async function listLeads(
+  organizationId: string,
+  options: {
+    status?: LeadStatus;
+    type?: LeadListItem["type"];
+    source?: string;
+    contactId?: string;
+    limit?: number;
+  } = {},
+): Promise<LeadListItem[]> {
+  const supabase = createClient();
+  let query = supabase
+    .from("leads")
+    .select("*")
+    .eq("organization_id", organizationId);
+  if (options.status) {
+    query = query.eq("status", options.status);
+  }
+  if (options.type) {
+    query = query.eq("type", options.type);
+  }
+  if (options.source) {
+    query = query.eq("source", options.source);
+  }
+  if (options.contactId) {
+    query = query.eq("contact_id", options.contactId);
+  }
+  const ordered = query.order("created_at", { ascending: false });
+  const { data } = await (options.limit
+    ? ordered.limit(options.limit)
+    : ordered);
+  return enrichLeadRows(supabase, data ?? []);
+}
+
+/**
+ * Страница лидов с фильтрами status/type/source и срезом `.range()`.
+ * Возвращает общее число совпадений (`count: exact`) для пагинации.
+ */
+export async function listLeadsPage(
+  organizationId: string,
+  options: {
+    status?: LeadStatus;
+    type?: LeadListItem["type"];
+    source?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<LeadListResult> {
+  const supabase = createClient();
+  const pageSize = options.pageSize ?? LEADS_PAGE_SIZE;
+  const page = Math.max(1, options.page ?? 1);
+  let query = supabase
+    .from("leads")
+    .select("*", { count: "exact" })
+    .eq("organization_id", organizationId);
+  if (options.status) {
+    query = query.eq("status", options.status);
+  }
+  if (options.type) {
+    query = query.eq("type", options.type);
+  }
+  if (options.source) {
+    query = query.eq("source", options.source);
+  }
+  const from = (page - 1) * pageSize;
+  const { data, count } = await query
+    .order("created_at", { ascending: false })
+    .range(from, from + pageSize - 1);
+  const items = await enrichLeadRows(supabase, data ?? []);
+  return { items, total: count ?? 0, page, pageSize };
 }
 
 /** Полные данные лида для страницы детали. */
@@ -322,6 +378,24 @@ export async function listTasks(
 
 // ---- Контакты -------------------------------------------------
 
+/** Страница контактов с общим числом совпадений для пагинации. */
+export interface ContactListResult {
+  items: ContactListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+function mapContactRow(contact: Contact): ContactListItem {
+  return {
+    id: contact.id,
+    fullName: contact.full_name,
+    email: contact.email,
+    phone: contact.phone,
+    createdAt: contact.created_at,
+  };
+}
+
 /** Список контактов организации. */
 export async function listContacts(
   organizationId: string,
@@ -340,13 +414,37 @@ export async function listContacts(
   }
   const { data } = await query.order("created_at", { ascending: false });
 
-  return (data ?? []).map((contact) => ({
-    id: contact.id,
-    fullName: contact.full_name,
-    email: contact.email,
-    phone: contact.phone,
-    createdAt: contact.created_at,
-  }));
+  return (data ?? []).map(mapContactRow);
+}
+
+/** Страница контактов с поиском `q` и срезом `.range()` (+ count для пагинации). */
+export async function listContactsPage(
+  organizationId: string,
+  filters: { q?: string; page?: number; pageSize?: number } = {},
+): Promise<ContactListResult> {
+  const supabase = createClient();
+  const pageSize = filters.pageSize ?? CONTACTS_PAGE_SIZE;
+  const page = Math.max(1, filters.page ?? 1);
+  let query = supabase
+    .from("contacts")
+    .select("*", { count: "exact" })
+    .eq("organization_id", organizationId);
+  if (filters.q) {
+    const term = filters.q.replace(/[,()]/g, " ");
+    query = query.or(
+      `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`,
+    );
+  }
+  const from = (page - 1) * pageSize;
+  const { data, count } = await query
+    .order("created_at", { ascending: false })
+    .range(from, from + pageSize - 1);
+  return {
+    items: (data ?? []).map(mapContactRow),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 /** Контакт с его лидами и сделками. */
