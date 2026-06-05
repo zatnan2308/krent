@@ -5,6 +5,13 @@ import * as React from "react";
 import { track } from "@/features/analytics/track";
 import { getBookingQuote, requestBooking } from "@/features/bookings/actions";
 import type { BookingQuote } from "@/features/bookings/pricing";
+import { startBookingPayment } from "@/features/payments/actions";
+import type { PaymentProviderType } from "@/features/payments/types";
+
+interface PaymentOptionView {
+  provider: PaymentProviderType;
+  displayName: string;
+}
 
 interface Props {
   propertyId: string;
@@ -18,6 +25,8 @@ interface Props {
   reviews?: number | null;
   /** Занятые ISO-даты — дизейблятся в календаре. */
   bookedDates?: string[];
+  /** Включённые платёжные способы организации (онлайн-оплата). */
+  paymentOptions?: PaymentOptionView[];
 }
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -46,6 +55,7 @@ export function BookingWidgetEditorial({
   rating,
   reviews,
   bookedDates = [],
+  paymentOptions = [],
 }: Props) {
   const [start, setStart] = React.useState<Date | null>(null);
   const [end, setEnd] = React.useState<Date | null>(null);
@@ -58,7 +68,32 @@ export function BookingWidgetEditorial({
   const [phone, setPhone] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [done, setDone] = React.useState<string | null>(null);
+  const [done, setDone] = React.useState<{
+    reference: string;
+    bookingId: string;
+  } | null>(null);
+  const [instructions, setInstructions] = React.useState<{
+    heading: string;
+    lines: string[];
+  } | null>(null);
+  const [paidBanner, setPaidBanner] = React.useState<
+    "paid" | "cancelled" | null
+  >(null);
+
+  // Возврат после онлайн-оплаты: ?booking=success|cancelled.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const status = new URLSearchParams(window.location.search).get("booking");
+    if (status === "success") {
+      setPaidBanner("paid");
+      track("payment_completed", {
+        entityType: "property",
+        entityId: propertyId,
+      });
+    } else if (status === "cancelled") {
+      setPaidBanner("cancelled");
+    }
+  }, [propertyId]);
 
   const money = React.useCallback(
     (n: number) => {
@@ -166,13 +201,41 @@ export function BookingWidgetEditorial({
       entityId: propertyId,
       data: { bookingId: result.bookingId, reference: result.reference },
     });
-    setDone(result.reference);
+    setDone({ reference: result.reference, bookingId: result.bookingId });
+  }
+
+  async function handlePay(provider: PaymentProviderType) {
+    if (!done) return;
+    track("payment_started", {
+      entityType: "property",
+      entityId: propertyId,
+      data: { provider, bookingId: done.bookingId },
+    });
+    setPending(true);
+    setError(null);
+    const result = await startBookingPayment({
+      bookingId: done.bookingId,
+      provider,
+      returnPath:
+        typeof window !== "undefined" ? window.location.pathname : null,
+    });
+    setPending(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    if (result.kind === "redirect") {
+      window.location.href = result.url;
+      return;
+    }
+    setInstructions({ heading: result.heading, lines: result.lines });
   }
 
   // Итоговая разбивка: серверный quote, если есть, иначе клиентская оценка.
   const showTotal = quote ? quote.total : estTotal;
 
   if (done) {
+    const canPay = paymentOptions.length > 0 && !instructions;
     return (
       <div className="ed-vac-widget">
         <div
@@ -187,9 +250,75 @@ export function BookingWidgetEditorial({
             ✓ Request sent
           </div>
           <p style={{ marginTop: 12, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-            Reference <span className="tnum" style={{ color: "var(--text-primary)" }}>{done}</span>.
-            You&apos;ll get a confirmation by email shortly — no charge yet.
+            Reference <span className="tnum" style={{ color: "var(--text-primary)" }}>{done.reference}</span>.
+            You&apos;ll get a confirmation by email shortly
+            {canPay ? "" : " — no charge yet"}.
           </p>
+
+          {instructions ? (
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTop: "1px solid var(--border-subtle)",
+              }}
+            >
+              <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
+                {instructions.heading}
+              </p>
+              <ul style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                {instructions.lines.map((line, i) => (
+                  <li key={i} style={{ fontSize: 12.5, color: "var(--text-secondary)", wordBreak: "break-word", lineHeight: 1.5 }}>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : canPay ? (
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTop: "1px solid var(--border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              <p style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>
+                Pay now to confirm instantly
+              </p>
+              {paymentOptions.map((option) => (
+                <button
+                  key={option.provider}
+                  type="button"
+                  onClick={() => handlePay(option.provider)}
+                  disabled={pending}
+                  className="btn-solid"
+                  style={{
+                    width: "100%",
+                    justifyContent: "center",
+                    padding: "14px",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    display: "flex",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  {pending ? "…" : `Pay with ${option.displayName}`}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {error ? (
+            <p role="alert" style={{ marginTop: 12, fontSize: 12, color: "#B7392E" }}>
+              {error}
+            </p>
+          ) : null}
         </div>
       </div>
     );
@@ -197,6 +326,36 @@ export function BookingWidgetEditorial({
 
   return (
     <div className="ed-vac-widget">
+      {paidBanner === "paid" ? (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(16,122,87,0.3)",
+            background: "rgba(16,122,87,0.08)",
+            fontSize: 13,
+            color: "#0B6B4F",
+          }}
+        >
+          Payment received — your booking is being confirmed.
+        </div>
+      ) : null}
+      {paidBanner === "cancelled" ? (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(183,57,46,0.3)",
+            background: "rgba(183,57,46,0.08)",
+            fontSize: 13,
+            color: "#B7392E",
+          }}
+        >
+          Payment was cancelled. You can try again.
+        </div>
+      ) : null}
       <div
         style={{
           border: "1px solid var(--border-subtle)",

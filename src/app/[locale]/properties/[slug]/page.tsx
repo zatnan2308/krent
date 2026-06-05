@@ -15,6 +15,7 @@ import {
   getBookedDates,
   getPropertyMinStay,
 } from "@/features/bookings/queries";
+import { getEnabledPaymentOptions } from "@/features/payments/queries";
 import { MortgageCalculator } from "@/features/properties/mortgage-calculator";
 import { PropertyHeroGallery } from "@/features/properties/property-hero-gallery";
 import { PropertyViewingForm } from "@/features/properties/property-viewing-form";
@@ -347,6 +348,10 @@ export default async function PropertyDetailPage({
       : null;
   const showBooking =
     isBookable && view.price !== null && view.price.displayType === "visible";
+  // Онлайн-оплата доступна только когда показан booking-виджет.
+  const paymentOptions = showBooking
+    ? await getEnabledPaymentOptions(site.organization.id)
+    : [];
   const saleVisible =
     (property.purpose === "sale" || property.purpose === "mixed") &&
     view.price !== null &&
@@ -505,6 +510,7 @@ export default async function PropertyDetailPage({
                 minNights={minStay}
                 maxGuests={property.guest_capacity}
                 bookedDates={bookedDates}
+                paymentOptions={paymentOptions}
               />
             ) : (
               <>
