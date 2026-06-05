@@ -10,7 +10,9 @@ import type {
 } from "./types";
 
 const ATTACHMENTS_BUCKET = "chat-attachments";
-const SIGNED_URL_TTL = 60 * 60;
+// 24ч — чтобы вложения не «протухали» в долго открытом треде (вид всё равно
+// перезапрашивается при навигации/refresh, генерируя свежие ссылки).
+const SIGNED_URL_TTL = 60 * 60 * 24;
 
 function notNull(value: string | null): value is string {
   return value !== null;
