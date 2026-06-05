@@ -13,16 +13,27 @@ export interface PageListItem {
   updatedAt: string;
 }
 
+/** Контент одной локали страницы. */
+export interface PageLocaleContent {
+  title: string;
+  seoTitle: string;
+  seoDescription: string;
+  content: PageContent;
+}
+
 /** Данные страницы для формы редактирования. */
 export interface PageEditData {
   id: string;
   slug: string;
   type: Tables<"pages">["type"];
   status: Tables<"pages">["status"];
+  /** Контент локали по умолчанию (обратная совместимость / стартовый показ). */
   title: string;
   seoTitle: string;
   seoDescription: string;
   content: PageContent;
+  /** Все переводы страницы по локали — для мультиязычного редактора. */
+  translations: Record<string, PageLocaleContent>;
 }
 
 /** Список страниц организации с заголовком из перевода. */
@@ -81,21 +92,31 @@ export async function getPageForEdit(
     return null;
   }
 
-  const { data: translation } = await supabase
+  const { data: translationRows } = await supabase
     .from("page_translations")
     .select("*")
-    .eq("page_id", pageId)
-    .eq("locale", locale)
-    .maybeSingle();
+    .eq("page_id", pageId);
+
+  const translations: Record<string, PageLocaleContent> = {};
+  for (const row of translationRows ?? []) {
+    translations[row.locale] = {
+      title: row.title ?? "",
+      seoTitle: row.seo_title ?? "",
+      seoDescription: row.seo_description ?? "",
+      content: parsePageContent(row.content),
+    };
+  }
+  const def = translations[locale];
 
   return {
     id: page.id,
     slug: page.slug,
     type: page.type,
     status: page.status,
-    title: translation?.title ?? "",
-    seoTitle: translation?.seo_title ?? "",
-    seoDescription: translation?.seo_description ?? "",
-    content: parsePageContent(translation?.content),
+    title: def?.title ?? "",
+    seoTitle: def?.seoTitle ?? "",
+    seoDescription: def?.seoDescription ?? "",
+    content: def?.content ?? parsePageContent(undefined),
+    translations,
   };
 }

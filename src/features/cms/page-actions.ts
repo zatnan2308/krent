@@ -29,7 +29,14 @@ export async function savePage(
   const data = parsed.data;
   const supabase = createClient();
   const organizationId = context.organization.id;
-  const locale = context.organization.default_language;
+  // Локаль перевода: переданная (если включена у организации), иначе дефолтная.
+  const defaultLocale = context.organization.default_language;
+  const enabledLanguages = context.organization.enabled_languages ?? [];
+  const locale =
+    data.locale &&
+    (data.locale === defaultLocale || enabledLanguages.includes(data.locale))
+      ? data.locale
+      : defaultLocale;
   const publishedAt =
     data.status === "published" ? new Date().toISOString() : null;
   const content = data.content as unknown as Json;

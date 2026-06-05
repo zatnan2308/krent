@@ -25,6 +25,8 @@ export const savePageSchema = z.object({
   seoTitle: z.string().max(200).optional(),
   seoDescription: z.string().max(400).optional(),
   content: pageContentSchema,
+  /** Локаль перевода. Не задана — язык организации по умолчанию. */
+  locale: z.string().trim().min(2).max(10).optional(),
 });
 
 export type SavePageInput = z.infer<typeof savePageSchema>;

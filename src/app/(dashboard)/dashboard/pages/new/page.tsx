@@ -40,6 +40,8 @@ export default async function NewPagePage() {
           seoDescription: "",
           content: EMPTY_PAGE_CONTENT,
         }}
+        locales={context.organization.enabled_languages ?? []}
+        defaultLocale={context.organization.default_language}
       />
     </div>
   );

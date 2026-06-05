@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import {
   createBlock,
+  EMPTY_PAGE_CONTENT,
   type PageBlock,
   type PageContent,
 } from "@/features/cms/content";
@@ -36,15 +37,26 @@ const PAGE_TYPES: SavePageInput["type"][] = [
   "landing",
 ];
 
+/** Контент одной локали страницы (заголовок/SEO/блоки). */
+export interface PageLocaleBuffer {
+  title: string;
+  seoTitle: string;
+  seoDescription: string;
+  content: PageContent;
+}
+
 export interface PageEditorInitial {
   id?: string;
   slug: string;
   type: SavePageInput["type"];
   status: SavePageInput["status"];
+  /** Контент локали по умолчанию (стартовый показ). */
   title: string;
   seoTitle: string;
   seoDescription: string;
   content: PageContent;
+  /** Все переводы по локали (для мультиязычного редактора). */
+  translations?: Record<string, PageLocaleBuffer>;
 }
 
 function BlockEditor({
@@ -130,23 +142,99 @@ function BlockEditor({
   );
 }
 
-export function PageEditor({ initial }: { initial: PageEditorInitial }) {
+export function PageEditor({
+  initial,
+  locales = [],
+  defaultLocale,
+}: {
+  initial: PageEditorInitial;
+  /** Включённые языки организации. */
+  locales?: string[];
+  defaultLocale: string;
+}) {
   const router = useRouter();
-  const [title, setTitle] = React.useState(initial.title);
+  // Языки редактора: default всегда первым, затем остальные включённые.
+  const localeList = React.useMemo(
+    () => Array.from(new Set([defaultLocale, ...locales])),
+    [defaultLocale, locales],
+  );
+
+  // Буферы контента по локали (page-уровень — slug/type/status — общий).
+  const buffersRef = React.useRef<Record<string, PageLocaleBuffer>>(
+    (() => {
+      const base =
+        initial.translations ??
+        ({
+          [defaultLocale]: {
+            title: initial.title,
+            seoTitle: initial.seoTitle,
+            seoDescription: initial.seoDescription,
+            content: initial.content,
+          },
+        } as Record<string, PageLocaleBuffer>);
+      const out: Record<string, PageLocaleBuffer> = {};
+      for (const l of localeList) {
+        out[l] = base[l] ?? {
+          title: "",
+          seoTitle: "",
+          seoDescription: "",
+          content: EMPTY_PAGE_CONTENT,
+        };
+      }
+      return out;
+    })(),
+  );
+
+  const [locale, setLocale] = React.useState(defaultLocale);
+  const startBuf = buffersRef.current[defaultLocale] ?? {
+    title: "",
+    seoTitle: "",
+    seoDescription: "",
+    content: EMPTY_PAGE_CONTENT,
+  };
   const [slug, setSlug] = React.useState(initial.slug);
   const [type, setType] = React.useState<SavePageInput["type"]>(initial.type);
   const [status, setStatus] = React.useState<SavePageInput["status"]>(
     initial.status,
   );
-  const [seoTitle, setSeoTitle] = React.useState(initial.seoTitle);
+  const [title, setTitle] = React.useState(startBuf.title);
+  const [seoTitle, setSeoTitle] = React.useState(startBuf.seoTitle);
   const [seoDescription, setSeoDescription] = React.useState(
-    initial.seoDescription,
+    startBuf.seoDescription,
   );
   const [blocks, setBlocks] = React.useState<PageBlock[]>(
-    initial.content.blocks,
+    startBuf.content.blocks,
   );
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+
+  function currentVersion(): number {
+    return (
+      buffersRef.current[locale]?.content.version ?? EMPTY_PAGE_CONTENT.version
+    );
+  }
+
+  function switchLocale(next: string) {
+    if (next === locale) return;
+    // Сохраняем текущую локаль в буфер, загружаем целевую.
+    buffersRef.current[locale] = {
+      title,
+      seoTitle,
+      seoDescription,
+      content: { version: currentVersion(), blocks },
+    };
+    const target = buffersRef.current[next] ?? {
+      title: "",
+      seoTitle: "",
+      seoDescription: "",
+      content: EMPTY_PAGE_CONTENT,
+    };
+    setTitle(target.title);
+    setSeoTitle(target.seoTitle);
+    setSeoDescription(target.seoDescription);
+    setBlocks(target.content.blocks);
+    setLocale(next);
+  }
 
   async function handleSave() {
     setPending(true);
@@ -159,10 +247,18 @@ export function PageEditor({ initial }: { initial: PageEditorInitial }) {
       status,
       seoTitle: seoTitle || undefined,
       seoDescription: seoDescription || undefined,
-      content: { version: initial.content.version, blocks },
+      content: { version: currentVersion(), blocks },
+      locale,
     });
     setPending(false);
     if (result.ok) {
+      // Запоминаем сохранённый буфер локали (на случай дальнейшего переключения).
+      buffersRef.current[locale] = {
+        title,
+        seoTitle,
+        seoDescription,
+        content: { version: currentVersion(), blocks },
+      };
       router.push(ROUTES.dashboard.pages);
       router.refresh();
     } else {
@@ -187,6 +283,30 @@ export function PageEditor({ initial }: { initial: PageEditorInitial }) {
           <CardTitle className="text-base">Page settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {localeList.length > 1 ? (
+            <div className="space-y-2">
+              <label htmlFor="page-locale" className="text-sm font-medium">
+                Content language
+              </label>
+              <select
+                id="page-locale"
+                className={`${FIELD_CLASS} sm:w-48`}
+                value={locale}
+                onChange={(event) => switchLocale(event.target.value)}
+              >
+                {localeList.map((code) => (
+                  <option key={code} value={code}>
+                    {code.toUpperCase()}
+                    {code === defaultLocale ? " (default)" : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Title, SEO and content below are saved per language. Slug, type
+                and status are shared across languages.
+              </p>
+            </div>
+          ) : null}
           <div className="space-y-2">
             <label htmlFor="page-title" className="text-sm font-medium">
               Title

@@ -58,7 +58,11 @@ export default async function EditPagePage({
           ) : null
         }
       />
-      <PageEditor initial={page} />
+      <PageEditor
+        initial={page}
+        locales={context.organization.enabled_languages ?? []}
+        defaultLocale={defaultLocale}
+      />
     </div>
   );
 }
