@@ -13,6 +13,8 @@ import {
   listNotes,
   listTasks,
 } from "@/features/crm/queries";
+import { ContactChannels } from "@/features/messaging/contact-channels";
+import { getContactChannels } from "@/features/messaging/queries";
 import { TaskManager } from "@/features/crm/task-manager";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,11 +50,14 @@ export default async function DealDetailPage({
     notFound();
   }
 
-  const [stages, notes, tasks, activity] = await Promise.all([
+  const [stages, notes, tasks, activity, dealChannels] = await Promise.all([
     getDealStages(context.organization.id),
     listNotes(context.organization.id, { dealId: params.id }),
     listTasks(context.organization.id, { dealId: params.id }),
     getEntityActivity(context.organization.id, [params.id]),
+    deal.contactId
+      ? getContactChannels(context.organization.id, deal.contactId)
+      : Promise.resolve([]),
   ]);
   const canManage = hasPermission(context, "crm.manage");
 
@@ -102,6 +107,14 @@ export default async function DealDetailPage({
             <p className="text-muted-foreground">
               Agent: {deal.agentName ?? "Unassigned"}
             </p>
+            {dealChannels.length > 0 ? (
+              <div className="border-t pt-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  Messaging
+                </p>
+                <ContactChannels channels={dealChannels} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

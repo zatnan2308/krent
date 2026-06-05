@@ -16,6 +16,8 @@ import {
   PAYMENT_STATUS_LABELS,
   REFUND_STATUS_LABELS,
 } from "@/features/payments/constants";
+import { ContactChannels } from "@/features/messaging/contact-channels";
+import { getContactChannels } from "@/features/messaging/queries";
 import { getBookingPaymentData } from "@/features/payments/queries";
 import { formatDateDisplay } from "@/features/rental-calendar/date-utils";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +72,9 @@ export default async function BookingDetailPage({
   const paymentData = canViewPayments
     ? await getBookingPaymentData(context.organization.id, params.id)
     : { payments: [], transactions: [], refunds: [] };
+  const bookingChannels = contact
+    ? await getContactChannels(context.organization.id, contact.id)
+    : [];
 
   const stayRows: { label: string; value: string }[] = [
     { label: "Check-in", value: formatDateDisplay(booking.check_in) },
@@ -179,6 +184,14 @@ export default async function BookingDetailPage({
               <p className="border-t pt-2 text-xs text-muted-foreground">
                 {guests.length} guest record(s) on file.
               </p>
+            ) : null}
+            {bookingChannels.length > 0 ? (
+              <div className="border-t pt-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  Messaging
+                </p>
+                <ContactChannels channels={bookingChannels} />
+              </div>
             ) : null}
           </CardContent>
         </Card>
