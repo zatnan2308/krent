@@ -59,7 +59,7 @@ PowerShell ломается на `&` в `-m` — несколько `-m` без 
 
 ## 4. ОСТАЛОСЬ (доработки; фича рабочая) — по приоритету
 
-### ✅ Сделано (2026-06-05, коммиты `cfe22dc..796373a`)
+### ✅ Сделано (2026-06-05, коммиты `cfe22dc..cf53aef`)
 1. **Статусы доставки** — ✅ `cfe22dc`. WA `value.statuses[]` + Messenger
    `delivery`/`read` → `store.updateOutboundStatus` / `markOutboundStatusByWatermark`
    (rank-guard от понижения). Индикатор статуса под исходящими в треде
@@ -71,24 +71,35 @@ PowerShell ломается на `&` в `-m` — несколько `-m` без 
    `messaging.inbound` (нетранзакционный) — миграция `20260605160000` (посев
    `notification_templates` + системный `email_templates`, применено к
    `pclhwbgsxdztriqdtosg`). Кормит колокол (`notification_logs`) + письмо.
-3. **Deep-link кнопки** — ✅ `1c0b616`. `getPropertyMessagingLinks` +
-   `PropertyChannelLinks` на публичной странице объекта (блок «Or reach directly»):
-   Telegram `start=p_<id>`, Messenger `ref=p_<id>` (auto-привязка к объекту),
-   WhatsApp `wa.me` с предзаполненным текстом. _Осталось опц.:_ те же кнопки с
-   `l_<id>` на дашборд-странице лида (для агента — отдать ссылку лиду).
+3. **Deep-link кнопки** — ✅ `1c0b616` (+ лид `cf53aef`). `getPropertyMessagingLinks`
+   + `PropertyChannelLinks` на публичной странице объекта (Telegram `start=p_<id>`,
+   Messenger `ref=p_<id>`, WhatsApp `wa.me` с prefill). Лид-страница: `getLeadMessagingLinks`
+   + `ChannelDeepLinks` (копируемые `l_<id>` ссылки — отдать лиду). Общий core
+   `buildOrgChannelLinks`.
+4. **Каналы в Analytics → Lead sources** — ✅ `001efdf`. Канальные диалоги за окно
+   мержатся в `leadSources` (`analytics/queries.ts`, лейблы каналов).
 5. **Deal/Booking quick actions** — ✅ `796373a`. `ContactChannels` в карточке
    Contact (`crm/deals/[id]`) и Guest (`bookings/[id]`), контекстно.
+6. **Медиа/файл из composer** — ✅ `7fed2de`. `sendChannelMedia` (FormData →
+   приватный бакет → signed URL → `adapter.sendMedia` → исходящее + вложение);
+   строка attach-file в composer. Хелперы `uploadMessagingMedia`/
+   `createMessagingMediaSignedUrl`/`insertMessagingAttachment` (общие in/out).
+8. **WhatsApp template-picker вне окна** — ✅ `771c166`. `whatsappListTemplates`
+   (Management API, только APPROVED без `{{}}`) → picker в закрытом окне →
+   `sendChannelTemplate`. `templates` в `getChannelConversationView`.
+9. **Messenger message tags вне окна** — ✅ `79a58be`. `fbSend` с `MESSAGE_TAG`,
+   `messengerSendTaggedText`, `sendChannelTag`; picker тегов (HUMAN_AGENT и др.)
+   в закрытом окне Messenger.
 
-### Осталось
-4. **Каналы в Analytics → Lead sources** (`src/features/analytics/queries.ts` +
-   `analytics/page.tsx`) — добавить каналы к источникам (есть `getMessagingStats`).
-6. **Медиа/файл из composer** — upload в `messaging-media` + signed/public URL →
-   `adapter.sendMedia`. (`messaging-thread.tsx`.)
-7. **Booking-confirmation шаблон** из брони (`whatsappSendTemplate` уже есть).
-8. **Шаблоны WhatsApp UI + template-picker в composer вне окна** (Management API list).
-   Сейчас вне 24ч composer блокируется; отправка by-name есть, picker нет.
-9. **Messenger message tags** вне окна (аналог п.8).
+### Осталось (нужно продуктовое решение)
+7. **Booking-confirmation шаблон** из брони. ⚠️ Реальный шаблон брони требует
+   ПАРАМЕТРОВ (даты/объект/референс) — текущий `whatsappSendTemplate` шлёт by-name
+   без params. Нужно: (а) расширить `whatsappSendTemplate` на body-компоненты;
+   (б) хранить имя шаблона + маппинг переменных (поле в brand/settings, т.к. имя
+   шаблона у каждого покупателя своё). Без этого — только parameterless заглушка.
 10. **Merge контактов** (TG/Messenger создают новый контакт без совпадения).
+    Крупная CRM-фича: перенос идентичностей/диалогов/лидов/сделок с контакта A на B
+    + UI выбора цели. Низкий приоритет.
 
 **НЕ делать:** Viber, BSP, AI, Embedded Signup/Tech Provider.
 
