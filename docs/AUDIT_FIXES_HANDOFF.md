@@ -8,6 +8,35 @@
 
 ---
 
+## ✅ СТАТУС НА 2026-06-05 (сессия 2 завершена, коммиты `b4ffc90..9239142`, 18 шт. в main)
+
+Закрыт ВЕСЬ контейнерный/безопасный/высоко-средне-ценный backlog разделов B/C/D:
+deal-editor валюта-select, deal-board result.error, crypto slug+23505, upload accept,
+seed lead_sources (миграция `20260605130000`), пагинация leads/contacts, refund cap,
+NearbyPlaces km/mi, sendFileMessage rollback, CSV-импорт лимит+батч, пикер агента в
+property-form, super-admin suspend/re-activate (+enforce в org-context), webhook secret
+rotation UI, **Home Process/Press/CTA рендер**, SEO default_title, videos/documents
+reorder, account+sidebar chat preview, realtime-чат debounce, **онлайн-оплата с сайта**
+(pay-шаг в BookingWidgetEditorial), SEO live-превью, чат↔lead/booking линковка.
+
+**Пропущены осознанно** (false-positive): email `queued`-ярлык; Settings Team N+1.
+
+**Осталось — ТОЛЬКО крупное/нужен продукт-ввод или RPC, или опц.-полировка:**
+- **Промокоды** — `bookings/pricing.ts` `resolvePromo` это заглушка (`return null`).
+  Нужны: таблица `promo_codes` (миграция) + admin-CRUD + валидация (даты/лимиты/min-nights)
+  + ввод кода в `booking-widget-editorial.tsx` (сейчас шлёт `promoCode: null`).
+- **Generic CMS pages моноязычны** / **два CMS-контура** — нужны переводы/слияние, крупно.
+- **Транзакционность** delete-then-insert цен (`properties/actions.ts`) и iCal
+  (`rental-calendar/sync.ts`) — нужен атомарный RPC (SECURITY/RLS аккуратно). Опц.
+- **read-then-write races** (`agency-api/auth.ts` rate-limit, `webhooks.ts` retry) — RPC. Низкий.
+- **TZ-унификация** (bookings/queries todayIso, task-manager, кампании) — multi-file, опц.
+- **bell серверный read_at** — нужна таблица/колонка, опц. (сейчас localStorage).
+- Раздел **E** (Cmd-K, тосты, bulk-действия, пресеты фильтров, тёмная тема…) — опционал.
+
+Кроны не трогаем. Ниже — исходный план сессии 2 (исторически, для контекста).
+
+---
+
 ## 0. РЕЖИМ РАБОТЫ (как договорились с пользователем)
 - **Непрерывно**: фикс → проверка → commit+push, после КАЖДОГО логического пункта.
   Не останавливаться и не спрашивать (пользователь явно велел идти подряд).
