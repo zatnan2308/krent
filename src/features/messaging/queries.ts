@@ -1,11 +1,15 @@
 import { createAdminClient } from "@/lib/supabase/server";
 
 import {
+  whatsappListTemplates,
+  type WhatsAppTemplateSummary,
+} from "./adapters/whatsapp";
+import {
   CHANNEL_HAS_SESSION_WINDOW,
   CHANNEL_LABELS,
   MESSAGING_CHANNELS,
 } from "./channels";
-import { isChannelConfigured } from "./config";
+import { getWhatsAppConfig, isChannelConfigured } from "./config";
 import type {
   MessagingChannel,
   MessagingConnectionStatus,
@@ -157,6 +161,8 @@ export interface ChannelConversationView {
   /** Открыто ли 24ч-окно (для WA/Messenger); Telegram — всегда true. */
   windowOpen: boolean;
   hasSessionWindow: boolean;
+  /** Одобренные WhatsApp-шаблоны для отправки вне окна (иначе пусто). */
+  templates: WhatsAppTemplateSummary[];
   messages: ChannelMessageView[];
 }
 
@@ -238,6 +244,15 @@ export async function getChannelConversationView(
           SESSION_WINDOW_MS,
     );
 
+  // Вне окна WhatsApp свободный текст запрещён — предлагаем одобренные шаблоны.
+  let templates: WhatsAppTemplateSummary[] = [];
+  if (conversation.channel === "whatsapp_cloud" && !windowOpen) {
+    const config = getWhatsAppConfig();
+    if (config) {
+      templates = await whatsappListTemplates(config);
+    }
+  }
+
   return {
     id: conversation.id,
     channel: conversation.channel,
@@ -245,6 +260,7 @@ export async function getChannelConversationView(
     to: identityRes.data?.external_id ?? null,
     windowOpen,
     hasSessionWindow,
+    templates,
     messages: (messagesRes.data ?? []).map((m) => ({
       id: m.id,
       direction: m.direction,

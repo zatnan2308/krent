@@ -16,6 +16,7 @@ import {
 import { telegramGetMe, telegramSetWebhook } from "./adapters/telegram";
 import {
   whatsappGetPhoneInfo,
+  whatsappSendTemplate,
   whatsappSubscribeApp,
 } from "./adapters/whatsapp";
 import { getMessageAdapter } from "./adapters/registry";
@@ -555,6 +556,93 @@ export async function sendChannelMedia(
       entityType: "contact",
       entityId: conversation.contact_id,
       metadata: { channel: conversation.channel, attachment: true },
+    });
+  }
+  revalidatePath(MESSAGES_PATH);
+  return { ok: true };
+}
+
+/**
+ * Отправляет одобренный WhatsApp-шаблон (повторный контакт вне 24ч-окна).
+ * Только для WhatsApp; шаблон — by-name без параметров (см. whatsappListTemplates).
+ */
+export async function sendChannelTemplate(input: {
+  conversationId: string;
+  templateName: string;
+  language: string;
+}): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to send messages." };
+  }
+  const templateName = input.templateName.trim();
+  const language = input.language.trim();
+  if (!templateName || !language) {
+    return { ok: false, error: "Pick a template first." };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  const { data: conversation } = await admin
+    .from("messaging_conversations")
+    .select("id, channel, channel_identity_id, contact_id")
+    .eq("organization_id", organizationId)
+    .eq("id", input.conversationId)
+    .maybeSingle();
+  if (!conversation || !conversation.channel_identity_id) {
+    return { ok: false, error: "Conversation not found." };
+  }
+  if (conversation.channel !== "whatsapp_cloud") {
+    return { ok: false, error: "Templates are available for WhatsApp only." };
+  }
+
+  const { data: identity } = await admin
+    .from("contact_channel_identities")
+    .select("external_id")
+    .eq("id", conversation.channel_identity_id)
+    .maybeSingle();
+  if (!identity?.external_id) {
+    return { ok: false, error: "Recipient identity not found." };
+  }
+  const { data: connection } = await admin
+    .from("messaging_connections")
+    .select("status")
+    .eq("organization_id", organizationId)
+    .eq("channel", "whatsapp_cloud")
+    .maybeSingle();
+  if (!connection || connection.status !== "connected") {
+    return { ok: false, error: "This channel is not connected." };
+  }
+
+  const result = await whatsappSendTemplate(
+    identity.external_id,
+    templateName,
+    language,
+  );
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the template." };
+  }
+
+  await recordOutboundMessage(admin, {
+    organizationId,
+    channel: "whatsapp_cloud",
+    conversationId: conversation.id,
+    senderUserId: context.user.id,
+    body: `Template: ${templateName}`,
+    externalMessageId: result.externalMessageId ?? null,
+    status: "sent",
+  });
+  if (conversation.contact_id) {
+    await logAudit({
+      organizationId,
+      userId: context.user.id,
+      action: "messaging.sent",
+      entityType: "contact",
+      entityId: conversation.contact_id,
+      metadata: { channel: "whatsapp_cloud", template: templateName },
     });
   }
   revalidatePath(MESSAGES_PATH);

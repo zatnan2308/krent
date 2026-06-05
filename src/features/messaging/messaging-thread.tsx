@@ -8,6 +8,7 @@ import {
   sendChannelMedia,
   sendChannelMessage,
   sendChannelProperty,
+  sendChannelTemplate,
 } from "@/features/messaging/actions";
 import { CHANNEL_LABELS } from "@/features/messaging/channels";
 import type { ChannelConversationView } from "@/features/messaging/queries";
@@ -40,6 +41,7 @@ export function MessagingThread({
   const [error, setError] = React.useState<string | null>(null);
   const [propertyId, setPropertyId] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
+  const [template, setTemplate] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -119,6 +121,30 @@ export function MessagingThread({
     setPending(false);
     if (result.ok) {
       setPropertyId("");
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleSendTemplate() {
+    if (!template) {
+      return;
+    }
+    const [templateName, language] = template.split("|");
+    if (!templateName || !language) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const result = await sendChannelTemplate({
+      conversationId: view.id,
+      templateName,
+      language,
+    });
+    setPending(false);
+    if (result.ok) {
+      setTemplate("");
       router.refresh();
     } else {
       setError(result.error);
@@ -231,11 +257,40 @@ export function MessagingThread({
 
       <div className="border-t p-3">
         {composerDisabled ? (
-          <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-            The 24-hour window is closed. An approved template
-            {view.channel === "messenger" ? " / message tag" : ""} is required
-            to message this contact now.
-          </p>
+          <div className="space-y-2">
+            <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+              The 24-hour window is closed. An approved template
+              {view.channel === "messenger" ? " / message tag" : ""} is required
+              to message this contact now.
+            </p>
+            {view.channel === "whatsapp_cloud" && view.templates.length > 0 ? (
+              <div className="flex items-center gap-2">
+                <select
+                  value={template}
+                  onChange={(event) => setTemplate(event.target.value)}
+                  aria-label="WhatsApp template"
+                  className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  <option value="">Send an approved template…</option>
+                  {view.templates.map((item) => (
+                    <option
+                      key={`${item.name}|${item.language}`}
+                      value={`${item.name}|${item.language}`}
+                    >
+                      {item.name} ({item.language})
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  size="sm"
+                  disabled={pending || !template}
+                  onClick={handleSendTemplate}
+                >
+                  Send
+                </Button>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <div className="flex items-end gap-2">
             <textarea

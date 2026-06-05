@@ -134,6 +134,69 @@ export async function whatsappDownloadMedia(
   }
 }
 
+export interface WhatsAppTemplateSummary {
+  name: string;
+  language: string;
+  category: string;
+}
+
+/**
+ * Одобренные шаблоны WABA без переменных (Management API). Фильтруем
+ * шаблоны с `{{n}}` — отправка by-name идёт без параметров, иначе Meta
+ * отклонит. Для повторного контакта вне 24ч-окна.
+ */
+export async function whatsappListTemplates(
+  config: WhatsAppConfig,
+): Promise<WhatsAppTemplateSummary[]> {
+  if (!config.wabaId) {
+    return [];
+  }
+  try {
+    const response = await fetch(
+      `${graphBase(config)}/${config.wabaId}/message_templates?fields=name,status,language,category,components&limit=200`,
+      { headers: { Authorization: `Bearer ${config.accessToken}` } },
+    );
+    if (!response.ok) {
+      return [];
+    }
+    const json = (await response.json()) as {
+      data?: {
+        name: string;
+        status: string;
+        language: string;
+        category?: string;
+        components?: { type: string; text?: string }[];
+      }[];
+    };
+    const seen = new Set<string>();
+    const templates: WhatsAppTemplateSummary[] = [];
+    for (const tpl of json.data ?? []) {
+      if (tpl.status !== "APPROVED") {
+        continue;
+      }
+      const hasVariables = (tpl.components ?? []).some((component) =>
+        (component.text ?? "").includes("{{"),
+      );
+      if (hasVariables) {
+        continue;
+      }
+      const key = `${tpl.name}:${tpl.language}`;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      templates.push({
+        name: tpl.name,
+        language: tpl.language,
+        category: tpl.category ?? "",
+      });
+    }
+    return templates;
+  } catch {
+    return [];
+  }
+}
+
 /** Отправка одобренного шаблона (вне 24-часового окна). */
 export async function whatsappSendTemplate(
   to: string,
