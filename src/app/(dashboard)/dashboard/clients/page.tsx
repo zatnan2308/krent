@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -60,17 +61,19 @@ export default async function ClientsPage() {
     listContacts(context.organization.id),
     listProperties(context.organization.id),
   ]);
+  const dict = await getServerDictionary();
+  const t = dict.dashClients;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Client portals"
-        description="Invite buyers, sellers and guests to their personal portals."
+        title={dict.adminNav.clientPortals}
+        description={t.description}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Portal accounts</CardTitle>
+          <CardTitle className="text-base">{t.portalAccounts}</CardTitle>
         </CardHeader>
         <CardContent>
           {accounts.length > 0 ? (
@@ -78,10 +81,10 @@ export default async function ClientsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Portal</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Invite link</TableHead>
+                    <TableHead>{t.colContact}</TableHead>
+                    <TableHead>{t.colPortal}</TableHead>
+                    <TableHead>{t.colStatus}</TableHead>
+                    <TableHead>{t.colInviteLink}</TableHead>
                     {canManage ? <TableHead /> : null}
                   </TableRow>
                 </TableHeader>
@@ -125,10 +128,7 @@ export default async function ClientsPage() {
               </Table>
             </div>
           ) : (
-            <EmptyState
-              title="No portal accounts"
-              description="Invite a client below to give them portal access."
-            />
+            <EmptyState title={t.emptyTitle} description={t.emptyDesc} />
           )}
         </CardContent>
       </Card>
@@ -136,7 +136,7 @@ export default async function ClientsPage() {
       {canManage ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Invite a client</CardTitle>
+            <CardTitle className="text-base">{t.inviteClient}</CardTitle>
           </CardHeader>
           <CardContent>
             <InviteForm

@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -140,12 +141,14 @@ export default async function BookingsPage({
   const paymentSettings = canViewPayments
     ? await getPaymentSettings(context.organization.id)
     : [];
+  const dict = await getServerDictionary();
+  const t = dict.dashBookings;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Bookings"
-        description="Direct booking requests and online payments from your website."
+        title={dict.adminNav.bookings}
+        description={t.description}
       />
 
       <form
@@ -154,20 +157,20 @@ export default async function BookingsPage({
       >
         <div className="space-y-1.5">
           <label htmlFor="q" className="text-sm font-medium">
-            Search
+            {t.search}
           </label>
           <input
             id="q"
             type="search"
             name="q"
             defaultValue={q}
-            placeholder="Reference, guest name, email or phone…"
+            placeholder={t.searchPlaceholder}
             className={`${FIELD_CLASS} w-72`}
           />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="status" className="text-sm font-medium">
-            Status
+            {t.status}
           </label>
           <select
             id="status"
@@ -175,7 +178,7 @@ export default async function BookingsPage({
             defaultValue={status ?? ""}
             className={`${FIELD_CLASS} w-48`}
           >
-            <option value="">All statuses</option>
+            <option value="">{t.allStatuses}</option>
             {BOOKING_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -185,7 +188,7 @@ export default async function BookingsPage({
         </div>
         <div className="space-y-1.5">
           <label htmlFor="source" className="text-sm font-medium">
-            Source
+            {t.source}
           </label>
           <select
             id="source"
@@ -193,7 +196,7 @@ export default async function BookingsPage({
             defaultValue={source ?? ""}
             className={`${FIELD_CLASS} w-48`}
           >
-            <option value="">All sources</option>
+            <option value="">{t.allSources}</option>
             {Object.entries(BOOKING_SOURCE_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -203,7 +206,7 @@ export default async function BookingsPage({
         </div>
         <div className="space-y-1.5">
           <label htmlFor="from" className="text-sm font-medium">
-            Check-in from
+            {t.checkInFrom}
           </label>
           <input
             id="from"
@@ -215,7 +218,7 @@ export default async function BookingsPage({
         </div>
         <div className="space-y-1.5">
           <label htmlFor="to" className="text-sm font-medium">
-            Check-in to
+            {t.checkInTo}
           </label>
           <input
             id="to"
@@ -229,28 +232,32 @@ export default async function BookingsPage({
           type="submit"
           className={buttonVariants({ variant: "outline" })}
         >
-          Filter
+          {t.filter}
         </button>
       </form>
 
       {bookings.length > 0 ? (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {total} booking{total === 1 ? "" : "s"}
-            {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+            {t.bookingsCount.replace("{n}", String(total))}
+            {totalPages > 1
+              ? ` · ${t.pageOf
+                  .replace("{page}", String(page))
+                  .replace("{total}", String(totalPages))}`
+              : ""}
           </p>
           <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Stay</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead>{t.colReference}</TableHead>
+                  <TableHead>{t.colProperty}</TableHead>
+                  <TableHead>{t.colGuest}</TableHead>
+                  <TableHead>{t.colStay}</TableHead>
+                  <TableHead>{t.colTotal}</TableHead>
+                  <TableHead>{t.colStatus}</TableHead>
+                  <TableHead>{t.colPayment}</TableHead>
+                  <TableHead>{t.colSource}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -274,7 +281,7 @@ export default async function BookingsPage({
                       {formatDateDisplay(booking.checkIn)} &rarr;{" "}
                       {formatDateDisplay(booking.checkOut)}
                       <span className="block text-xs">
-                        {booking.nights} night(s)
+                        {t.nights.replace("{n}", String(booking.nights))}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -304,11 +311,11 @@ export default async function BookingsPage({
         </div>
       ) : (
         <EmptyState
-          title="No bookings found"
+          title={t.emptyTitle}
           description={
             q || status || source || checkInFrom || checkInTo
-              ? "No bookings match your filters. Try clearing the search."
-              : "Booking requests from your website will appear here."
+              ? t.emptyFiltered
+              : t.emptyDefault
           }
         />
       )}
@@ -316,7 +323,7 @@ export default async function BookingsPage({
       {canViewPayments ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Payment providers</CardTitle>
+            <CardTitle className="text-base">{t.paymentProviders}</CardTitle>
           </CardHeader>
           <CardContent>
             <PaymentSettings
