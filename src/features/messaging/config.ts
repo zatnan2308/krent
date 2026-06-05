@@ -25,6 +25,10 @@ export interface WhatsAppConfig {
   appSecret: string | null;
   verifyToken: string | null;
   graphVersion: string;
+  /** Имя одобренного шаблона подтверждения брони (или null). */
+  bookingTemplate: string | null;
+  /** Язык booking-шаблона (дефолт en_US). */
+  bookingTemplateLang: string;
 }
 
 export function getWhatsAppConfig(): WhatsAppConfig | null {
@@ -39,6 +43,8 @@ export function getWhatsAppConfig(): WhatsAppConfig | null {
     appSecret: env.WHATSAPP_APP_SECRET ?? null,
     verifyToken: env.WHATSAPP_VERIFY_TOKEN ?? null,
     graphVersion: getGraphVersion(),
+    bookingTemplate: env.WHATSAPP_BOOKING_TEMPLATE ?? null,
+    bookingTemplateLang: env.WHATSAPP_BOOKING_TEMPLATE_LANG || "en_US",
   };
 }
 

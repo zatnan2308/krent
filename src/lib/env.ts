@@ -57,6 +57,10 @@ const serverSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  // Одобренный шаблон подтверждения брони ({{1}} объект, {{2}} заезд,
+  // {{3}} выезд, {{4}} референс) и его язык — см. SETUP.md.
+  WHATSAPP_BOOKING_TEMPLATE: z.string().optional(),
+  WHATSAPP_BOOKING_TEMPLATE_LANG: z.string().optional(),
   // Telegram — бот ПОКУПАТЕЛЯ (через @BotFather).
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
@@ -161,6 +165,8 @@ export function getServerEnv(): ServerEnv {
     WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN,
     WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
     WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
+    WHATSAPP_BOOKING_TEMPLATE: process.env.WHATSAPP_BOOKING_TEMPLATE,
+    WHATSAPP_BOOKING_TEMPLATE_LANG: process.env.WHATSAPP_BOOKING_TEMPLATE_LANG,
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
     MESSENGER_PAGE_ID: process.env.MESSENGER_PAGE_ID,

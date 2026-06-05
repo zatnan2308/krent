@@ -197,21 +197,34 @@ export async function whatsappListTemplates(
   }
 }
 
-/** Отправка одобренного шаблона (вне 24-часового окна). */
+/**
+ * Отправка одобренного шаблона (вне 24-часового окна). `bodyParams` —
+ * значения для переменных тела {{1}}, {{2}}… в порядке следования; пусто —
+ * шаблон без переменных.
+ */
 export async function whatsappSendTemplate(
   to: string,
   templateName: string,
   languageCode: string,
+  bodyParams: string[] = [],
 ): Promise<SendResult> {
   const config = getWhatsAppConfig();
   if (!config) {
     return { ok: false, error: "WhatsApp is not configured." };
   }
-  return waSend(config, {
-    to,
-    type: "template",
-    template: { name: templateName, language: { code: languageCode } },
-  });
+  const template: Record<string, unknown> = {
+    name: templateName,
+    language: { code: languageCode },
+  };
+  if (bodyParams.length > 0) {
+    template.components = [
+      {
+        type: "body",
+        parameters: bodyParams.map((text) => ({ type: "text", text })),
+      },
+    ];
+  }
+  return waSend(config, { to, type: "template", template });
 }
 
 /** Адаптер WhatsApp Cloud API (свободный текст в 24ч-окне, иначе шаблон). */

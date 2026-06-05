@@ -16,6 +16,8 @@ import {
   PAYMENT_STATUS_LABELS,
   REFUND_STATUS_LABELS,
 } from "@/features/payments/constants";
+import { BookingWhatsAppButton } from "@/features/messaging/booking-whatsapp-button";
+import { getWhatsAppConfig } from "@/features/messaging/config";
 import { ContactChannels } from "@/features/messaging/contact-channels";
 import { getContactChannels } from "@/features/messaging/queries";
 import { getBookingPaymentData } from "@/features/payments/queries";
@@ -75,6 +77,12 @@ export default async function BookingDetailPage({
   const bookingChannels = contact
     ? await getContactChannels(context.organization.id, contact.id)
     : [];
+  const waConfig = getWhatsAppConfig();
+  const canSendBookingWhatsApp = Boolean(
+    waConfig?.bookingTemplate &&
+      booking.guest_phone &&
+      hasPermission(context, "bookings.manage"),
+  );
 
   const stayRows: { label: string; value: string }[] = [
     { label: "Check-in", value: formatDateDisplay(booking.check_in) },
@@ -209,6 +217,11 @@ export default async function BookingDetailPage({
               canManageBookings={hasPermission(context, "bookings.manage")}
               canManagePayments={hasPermission(context, "payments.manage")}
             />
+            {canSendBookingWhatsApp ? (
+              <div className="mt-3 border-t pt-3">
+                <BookingWhatsAppButton bookingId={booking.id} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

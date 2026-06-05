@@ -47,6 +47,8 @@ own number/page.
 | `WHATSAPP_ACCESS_TOKEN` | WhatsApp | Permanent system-user / app access token |
 | `WHATSAPP_APP_SECRET` | WhatsApp | Meta App secret — verifies inbound `X-Hub-Signature-256` |
 | `WHATSAPP_VERIFY_TOKEN` | WhatsApp | Any random string; entered in Meta webhook config |
+| `WHATSAPP_BOOKING_TEMPLATE` | WhatsApp | _(optional)_ Approved template name for the booking-confirmation button |
+| `WHATSAPP_BOOKING_TEMPLATE_LANG` | WhatsApp | _(optional)_ Template language code (default `en_US`) |
 | `TELEGRAM_BOT_TOKEN` | Telegram | From @BotFather |
 | `TELEGRAM_WEBHOOK_SECRET` | Telegram | Any random string; sent back in `X-Telegram-Bot-Api-Secret-Token` |
 | `MESSENGER_PAGE_ID` | Messenger | Your Facebook Page id |
@@ -106,4 +108,21 @@ Webhook URLs to register (replace host with your `NEXT_PUBLIC_SITE_URL`):
 - **Telegram** needs no templates — replies are free once the user has started the bot.
 
 The unified inbox composer enforces these rules automatically: free text inside the
-window, and a clear prompt to use a template/tag when the window is closed.
+window, and a clear prompt to use a template/tag when the window is closed. The
+composer lists your **parameterless** approved templates for WhatsApp; templates with
+variables are sent through dedicated flows (see below).
+
+**Booking-confirmation template.** The booking page has a one-click *Send WhatsApp
+confirmation* button. Create an approved template with **four body variables in this
+order** and point `WHATSAPP_BOOKING_TEMPLATE` (+ optional `WHATSAPP_BOOKING_TEMPLATE_LANG`,
+default `en_US`) at it:
+
+| Variable | Maps to |
+|---|---|
+| `{{1}}` | Property title |
+| `{{2}}` | Check-in date |
+| `{{3}}` | Check-out date |
+| `{{4}}` | Booking reference |
+
+Example body: `Hi! Your booking for {{1}} is confirmed. Check-in {{2}}, check-out {{3}}. Reference {{4}}.`
+The button appears only when the variable is set and the booking has a guest phone.

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getClientEnv } from "@/lib/env";
+import { normalizePhoneE164, phoneToDigits } from "@/lib/phone";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { TablesUpdate } from "@/types/database";
 import { logAudit } from "@/server/audit";
@@ -29,6 +30,8 @@ import {
 import { CHANNEL_HAS_SESSION_WINDOW } from "./channels";
 import {
   createMessagingMediaSignedUrl,
+  ensureContactIdentity,
+  ensureConversation,
   insertMessagingAttachment,
   recordOutboundMessage,
   uploadMessagingMedia,
@@ -742,6 +745,128 @@ export async function sendChannelTag(input: {
     });
   }
   revalidatePath(MESSAGES_PATH);
+  return { ok: true };
+}
+
+/**
+ * Шлёт гостю подтверждение брони одобренным WhatsApp-шаблоном
+ * (`WHATSAPP_BOOKING_TEMPLATE`, переменные {{1}} объект, {{2}} заезд,
+ * {{3}} выезд, {{4}} референс). Бизнес-инициированный шаблон разрешён вне
+ * окна. Создаёт/находит WhatsApp-диалог гостя и пишет исходящее.
+ */
+export async function sendBookingWhatsAppConfirmation(
+  bookingId: string,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "bookings.manage")) {
+    return { ok: false, error: "You do not have permission to manage bookings." };
+  }
+  const config = getWhatsAppConfig();
+  if (!config) {
+    return { ok: false, error: "WhatsApp is not configured (see SETUP.md)." };
+  }
+  if (!config.bookingTemplate) {
+    return {
+      ok: false,
+      error: "Set WHATSAPP_BOOKING_TEMPLATE in the environment first (see SETUP.md).",
+    };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  const { data: booking } = await admin
+    .from("rental_bookings")
+    .select(
+      "id, guest_name, guest_phone, guest_contact_id, check_in, check_out, reference, property_id",
+    )
+    .eq("organization_id", organizationId)
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (!booking) {
+    return { ok: false, error: "Booking not found." };
+  }
+  const e164 = normalizePhoneE164(booking.guest_phone ?? "");
+  if (!e164) {
+    return { ok: false, error: "This booking has no valid guest phone number." };
+  }
+
+  const { data: connection } = await admin
+    .from("messaging_connections")
+    .select("id, status")
+    .eq("organization_id", organizationId)
+    .eq("channel", "whatsapp_cloud")
+    .maybeSingle();
+  if (!connection || connection.status !== "connected") {
+    return { ok: false, error: "Connect WhatsApp first (Integrations)." };
+  }
+
+  const { data: property } = booking.property_id
+    ? await admin
+        .from("properties")
+        .select("title")
+        .eq("id", booking.property_id)
+        .maybeSingle()
+    : { data: null };
+
+  const recipient = phoneToDigits(e164);
+  const result = await whatsappSendTemplate(
+    recipient,
+    config.bookingTemplate,
+    config.bookingTemplateLang,
+    [
+      property?.title ?? "your booking",
+      booking.check_in,
+      booking.check_out,
+      booking.reference,
+    ],
+  );
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the confirmation." };
+  }
+
+  // Записываем исходящее в WhatsApp-диалог гостя (создаём при необходимости).
+  const identity = await ensureContactIdentity(admin, {
+    organizationId,
+    channel: "whatsapp_cloud",
+    externalId: recipient,
+    phone: e164,
+    name: booking.guest_name,
+    preferredContactId: booking.guest_contact_id,
+  });
+  if (identity) {
+    const conversationId = await ensureConversation(admin, {
+      organizationId,
+      channel: "whatsapp_cloud",
+      connectionId: connection.id,
+      contactId: identity.contactId,
+      identityId: identity.identityId,
+      propertyId: booking.property_id,
+    });
+    if (conversationId) {
+      await recordOutboundMessage(admin, {
+        organizationId,
+        channel: "whatsapp_cloud",
+        conversationId,
+        senderUserId: context.user.id,
+        body: `Booking confirmation sent (${booking.reference})`,
+        externalMessageId: result.externalMessageId ?? null,
+        status: "sent",
+      });
+    }
+  }
+
+  await logAudit({
+    organizationId,
+    userId: context.user.id,
+    action: "messaging.sent",
+    entityType: "booking",
+    entityId: booking.id,
+    metadata: { channel: "whatsapp_cloud", template: config.bookingTemplate },
+  });
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
   return { ok: true };
 }
 
