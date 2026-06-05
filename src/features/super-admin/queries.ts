@@ -433,7 +433,8 @@ export async function getSystemHealth(): Promise<SystemHealth> {
     notifsPending,
     notifsFailed,
     apiUsage,
-    usersList,
+    memberUsers,
+    portalUsers,
   ] = await Promise.all([
     admin.from("organizations").select("id", { count: "exact", head: true }),
     admin
@@ -477,7 +478,8 @@ export async function getSystemHealth(): Promise<SystemHealth> {
       .from("api_usage_logs")
       .select("status, occurred_at")
       .gte("occurred_at", weekAgo),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+    admin.from("organization_members").select("user_id"),
+    admin.from("portal_accounts").select("user_id"),
   ]);
 
   let requests = 0;
@@ -487,9 +489,17 @@ export async function getSystemHealth(): Promise<SystemHealth> {
     if (row.status >= 400) errors += 1;
   }
 
-  const totalUsers = usersList.data
-    ? (usersList.data as unknown as { total?: number }).total ?? 0
-    : 0;
+  // Уникальные пользователи платформы: сотрудники (organization_members) +
+  // активированные клиенты порталов (portal_accounts.user_id). Детерминированно,
+  // в отличие от непроверенного GoTrue listUsers().total.
+  const userIds = new Set<string>();
+  for (const row of memberUsers.data ?? []) {
+    if (row.user_id) userIds.add(row.user_id);
+  }
+  for (const row of portalUsers.data ?? []) {
+    if (row.user_id) userIds.add(row.user_id);
+  }
+  const totalUsers = userIds.size;
 
   return {
     organizations: {
