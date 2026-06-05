@@ -58,19 +58,30 @@ PowerShell ломается на `&` в `-m` — несколько `-m` без 
 - Гайд покупателя: `SETUP.md`.
 
 ## 4. ОСТАЛОСЬ (доработки; фича рабочая) — по приоритету
-1. **Статусы доставки** — обрабатывать `value.statuses[]` в `/api/webhooks/whatsapp`
-   (и delivery/read у Messenger) → обновлять `messaging_messages.status`
-   (delivered/read/failed). Высокая ценность.
-2. **Колокол на входящее** — в `store.recordInboundMessage` (или в вебхуках после
-   записи) создавать событие нотификации, как `chat/notifications.ts notifyNewMessage`.
-   Сейчас входящее кормит только бейдж Messages.
-3. **Deep-link кнопки** на странице объекта/лида/публичном сайте:
-   `t.me/<bot>?start=p_<id>` и `m.me/<page>?ref=p_<id>` (вебхуки их уже парсят).
-   Бот/страницу брать из `messaging_connections`. Это вход для TG/Messenger лидов.
+
+### ✅ Сделано (2026-06-05, коммиты `cfe22dc..796373a`)
+1. **Статусы доставки** — ✅ `cfe22dc`. WA `value.statuses[]` + Messenger
+   `delivery`/`read` → `store.updateOutboundStatus` / `markOutboundStatusByWatermark`
+   (rank-guard от понижения). Индикатор статуса под исходящими в треде
+   (`messaging-thread.tsx`, поле `status` в `getChannelConversationView`). Попутно
+   починен баг: Messenger delivery/read раньше создавали пустые входящие.
+2. **Колокол на входящее** — ✅ `472b0ac`. `messaging/notifications.ts`
+   `notifyInboundChannelMessage` (получатель: агент диалога → агент лида → первый
+   активный сотрудник) вызывается из `store.recordInboundMessage`. Новый event type
+   `messaging.inbound` (нетранзакционный) — миграция `20260605160000` (посев
+   `notification_templates` + системный `email_templates`, применено к
+   `pclhwbgsxdztriqdtosg`). Кормит колокол (`notification_logs`) + письмо.
+3. **Deep-link кнопки** — ✅ `1c0b616`. `getPropertyMessagingLinks` +
+   `PropertyChannelLinks` на публичной странице объекта (блок «Or reach directly»):
+   Telegram `start=p_<id>`, Messenger `ref=p_<id>` (auto-привязка к объекту),
+   WhatsApp `wa.me` с предзаполненным текстом. _Осталось опц.:_ те же кнопки с
+   `l_<id>` на дашборд-странице лида (для агента — отдать ссылку лиду).
+5. **Deal/Booking quick actions** — ✅ `796373a`. `ContactChannels` в карточке
+   Contact (`crm/deals/[id]`) и Guest (`bookings/[id]`), контекстно.
+
+### Осталось
 4. **Каналы в Analytics → Lead sources** (`src/features/analytics/queries.ts` +
    `analytics/page.tsx`) — добавить каналы к источникам (есть `getMessagingStats`).
-5. **Deal/Booking quick actions** — карточка `ContactChannels` на
-   `crm/deals/[id]` и `bookings/[id]` (1:1 как на `crm/leads/[id]` и контакте).
 6. **Медиа/файл из composer** — upload в `messaging-media` + signed/public URL →
    `adapter.sendMedia`. (`messaging-thread.tsx`.)
 7. **Booking-confirmation шаблон** из брони (`whatsappSendTemplate` уже есть).
