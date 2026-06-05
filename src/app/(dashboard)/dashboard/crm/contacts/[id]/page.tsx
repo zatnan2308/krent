@@ -9,6 +9,7 @@ import {
 } from "@/features/crm/constants";
 import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { ContactEditForm } from "@/features/crm/contact-edit-form";
+import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -73,6 +74,7 @@ export default async function ContactDetailPage({
     status: row.status,
   }));
   const canManage = hasPermission(context, "crm.manage");
+  const canManageAll = hasPermission(context, "crm.manage_all");
   const { contact, leads, deals } = detail;
   const activity = await getEntityActivity(context.organization.id, [
     contact.id,
@@ -214,6 +216,20 @@ export default async function ContactDetailPage({
           <ActivityTimeline items={activity} />
         </CardContent>
       </Card>
+
+      {canManageAll ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Merge contact</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ContactMergeCard
+              contactId={contact.id}
+              contactName={contact.full_name}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

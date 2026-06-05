@@ -6604,6 +6604,10 @@ export type Database = {
     }
     Functions: {
       current_user_id: { Args: never; Returns: string }
+      merge_contacts: {
+        Args: { p_primary: string; p_secondary: string; p_org: string }
+        Returns: undefined
+      }
     }
     Enums: {
       address_visibility: "exact" | "approximate" | "hidden"

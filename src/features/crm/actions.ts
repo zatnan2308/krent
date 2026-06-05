@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -525,6 +525,98 @@ export async function updateContact(
   }
   revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
   revalidatePath(CRM_CONTACTS);
+  return { ok: true };
+}
+
+export interface MergeTargetOption {
+  id: string;
+  name: string;
+  detail: string | null;
+}
+
+/** Поиск кандидатов для слияния (имя/email/телефон), кроме исключённого. */
+export async function searchContactsForMerge(input: {
+  query: string;
+  excludeId: string;
+}): Promise<MergeTargetOption[]> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return [];
+  }
+  if (!hasPermission(context, "crm.manage_all")) {
+    return [];
+  }
+  const term = input.query.trim().replace(/[,()%]/g, " ");
+  if (term.length < 2) {
+    return [];
+  }
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("contacts")
+    .select("id, full_name, email, phone")
+    .eq("organization_id", context.organization.id)
+    .neq("id", input.excludeId)
+    .or(`full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
+    .order("full_name", { ascending: true })
+    .limit(10);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.full_name,
+    detail: row.email ?? row.phone ?? null,
+  }));
+}
+
+/**
+ * Сливает дубликат-контакт (secondary) в основной (primary): атомарно
+ * переносит все ссылки и удаляет secondary (RPC `merge_contacts`).
+ * Деструктивно — только обладатель `crm.manage_all`.
+ */
+export async function mergeContact(input: {
+  primaryId: string;
+  secondaryId: string;
+}): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage_all")) {
+    return { ok: false, error: "Only managers can merge contacts." };
+  }
+  if (input.primaryId === input.secondaryId) {
+    return { ok: false, error: "Pick a different contact to merge into." };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  // Обе записи должны существовать в этой организации.
+  const { data: both } = await admin
+    .from("contacts")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .in("id", [input.primaryId, input.secondaryId]);
+  if (!both || both.length !== 2) {
+    return { ok: false, error: "Both contacts must exist in your organization." };
+  }
+
+  const { error } = await admin.rpc("merge_contacts", {
+    p_primary: input.primaryId,
+    p_secondary: input.secondaryId,
+    p_org: organizationId,
+  });
+  if (error) {
+    return { ok: false, error: "Could not merge the contacts." };
+  }
+
+  await logAudit({
+    organizationId,
+    userId: context.user.id,
+    action: "contact.merged",
+    entityType: "contact",
+    entityId: input.primaryId,
+    metadata: { merged_from: input.secondaryId },
+  });
+  revalidatePath(CRM_CONTACTS);
+  revalidatePath(`${CRM_CONTACTS}/${input.primaryId}`);
   return { ok: true };
 }
 
