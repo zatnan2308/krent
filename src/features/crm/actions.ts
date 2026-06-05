@@ -43,6 +43,25 @@ function revalidateForTarget(target: CrmTarget): void {
   }
 }
 
+/** Пишет активность по заметке/задаче на таймлайн связанной сущности
+ *  (getEntityActivity фильтрует по entity_id). */
+async function logCrmTargetActivity(
+  organizationId: string,
+  userId: string,
+  action: string,
+  target: CrmTarget,
+): Promise<void> {
+  const entityId = target.leadId ?? target.contactId ?? target.dealId;
+  if (!entityId) return;
+  await logAudit({
+    organizationId,
+    userId,
+    action,
+    entityType: target.leadId ? "lead" : target.contactId ? "contact" : "deal",
+    entityId,
+  });
+}
+
 /** Меняет статус лида. */
 export async function setLeadStatus(
   leadId: string,
@@ -442,6 +461,12 @@ export async function createNote(
     return { ok: false, error: "Could not save the note." };
   }
 
+  await logCrmTargetActivity(
+    context.organization.id,
+    context.user.id,
+    "note.created",
+    data,
+  );
   revalidateForTarget(data);
   return { ok: true };
 }
@@ -480,11 +505,18 @@ export async function deleteNote(noteId: string): Promise<ActionResult> {
   }
 
   if (note) {
-    revalidateForTarget({
+    const target: CrmTarget = {
       leadId: note.lead_id,
       contactId: note.contact_id,
       dealId: note.deal_id,
-    });
+    };
+    await logCrmTargetActivity(
+      context.organization.id,
+      context.user.id,
+      "note.deleted",
+      target,
+    );
+    revalidateForTarget(target);
   }
   return { ok: true };
 }
@@ -526,6 +558,12 @@ export async function createTask(
     return { ok: false, error: "Could not create the task." };
   }
 
+  await logCrmTargetActivity(
+    context.organization.id,
+    context.user.id,
+    "task.created",
+    data,
+  );
   revalidatePath(CRM_TASKS);
   revalidatePath(CRM_ROOT);
   revalidateForTarget(data);
@@ -557,7 +595,7 @@ export async function setTaskStatus(
     .update({ status: parsedStatus.data, completed_at: completedAt })
     .eq("id", taskId)
     .eq("organization_id", context.organization.id)
-    .select("id");
+    .select("id, lead_id, contact_id, deal_id");
   if (error) {
     return { ok: false, error: "Could not update the task." };
   }
@@ -565,8 +603,21 @@ export async function setTaskStatus(
     return { ok: false, error: "Task not found or not editable." };
   }
 
+  const row = data[0];
+  const target: CrmTarget = {
+    leadId: row?.lead_id ?? null,
+    contactId: row?.contact_id ?? null,
+    dealId: row?.deal_id ?? null,
+  };
+  await logCrmTargetActivity(
+    context.organization.id,
+    context.user.id,
+    "task.status_changed",
+    target,
+  );
   revalidatePath(CRM_TASKS);
   revalidatePath(CRM_ROOT);
+  revalidateForTarget(target);
   return { ok: true };
 }
 
@@ -581,6 +632,12 @@ export async function deleteTask(taskId: string): Promise<ActionResult> {
   }
 
   const supabase = createClient();
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("lead_id, contact_id, deal_id")
+    .eq("id", taskId)
+    .eq("organization_id", context.organization.id)
+    .maybeSingle();
   const { error } = await supabase
     .from("tasks")
     .delete()
@@ -590,6 +647,20 @@ export async function deleteTask(taskId: string): Promise<ActionResult> {
     return { ok: false, error: "Could not delete the task." };
   }
 
+  if (task) {
+    const target: CrmTarget = {
+      leadId: task.lead_id,
+      contactId: task.contact_id,
+      dealId: task.deal_id,
+    };
+    await logCrmTargetActivity(
+      context.organization.id,
+      context.user.id,
+      "task.deleted",
+      target,
+    );
+    revalidateForTarget(target);
+  }
   revalidatePath(CRM_TASKS);
   return { ok: true };
 }

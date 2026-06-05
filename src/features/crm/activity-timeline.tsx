@@ -26,6 +26,16 @@ function describe(action: string, metadata: Record<string, unknown>): string {
       return `Moved to ${stage ?? "a new stage"}${status ? ` · ${status}` : ""}`;
     case "deal.updated":
       return "Deal details updated";
+    case "note.created":
+      return "Note added";
+    case "note.deleted":
+      return "Note deleted";
+    case "task.created":
+      return "Task created";
+    case "task.status_changed":
+      return "Task status changed";
+    case "task.deleted":
+      return "Task deleted";
     default:
       return action.replace(/[._]/g, " ");
   }
