@@ -9,6 +9,8 @@ import {
 } from "@/features/integrations/constants";
 import { listIntegrations } from "@/features/integrations/queries";
 import type { IntegrationProvider } from "@/features/integrations/types";
+import { MessagingChannelsCard } from "@/features/messaging/messaging-channels-card";
+import { getChannelConnections } from "@/features/messaging/queries";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -46,6 +48,9 @@ export default async function IntegrationsPage() {
   const byProvider = new Map(
     connections.map((connection) => [connection.provider, connection]),
   );
+  const channelConnections = await getChannelConnections(
+    context.organization.id,
+  );
 
   return (
     <div className="space-y-6">
@@ -81,6 +86,20 @@ export default async function IntegrationsPage() {
               </div>
             );
           })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Messaging channels</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Connect WhatsApp, Telegram and Messenger to the unified inbox. Each
+            channel uses your own credentials, configured in the environment —
+            see <code>SETUP.md</code>.
+          </p>
+          <MessagingChannelsCard connections={channelConnections} />
         </CardContent>
       </Card>
 

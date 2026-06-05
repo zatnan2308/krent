@@ -1,9 +1,21 @@
 import { normalizePhoneE164, phoneToDigits } from "@/lib/phone";
 import { createAdminClient } from "@/lib/supabase/server";
+import type { Enums } from "@/types/database";
 
 import type { MessagingChannel, MessagingConnection } from "./types";
 
 type Admin = ReturnType<typeof createAdminClient>;
+
+const MESSAGING_BUCKET = "messaging-media";
+
+/** Категория вложения по MIME. */
+export function attachmentTypeFromMime(
+  mime: string,
+): Enums<"attachment_type"> {
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  return "document";
+}
 
 /** Понятное имя контакта по умолчанию, когда канал не дал имени. */
 function fallbackContactName(
@@ -60,6 +72,8 @@ export async function ensureContactIdentity(
     handle?: string | null;
     name?: string | null;
     phone?: string | null;
+    /** Привязать идентичность к этому контакту (deep-link к лиду/контакту). */
+    preferredContactId?: string | null;
   },
 ): Promise<{ contactId: string; identityId: string } | null> {
   const { organizationId, channel } = params;
@@ -99,7 +113,12 @@ export async function ensureContactIdentity(
     }
   }
 
-  // 3) Контакта нет — создаём.
+  // 3) Привязка к контакту из deep-link (например, лида), если задана.
+  if (!contactId && params.preferredContactId) {
+    contactId = params.preferredContactId;
+  }
+
+  // 4) Контакта нет — создаём.
   if (!contactId) {
     const name =
       (params.name ?? "").trim() ||
@@ -120,7 +139,7 @@ export async function ensureContactIdentity(
     contactId = created.id;
   }
 
-  // 4) Создаём идентичность (с защитой от гонки по unique-индексу).
+  // 5) Создаём идентичность (с защитой от гонки по unique-индексу).
   const { data: identity, error } = await admin
     .from("contact_channel_identities")
     .insert({
@@ -255,6 +274,48 @@ export async function recordInboundMessage(
     .update({ last_message_at: now, last_inbound_at: now })
     .eq("id", params.conversationId);
   return { messageId: message.id, isNew: true };
+}
+
+/**
+ * Сохраняет входящее медиа в приватный бакет messaging-media и создаёт строку
+ * вложения. Файл скачивает вызывающий код канала (у него есть токен/URL).
+ */
+export async function attachInboundMedia(
+  admin: Admin,
+  params: {
+    organizationId: string;
+    conversationId: string;
+    messageId: string;
+    fileName: string;
+    mimeType: string;
+    data: ArrayBuffer;
+    externalMediaId?: string | null;
+  },
+): Promise<void> {
+  const safeExt =
+    params.fileName.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+    "bin";
+  const storagePath = `${params.organizationId}/${params.conversationId}/${crypto.randomUUID()}.${safeExt}`;
+  const { error: uploadError } = await admin.storage
+    .from(MESSAGING_BUCKET)
+    .upload(storagePath, params.data, {
+      contentType: params.mimeType,
+      upsert: false,
+    });
+  if (uploadError) {
+    return;
+  }
+  await admin.from("messaging_attachments").insert({
+    organization_id: params.organizationId,
+    message_id: params.messageId,
+    conversation_id: params.conversationId,
+    file_name: params.fileName,
+    file_size: params.data.byteLength,
+    file_type: attachmentTypeFromMime(params.mimeType),
+    file_url: storagePath,
+    mime_type: params.mimeType,
+    external_media_id: params.externalMediaId ?? null,
+  });
 }
 
 /** Записывает исходящее сообщение и двигает last_message_at диалога. */
