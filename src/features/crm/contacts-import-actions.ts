@@ -17,6 +17,11 @@ const rowSchema = z.object({
   phone: z.string().trim().max(60).nullable(),
 });
 
+/** Жёсткий лимит строк на один импорт и размеры пакетов запросов. */
+const MAX_IMPORT_ROWS = 1000;
+const LOOKUP_CHUNK = 200;
+const INSERT_CHUNK = 200;
+
 /** Парсит CSV-строку (поддерживает quoted values и переводы строк). */
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -91,50 +96,97 @@ export async function importContactsCsv(csv: string): Promise<CsvImportResult> {
     return { ok: false, error: "Header must contain a name/full_name column." };
   }
 
+  const dataRows = rows.slice(1);
+  if (dataRows.length > MAX_IMPORT_ROWS) {
+    return {
+      ok: false,
+      error: `Too many rows (${dataRows.length}). Import at most ${MAX_IMPORT_ROWS} contacts per file.`,
+    };
+  }
+
   const admin = createAdminClient();
-  let inserted = 0;
+  const organizationId = context.organization.id;
   let skipped = 0;
-  for (let i = 1; i < rows.length; i += 1) {
-    const row = rows[i];
+
+  // 1) Валидируем строки и дедуплицируем по email внутри самого файла.
+  const seenEmails = new Set<string>();
+  const candidates: { fullName: string; email: string | null; phone: string | null }[] =
+    [];
+  for (const row of dataRows) {
     if (!row) {
       skipped += 1;
       continue;
     }
-    const candidate = {
+    const parsed = rowSchema.safeParse({
       fullName: (row[nameIdx] ?? "").trim(),
       email: emailIdx >= 0 ? (row[emailIdx] ?? "").trim() || null : null,
       phone: phoneIdx >= 0 ? (row[phoneIdx] ?? "").trim() || null : null,
-    };
-    const parsed = rowSchema.safeParse(candidate);
+    });
     if (!parsed.success) {
       skipped += 1;
       continue;
     }
-    const data = parsed.data;
-    if (data.email) {
-      const { data: existing } = await admin
-        .from("contacts")
-        .select("id")
-        .eq("organization_id", context.organization.id)
-        .eq("email", data.email.toLowerCase())
-        .maybeSingle();
-      if (existing) {
+    const email = parsed.data.email ? parsed.data.email.toLowerCase() : null;
+    if (email) {
+      if (seenEmails.has(email)) {
         skipped += 1;
         continue;
       }
+      seenEmails.add(email);
     }
-    const { error } = await admin.from("contacts").insert({
-      organization_id: context.organization.id,
-      full_name: data.fullName,
-      email: data.email ? data.email.toLowerCase() : null,
-      phone: data.phone,
+    candidates.push({
+      fullName: parsed.data.fullName,
+      email,
+      phone: parsed.data.phone,
     });
-    if (error) {
-      skipped += 1;
-    } else {
-      inserted += 1;
+  }
+
+  // 2) Пакетно (чанками) находим уже существующие email в организации.
+  const existing = new Set<string>();
+  const emails = [...seenEmails];
+  for (let i = 0; i < emails.length; i += LOOKUP_CHUNK) {
+    const { data } = await admin
+      .from("contacts")
+      .select("email")
+      .eq("organization_id", organizationId)
+      .in("email", emails.slice(i, i + LOOKUP_CHUNK));
+    for (const c of data ?? []) {
+      if (c.email) existing.add(c.email.toLowerCase());
     }
   }
+
+  // 3) Отбрасываем дубликаты по существующим email и готовим строки.
+  const toInsert = candidates
+    .filter((c) => {
+      if (c.email && existing.has(c.email)) {
+        skipped += 1;
+        return false;
+      }
+      return true;
+    })
+    .map((c) => ({
+      organization_id: organizationId,
+      full_name: c.fullName,
+      email: c.email,
+      phone: c.phone,
+    }));
+
+  // 4) Пакетная вставка; при ошибке чанка — построчно, чтобы не терять счёт.
+  let inserted = 0;
+  for (let i = 0; i < toInsert.length; i += INSERT_CHUNK) {
+    const chunk = toInsert.slice(i, i + INSERT_CHUNK);
+    const { error } = await admin.from("contacts").insert(chunk);
+    if (!error) {
+      inserted += chunk.length;
+      continue;
+    }
+    for (const oneRow of chunk) {
+      const { error: rowError } = await admin.from("contacts").insert(oneRow);
+      if (rowError) skipped += 1;
+      else inserted += 1;
+    }
+  }
+
   revalidatePath("/dashboard/crm/contacts");
   return { ok: true, inserted, skipped };
 }
