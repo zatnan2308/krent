@@ -68,16 +68,15 @@ export async function runIcalSync(sourceId: string): Promise<SyncResult> {
   const events = [...byUid.values()];
   const eventSource = PROVIDER_EVENT_SOURCE[source.provider];
 
-  // Полная замена событий источника отражает внешний календарь как есть.
-  await admin
-    .from("rental_calendar_events")
-    .delete()
-    .eq("import_source_id", source.id);
-
+  // Отражаем внешний календарь как есть, но БЕЗ окна delete-then-insert
+  // (раньше при сбое insert даты источника пропадали до след. синка — риск
+  // овербукинга). Сначала upsert текущих событий по (import_source_id,
+  // external_uid), затем удаляем только те строки источника, которых уже нет
+  // во внешнем фиде (по id — UUID безопасны в .in()).
   if (events.length > 0) {
-    const { error: insertError } = await admin
+    const { error: upsertError } = await admin
       .from("rental_calendar_events")
-      .insert(
+      .upsert(
         events.map((event) => ({
           organization_id: source.organization_id,
           calendar_id: source.calendar_id,
@@ -90,8 +89,9 @@ export async function runIcalSync(sourceId: string): Promise<SyncResult> {
           title: event.summary,
           external_uid: event.uid,
         })),
+        { onConflict: "import_source_id,external_uid" },
       );
-    if (insertError) {
+    if (upsertError) {
       await admin.from("ical_sync_logs").insert({
         organization_id: source.organization_id,
         import_source_id: source.id,
@@ -101,6 +101,19 @@ export async function runIcalSync(sourceId: string): Promise<SyncResult> {
       });
       return { ok: false, imported: 0, error: "Could not save events." };
     }
+  }
+
+  // Снятие устаревших (исчезнувших из фида) событий источника.
+  const keepUids = new Set(events.map((event) => event.uid));
+  const { data: existingRows } = await admin
+    .from("rental_calendar_events")
+    .select("id, external_uid")
+    .eq("import_source_id", source.id);
+  const staleIds = (existingRows ?? [])
+    .filter((row) => !row.external_uid || !keepUids.has(row.external_uid))
+    .map((row) => row.id);
+  if (staleIds.length > 0) {
+    await admin.from("rental_calendar_events").delete().in("id", staleIds);
   }
 
   await admin
