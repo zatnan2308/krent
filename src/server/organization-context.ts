@@ -85,10 +85,19 @@ const loadOrgData = unstable_cache(
     const organizationIds = membershipList.map((m) => m.organization_id);
     const { data: orgRows } = await admin
       .from("organizations")
-      .select("id, name, slug")
+      .select("id, name, slug, status")
       .in("id", organizationIds)
       .order("name");
-    const organizations: OrganizationSummary[] = orgRows ?? [];
+    // Suspended/inactive тенант теряет доступ к дашборду: обычный пользователь
+    // видит только активные организации. Super-admin видит все (для управления).
+    const visibleRows = (orgRows ?? []).filter(
+      (org) => isSuperAdmin || org.status === "active",
+    );
+    const organizations: OrganizationSummary[] = visibleRows.map((org) => ({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+    }));
 
     const fallbackOrganization = organizations[0];
     if (!fallbackOrganization) {

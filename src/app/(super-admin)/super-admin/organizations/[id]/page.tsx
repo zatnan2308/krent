@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { OrganizationStatusButtons } from "@/features/super-admin/organization-status-buttons";
 import { getOrganizationDetail } from "@/features/super-admin/queries";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -61,13 +62,21 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         ]}
         title={detail.organization.name}
         actions={
-          <Badge
-            variant={
-              detail.organization.status === "active" ? "default" : "secondary"
-            }
-          >
-            {detail.organization.status}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge
+              variant={
+                detail.organization.status === "active"
+                  ? "default"
+                  : "secondary"
+              }
+            >
+              {detail.organization.status}
+            </Badge>
+            <OrganizationStatusButtons
+              id={detail.organization.id}
+              status={detail.organization.status}
+            />
+          </div>
         }
       />
       <p className="-mt-3 text-sm text-muted-foreground">
