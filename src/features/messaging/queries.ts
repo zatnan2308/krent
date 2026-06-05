@@ -10,6 +10,7 @@ import type {
   MessagingChannel,
   MessagingConnectionStatus,
   MessagingDirection,
+  MessagingMessageStatus,
 } from "./types";
 
 const MESSAGING_BUCKET = "messaging-media";
@@ -137,6 +138,7 @@ export async function listChannelConversations(
 export interface ChannelMessageView {
   id: string;
   direction: MessagingDirection;
+  status: MessagingMessageStatus;
   body: string;
   createdAt: string;
   attachment: {
@@ -192,7 +194,7 @@ export async function getChannelConversationView(
         : Promise.resolve({ data: null }),
       admin
         .from("messaging_messages")
-        .select("id, direction, body, created_at")
+        .select("id, direction, status, body, created_at")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true }),
       admin
@@ -246,6 +248,7 @@ export async function getChannelConversationView(
     messages: (messagesRes.data ?? []).map((m) => ({
       id: m.id,
       direction: m.direction,
+      status: m.status,
       body: m.body,
       createdAt: m.created_at,
       attachment: attachmentByMessage.get(m.id) ?? null,

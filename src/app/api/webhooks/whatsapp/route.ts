@@ -13,6 +13,7 @@ import {
   ensureConversation,
   recordInboundMessage,
   resolveConnectionByRouting,
+  updateOutboundStatus,
 } from "@/features/messaging/store";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -38,10 +39,16 @@ interface WaContact {
   wa_id: string;
   profile?: { name?: string };
 }
+interface WaStatus {
+  id: string;
+  status: string;
+  errors?: { code?: number; title?: string; message?: string }[];
+}
 interface WaChangeValue {
   metadata?: { phone_number_id?: string };
   contacts?: WaContact[];
   messages?: WaMessage[];
+  statuses?: WaStatus[];
 }
 interface WaEntry {
   changes?: { value?: WaChangeValue }[];
@@ -50,6 +57,20 @@ interface WaPayload {
   object?: string;
   entry?: WaEntry[];
 }
+
+/** WhatsApp шлёт ровно эти значения статуса доставки исходящего. */
+function mapWaStatus(value: string): WaDeliveryStatus | null {
+  if (
+    value === "sent" ||
+    value === "delivered" ||
+    value === "read" ||
+    value === "failed"
+  ) {
+    return value;
+  }
+  return null;
+}
+type WaDeliveryStatus = "sent" | "delivered" | "read" | "failed";
 
 /** GET: верификация вебхука Meta (hub.challenge). */
 export async function GET(request: Request) {
@@ -116,6 +137,22 @@ export async function POST(request: Request) {
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       const value = change.value;
+
+      // Статусы доставки исходящих (sent/delivered/read/failed).
+      for (const status of value?.statuses ?? []) {
+        const mapped = mapWaStatus(status.status);
+        if (!mapped) {
+          continue;
+        }
+        await updateOutboundStatus(admin, {
+          channel: "whatsapp_cloud",
+          externalMessageId: status.id,
+          status: mapped,
+          errorMessage:
+            status.errors?.[0]?.title ?? status.errors?.[0]?.message ?? null,
+        });
+      }
+
       const phoneNumberId = value?.metadata?.phone_number_id;
       const messages = value?.messages;
       if (!phoneNumberId || !messages?.length) {

@@ -8,8 +8,11 @@ import {
   attachInboundMedia,
   ensureContactIdentity,
   ensureConversation,
+  findChannelConversationId,
+  markOutboundStatusByWatermark,
   recordInboundMessage,
   resolveConnectionByRouting,
+  updateOutboundStatus,
 } from "@/features/messaging/store";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -27,6 +30,8 @@ interface FbMessaging {
   message?: { mid?: string; text?: string; attachments?: FbAttachment[] };
   postback?: { referral?: { ref?: string } };
   referral?: { ref?: string };
+  delivery?: { mids?: string[]; watermark?: number };
+  read?: { watermark?: number };
 }
 interface FbEntry {
   id?: string;
@@ -123,6 +128,44 @@ export async function POST(request: Request) {
       if (!psid) {
         continue;
       }
+
+      // Квитанции доставки/прочтения исходящих (нет message — не входящее).
+      if (event.delivery || event.read) {
+        const conversationId = await findChannelConversationId(admin, {
+          organizationId,
+          channel: "messenger",
+          externalId: psid,
+        });
+        if (conversationId) {
+          const mids = event.delivery?.mids ?? [];
+          if (mids.length > 0) {
+            for (const mid of mids) {
+              await updateOutboundStatus(admin, {
+                channel: "messenger",
+                externalMessageId: mid,
+                status: "delivered",
+              });
+            }
+          } else if (event.delivery?.watermark) {
+            await markOutboundStatusByWatermark(admin, {
+              channel: "messenger",
+              conversationId,
+              untilIso: new Date(event.delivery.watermark).toISOString(),
+              status: "delivered",
+            });
+          }
+          if (event.read?.watermark) {
+            await markOutboundStatusByWatermark(admin, {
+              channel: "messenger",
+              conversationId,
+              untilIso: new Date(event.read.watermark).toISOString(),
+              status: "read",
+            });
+          }
+        }
+        continue;
+      }
+
       const ref = event.referral?.ref ?? event.postback?.referral?.ref ?? null;
 
       // Deep-link m.me/<page>?ref=p_<id>/l_<id>.

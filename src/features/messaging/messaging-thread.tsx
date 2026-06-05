@@ -10,10 +10,21 @@ import {
 } from "@/features/messaging/actions";
 import { CHANNEL_LABELS } from "@/features/messaging/channels";
 import type { ChannelConversationView } from "@/features/messaging/queries";
+import type { MessagingMessageStatus } from "@/features/messaging/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+
+/** Короткая метка статуса доставки исходящего (квитанции каналов). */
+const OUTBOUND_STATUS_LABEL: Record<MessagingMessageStatus, string | null> = {
+  received: null,
+  queued: "Sending…",
+  sent: "✓ Sent",
+  delivered: "✓✓ Delivered",
+  read: "✓✓ Read",
+  failed: "⚠ Failed",
+};
 
 export function MessagingThread({
   view,
@@ -170,6 +181,18 @@ export function MessagingThread({
               ) : null}
               <span className="mt-1 block text-[10px] opacity-70">
                 {new Date(message.createdAt).toLocaleString("en-US")}
+                {message.direction === "outbound" &&
+                OUTBOUND_STATUS_LABEL[message.status] ? (
+                  <span
+                    className={cn(
+                      "ml-1",
+                      message.status === "failed" && "text-red-200",
+                      message.status === "read" && "font-semibold",
+                    )}
+                  >
+                    · {OUTBOUND_STATUS_LABEL[message.status]}
+                  </span>
+                ) : null}
               </span>
             </div>
           </div>

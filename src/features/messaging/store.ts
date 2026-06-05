@@ -318,6 +318,107 @@ export async function attachInboundMedia(
   });
 }
 
+/** Узкий тип: статусы доставки, в которые можно перевести исходящее. */
+type OutboundDeliveryStatus = "sent" | "delivered" | "read" | "failed";
+
+/**
+ * Из каких статусов разрешён переход в целевой — защита от «понижения»
+ * (вебхуки доставки приходят не по порядку: read может опередить delivered).
+ */
+const OUTBOUND_UPGRADE_FROM: Record<
+  OutboundDeliveryStatus,
+  Enums<"messaging_message_status">[]
+> = {
+  sent: ["queued"],
+  delivered: ["queued", "sent"],
+  read: ["queued", "sent", "delivered"],
+  failed: ["queued", "sent"],
+};
+
+/**
+ * Обновляет статус исходящего по внешнему id (delivery receipt канала).
+ * Только «вверх» по воронке: уже delivered не откатится в sent.
+ */
+export async function updateOutboundStatus(
+  admin: Admin,
+  params: {
+    channel: MessagingChannel;
+    externalMessageId: string;
+    status: OutboundDeliveryStatus;
+    errorMessage?: string | null;
+  },
+): Promise<void> {
+  if (!params.externalMessageId) {
+    return;
+  }
+  const patch: {
+    status: OutboundDeliveryStatus;
+    error_message?: string | null;
+  } = { status: params.status };
+  if (params.status === "failed" && params.errorMessage) {
+    patch.error_message = params.errorMessage;
+  }
+  await admin
+    .from("messaging_messages")
+    .update(patch)
+    .eq("channel", params.channel)
+    .eq("direction", "outbound")
+    .eq("external_message_id", params.externalMessageId)
+    .in("status", OUTBOUND_UPGRADE_FROM[params.status]);
+}
+
+/**
+ * Помечает исходящие диалога доставленными/прочитанными по watermark
+ * (Messenger шлёт read/delivery как «всё до момента T»). Тоже только «вверх».
+ */
+export async function markOutboundStatusByWatermark(
+  admin: Admin,
+  params: {
+    channel: MessagingChannel;
+    conversationId: string;
+    untilIso: string;
+    status: "delivered" | "read";
+  },
+): Promise<void> {
+  await admin
+    .from("messaging_messages")
+    .update({ status: params.status })
+    .eq("channel", params.channel)
+    .eq("conversation_id", params.conversationId)
+    .eq("direction", "outbound")
+    .lte("created_at", params.untilIso)
+    .in("status", OUTBOUND_UPGRADE_FROM[params.status]);
+}
+
+/** Диалог канала по внешнему id отправителя (для delivery/read без mid). */
+export async function findChannelConversationId(
+  admin: Admin,
+  params: {
+    organizationId: string;
+    channel: MessagingChannel;
+    externalId: string;
+  },
+): Promise<string | null> {
+  const { data: identity } = await admin
+    .from("contact_channel_identities")
+    .select("id")
+    .eq("organization_id", params.organizationId)
+    .eq("channel", params.channel)
+    .eq("external_id", params.externalId)
+    .maybeSingle();
+  if (!identity) {
+    return null;
+  }
+  const { data: conversation } = await admin
+    .from("messaging_conversations")
+    .select("id")
+    .eq("organization_id", params.organizationId)
+    .eq("channel", params.channel)
+    .eq("channel_identity_id", identity.id)
+    .maybeSingle();
+  return conversation?.id ?? null;
+}
+
 /** Записывает исходящее сообщение и двигает last_message_at диалога. */
 export async function recordOutboundMessage(
   admin: Admin,
