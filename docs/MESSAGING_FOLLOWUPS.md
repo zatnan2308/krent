@@ -95,11 +95,13 @@ PowerShell ломается на `&` в `-m` — несколько `-m` без 
    {{2}} заезд, {{3}} выезд, {{4}} референс), создаёт/пишет WhatsApp-диалог. Кнопка
    на странице брони. Имя/язык шаблона — env `WHATSAPP_BOOKING_TEMPLATE[_LANG]`
    (self-hosted), задокументировано в SETUP.md.
+10. **Merge контактов** — ✅ `6f769ae`. RPC `public.merge_contacts` (атомарный перенос
+    всех 15 FK-колонок A→B одной транзакцией; дедуп для 4 таблиц с unique по
+    contact_id; backfill email/phone; удаление вторичного). Экшены `mergeContact`
+    (crm.manage_all) + `searchContactsForMerge`; карточка Merge на странице контакта.
+    Миграция `20260605170000`, применена к pclhwbgsxdztriqdtosg (проверено в rollback).
 
-### Осталось (низкий приоритет)
-10. **Merge контактов** (TG/Messenger создают новый контакт без совпадения).
-    Крупная CRM-фича: перенос идентичностей/диалогов/лидов/сделок с контакта A на B
-    + UI выбора цели. Низкий приоритет — отложено.
+### 🎉 Все 10 доработок закрыты (`cfe22dc..6f769ae`).
 
 **НЕ делать:** Viber, BSP, AI, Embedded Signup/Tech Provider.
 
