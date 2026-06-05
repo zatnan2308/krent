@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChatThread } from "@/features/chat/chat-thread";
 import { CONVERSATION_TYPE_LABELS } from "@/features/chat/constants";
 import { NewConversationForm } from "@/features/chat/new-conversation-form";
+import { NewInternalChatForm } from "@/features/chat/new-internal-chat-form";
 import {
   getConversationView,
   listMyConversations,
@@ -48,6 +49,7 @@ interface RenderInboxArgs {
   filter: Filter;
   portalAccounts: { id: string; label: string }[];
   properties: { id: string; title: string }[];
+  orgMembers: { id: string; name: string }[];
 }
 
 /** Единый channel-aware инбокс: портальные чаты + WhatsApp/Telegram/Messenger. */
@@ -73,7 +75,7 @@ export async function renderInbox(args: RenderInboxArgs) {
 
   const portalItems: UnifiedItem[] = portalConvs.map((conv) => ({
     href: buildHref({ c: conv.id }),
-    badge: "Portal",
+    badge: conv.type === "internal" ? "Team" : "Portal",
     title: conv.title,
     preview: conv.lastMessage ?? CONVERSATION_TYPE_LABELS[conv.type],
     at: conv.lastMessageAt,
@@ -142,6 +144,10 @@ export async function renderInbox(args: RenderInboxArgs) {
           <NewConversationForm
             portalAccounts={args.portalAccounts}
             properties={args.properties}
+            basePath={args.basePath}
+          />
+          <NewInternalChatForm
+            members={args.orgMembers}
             basePath={args.basePath}
           />
         </div>

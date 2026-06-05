@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { getOrgAgents } from "@/features/crm/queries";
 import { renderInbox } from "@/features/messaging/inbox-screen";
 import type { MessagingChannel } from "@/features/messaging/types";
 import { PORTAL_TYPE_LABELS } from "@/features/portal/constants";
@@ -40,10 +41,12 @@ export default async function MessagesPage({
     redirect(ROUTES.dashboard.root);
   }
 
-  const [accounts, properties] = await Promise.all([
+  const [accounts, properties, agents] = await Promise.all([
     listPortalAccounts(context.organization.id),
     listProperties(context.organization.id),
+    getOrgAgents(context.organization.id),
   ]);
+  const orgMembers = agents.filter((agent) => agent.id !== context.user.id);
   const portalAccounts = accounts
     .filter(
       (account) =>
@@ -82,6 +85,7 @@ export default async function MessagesPage({
           id: property.id,
           title: property.title,
         })),
+        orgMembers,
       })}
     </div>
   );

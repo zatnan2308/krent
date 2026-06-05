@@ -12,10 +12,12 @@ import { notifyNewMessage } from "./notifications";
 import {
   sendMessageSchema,
   startConversationSchema,
+  startInternalConversationSchema,
   type ActionResult,
   type SendMessageInput,
   type StartConversationInput,
   type StartConversationResult,
+  type StartInternalConversationInput,
 } from "./schema";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -336,6 +338,76 @@ export async function startConversationWithAgent(input?: {
   }
 
   revalidatePath(PORTAL_MESSAGES);
+  revalidatePath(DASHBOARD_MESSAGES);
+  return { ok: true, conversationId: conversation.id };
+}
+
+/**
+ * Старт внутреннего диалога сотрудника с коллегами (staff-to-staff).
+ * Участники — только активные члены организации; создатель добавляется сам.
+ */
+export async function startInternalConversation(
+  input: StartInternalConversationInput,
+): Promise<StartConversationResult> {
+  const parsed = startInternalConversationSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Pick at least one colleague." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  // Только активные участники организации (кроме самого создателя).
+  const requested = [...new Set(parsed.data.memberIds)].filter(
+    (id) => id !== context.user.id,
+  );
+  if (requested.length === 0) {
+    return { ok: false, error: "Pick at least one colleague." };
+  }
+  const { data: members } = await admin
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("status", "active")
+    .in("user_id", requested);
+  const memberIds = [...new Set((members ?? []).map((m) => m.user_id))];
+  if (memberIds.length === 0) {
+    return {
+      ok: false,
+      error: "Selected colleagues are not in your organization.",
+    };
+  }
+
+  const title = parsed.data.title?.trim() || null;
+  const { data: conversation, error } = await admin
+    .from("chat_conversations")
+    .insert({
+      organization_id: organizationId,
+      type: "internal",
+      title,
+      created_by: context.user.id,
+    })
+    .select("id")
+    .single();
+  if (error || !conversation) {
+    return { ok: false, error: "Could not start the conversation." };
+  }
+
+  const participantRows = [context.user.id, ...memberIds].map((userId) => ({
+    conversation_id: conversation.id,
+    organization_id: organizationId,
+    user_id: userId,
+  }));
+  const { error: participantsError } = await admin
+    .from("chat_participants")
+    .insert(participantRows);
+  if (participantsError) {
+    return { ok: false, error: "Could not add conversation participants." };
+  }
+
   revalidatePath(DASHBOARD_MESSAGES);
   return { ok: true, conversationId: conversation.id };
 }
