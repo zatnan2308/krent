@@ -10,6 +10,8 @@ import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { LeadControls } from "@/features/crm/lead-controls";
 import { NotesPanel } from "@/features/crm/notes-panel";
+import { ContactChannels } from "@/features/messaging/contact-channels";
+import { getContactChannels } from "@/features/messaging/queries";
 import {
   getEntityActivity,
   getLead,
@@ -52,11 +54,12 @@ export default async function LeadDetailPage({
     notFound();
   }
 
-  const [notes, tasks, activity, agents] = await Promise.all([
+  const [notes, tasks, activity, agents, leadChannels] = await Promise.all([
     listNotes(context.organization.id, { leadId: params.id }),
     listTasks(context.organization.id, { leadId: params.id }),
     getEntityActivity(context.organization.id, [params.id]),
     getOrgAgents(context.organization.id),
+    getContactChannels(context.organization.id, detail.lead.contact_id),
   ]);
   const canManage = hasPermission(context, "crm.manage");
   const { lead, contact, attribution } = detail;
@@ -209,6 +212,15 @@ export default async function LeadDetailPage({
               agents={agents}
               assignedAgentId={lead.assigned_agent_id}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Messaging</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ContactChannels channels={leadChannels} />
           </CardContent>
         </Card>
       </div>

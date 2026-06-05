@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   markChannelConversationRead,
   sendChannelMessage,
+  sendChannelProperty,
 } from "@/features/messaging/actions";
 import { CHANNEL_LABELS } from "@/features/messaging/channels";
 import type { ChannelConversationView } from "@/features/messaging/queries";
@@ -14,11 +15,18 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-export function MessagingThread({ view }: { view: ChannelConversationView }) {
+export function MessagingThread({
+  view,
+  properties,
+}: {
+  view: ChannelConversationView;
+  properties: { id: string; title: string }[];
+}) {
   const router = useRouter();
   const [text, setText] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [propertyId, setPropertyId] = React.useState("");
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -78,6 +86,25 @@ export function MessagingThread({ view }: { view: ChannelConversationView }) {
     setPending(false);
     if (result.ok) {
       setText("");
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleAttachProperty() {
+    if (!propertyId) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const result = await sendChannelProperty({
+      conversationId: view.id,
+      propertyId,
+    });
+    setPending(false);
+    if (result.ok) {
+      setPropertyId("");
       router.refresh();
     } else {
       setError(result.error);
@@ -177,6 +204,31 @@ export function MessagingThread({ view }: { view: ChannelConversationView }) {
             </Button>
           </div>
         )}
+        {!composerDisabled && properties.length > 0 ? (
+          <div className="mt-2 flex items-center gap-2">
+            <select
+              value={propertyId}
+              onChange={(event) => setPropertyId(event.target.value)}
+              aria-label="Attach property"
+              className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+            >
+              <option value="">Attach a property…</option>
+              {properties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {property.title}
+                </option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending || !propertyId}
+              onClick={handleAttachProperty}
+            >
+              Send listing
+            </Button>
+          </div>
+        ) : null}
         {error ? (
           <p className="mt-2 text-xs text-destructive" role="alert">
             {error}

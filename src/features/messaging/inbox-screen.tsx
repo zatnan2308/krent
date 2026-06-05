@@ -184,7 +184,7 @@ export async function renderInbox(args: RenderInboxArgs) {
       </div>
       <div className="flex-1">
         {channelView ? (
-          <MessagingThread view={channelView} />
+          <MessagingThread view={channelView} properties={args.properties} />
         ) : portalView ? (
           <ChatThread
             conversationId={portalView.conversation.id}

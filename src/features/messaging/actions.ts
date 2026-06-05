@@ -296,6 +296,116 @@ export async function sendChannelMessage(input: {
   return { ok: true };
 }
 
+/**
+ * Прикрепляет объект к каналу: отправляет название + ссылку на листинг (и
+ * обложку, если доступна). Уважает то же 24ч-окно.
+ */
+export async function sendChannelProperty(input: {
+  conversationId: string;
+  propertyId: string;
+}): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to send messages." };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  const { data: conversation } = await admin
+    .from("messaging_conversations")
+    .select("id, channel, channel_identity_id, contact_id, last_inbound_at")
+    .eq("organization_id", organizationId)
+    .eq("id", input.conversationId)
+    .maybeSingle();
+  if (!conversation || !conversation.channel_identity_id) {
+    return { ok: false, error: "Conversation not found." };
+  }
+  if (CHANNEL_HAS_SESSION_WINDOW[conversation.channel]) {
+    const open =
+      conversation.last_inbound_at &&
+      Date.now() - new Date(conversation.last_inbound_at).getTime() <
+        SESSION_WINDOW_MS;
+    if (!open) {
+      return {
+        ok: false,
+        error: "The 24-hour window is closed — a template/tag is required.",
+      };
+    }
+  }
+
+  const { data: property } = await admin
+    .from("properties")
+    .select("id, title, slug")
+    .eq("organization_id", organizationId)
+    .eq("id", input.propertyId)
+    .maybeSingle();
+  if (!property) {
+    return { ok: false, error: "Property not found." };
+  }
+  const { data: cover } = await admin
+    .from("property_media")
+    .select("url, category")
+    .eq("property_id", property.id)
+    .order("sort_order", { ascending: true })
+    .limit(20);
+  const coverUrl =
+    cover?.find((m) => m.category === "cover")?.url ?? cover?.[0]?.url ?? null;
+
+  const siteUrl = getClientEnv().NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  const locale = context.organization.default_language;
+  const listingUrl = `${siteUrl}/${locale}/properties/${property.slug}`;
+  const body = `${property.title}\n${listingUrl}`;
+
+  const { data: identity } = await admin
+    .from("contact_channel_identities")
+    .select("external_id")
+    .eq("id", conversation.channel_identity_id)
+    .maybeSingle();
+  if (!identity?.external_id) {
+    return { ok: false, error: "Recipient identity not found." };
+  }
+  const { data: connection } = await admin
+    .from("messaging_connections")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("channel", conversation.channel)
+    .maybeSingle();
+  if (!connection || connection.status !== "connected") {
+    return { ok: false, error: "This channel is not connected." };
+  }
+
+  const adapter = getMessageAdapter(conversation.channel);
+  const result = coverUrl
+    ? await adapter.sendMedia(connection, {
+        to: identity.external_id,
+        mediaUrl: coverUrl,
+        kind: "image",
+        caption: body,
+      })
+    : await adapter.sendText(connection, {
+        to: identity.external_id,
+        text: body,
+      });
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the property." };
+  }
+
+  await recordOutboundMessage(admin, {
+    organizationId,
+    channel: conversation.channel,
+    conversationId: conversation.id,
+    senderUserId: context.user.id,
+    body,
+    externalMessageId: result.externalMessageId ?? null,
+    status: "sent",
+  });
+  revalidatePath(MESSAGES_PATH);
+  return { ok: true };
+}
+
 /** Отмечает канальный диалог прочитанным для текущего пользователя. */
 export async function markChannelConversationRead(
   conversationId: string,
