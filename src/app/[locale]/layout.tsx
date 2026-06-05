@@ -20,6 +20,7 @@ import { AttributionTracker } from "@/features/crm/attribution-tracker";
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { DEFAULT_LOCALE, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { I18nProvider } from "@/lib/i18n/provider";
 import { buildLocalizedPath } from "@/lib/seo";
 import { getCurrentUserShallow } from "@/server/auth";
 import { getPublicSiteContext } from "@/server/public-site";
@@ -192,7 +193,7 @@ export default async function LocaleLayout({
   }
 
   return (
-    <>
+    <I18nProvider locale={locale} dictionary={dictionary}>
       <AttributionTracker />
       {trackingConfig ? (
         <AnalyticsTracker config={trackingConfig} />
@@ -217,6 +218,6 @@ export default async function LocaleLayout({
       >
         {children}
       </PublicLayout>
-    </>
+    </I18nProvider>
   );
 }

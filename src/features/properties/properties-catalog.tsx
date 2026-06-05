@@ -3,6 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useI18n } from "@/lib/i18n/provider";
+
 /** Тип сделки карточки (маппинг purpose → дизайн). */
 type Deal = "sale" | "rent" | "vacation" | "other";
 /** Режим каталога — основной переключатель Buy/Rent/Vacation (не фильтр). */
@@ -57,25 +60,33 @@ interface Filters {
 
 const PRICE_MAX = 20_000_000;
 
-const DEAL_TITLE: Record<DealMode, string> = {
-  sale: "For sale",
-  rent: "For long-term rent",
-  vacation: "Vacation rentals",
-};
+type CatalogDict = Dictionary["catalog"];
 
-const DEAL_LABEL: Record<Deal, string> = {
-  sale: "For sale",
-  rent: "Long-term rent",
-  vacation: "Vacation",
-  other: "Featured",
-};
-
-const DEAL_TAG: Record<Deal, string> = {
-  sale: "For sale",
-  rent: "For lease",
-  vacation: "Vacation",
-  other: "Featured",
-};
+function dealTitle(deal: DealMode, c: CatalogDict): string {
+  return deal === "sale"
+    ? c.titleSale
+    : deal === "rent"
+      ? c.titleRent
+      : c.titleVacation;
+}
+function dealLabel(deal: Deal, c: CatalogDict): string {
+  return deal === "sale"
+    ? c.labelSale
+    : deal === "rent"
+      ? c.labelRent
+      : deal === "vacation"
+        ? c.labelVacation
+        : c.labelFeatured;
+}
+function dealTag(deal: Deal, c: CatalogDict): string {
+  return deal === "sale"
+    ? c.tagSale
+    : deal === "rent"
+      ? c.tagRent
+      : deal === "vacation"
+        ? c.tagVacation
+        : c.tagFeatured;
+}
 
 const MONO = "'Geist Mono', ui-monospace, monospace";
 
@@ -104,6 +115,8 @@ export function PropertiesCatalog({
   initialDeal,
   contactHref,
 }: Props) {
+  const { dict } = useI18n();
+  const t = dict.catalog;
   const defaultFilters = React.useMemo<Filters>(
     () => ({
       deal: initialDeal,
@@ -235,12 +248,12 @@ export function PropertiesCatalog({
   );
   if (filters.beds !== "Any")
     chips.push({
-      label: `${filters.beds} bed`,
+      label: `${filters.beds} ${t.bed}`,
       onClear: () => setFilters((f) => ({ ...f, beds: "Any" })),
     });
   if (filters.baths !== "Any")
     chips.push({
-      label: `${filters.baths} bath`,
+      label: `${filters.baths} ${t.bath}`,
       onClear: () => setFilters((f) => ({ ...f, baths: "Any" })),
     });
   filters.views.forEach((v) =>
@@ -267,7 +280,7 @@ export function PropertiesCatalog({
     });
   if (filters.yield !== "Any")
     chips.push({
-      label: `Yield ${filters.yield}`,
+      label: `${t.yieldLabel} ${filters.yield}`,
       onClear: () => setFilters((f) => ({ ...f, yield: "Any" })),
     });
   filters.amenities.forEach((a) =>
@@ -358,7 +371,7 @@ export function PropertiesCatalog({
                   fontWeight: 400,
                 }}
               >
-                {DEAL_TITLE[filters.deal]}
+                {dealTitle(filters.deal, t)}
               </h1>
               <p
                 className="tnum"
@@ -523,10 +536,12 @@ function DealToggle({
   deal: DealMode;
   setDeal: (k: DealMode) => void;
 }) {
+  const { dict } = useI18n();
+  const t = dict.catalog;
   const opts: { k: DealMode; label: string }[] = [
-    { k: "sale", label: "Buy" },
-    { k: "rent", label: "Rent" },
-    { k: "vacation", label: "Stay" },
+    { k: "sale", label: t.dealBuy },
+    { k: "rent", label: t.dealRent },
+    { k: "vacation", label: t.dealStay },
   ];
   const activeIdx = opts.findIndex((o) => o.k === deal);
   return (
@@ -735,6 +750,8 @@ function RangeSlider({
 }) {
   const [lo, hi] = value;
   const pct = (v: number) => ((v - min) / (max - min)) * 100;
+  const { dict } = useI18n();
+  const t = dict.catalog;
   return (
     <div>
       <div
@@ -742,8 +759,8 @@ function RangeSlider({
         style={{ display: "flex", gap: 10, marginBottom: 16 }}
       >
         {[
-          { label: "Min", v: lo, any: false },
-          { label: "Max", v: hi, any: hi >= max },
+          { label: t.min, v: lo, any: false },
+          { label: t.max, v: hi, any: hi >= max },
         ].map((b) => (
           <div
             key={b.label}
@@ -774,7 +791,7 @@ function RangeSlider({
                 letterSpacing: "-0.01em",
               }}
             >
-              {b.any ? "Any" : formatUsd(b.v)}
+              {b.any ? t.any : formatUsd(b.v)}
             </div>
           </div>
         ))}
@@ -861,6 +878,8 @@ function Sidebar({
 }) {
   const update = (patch: Partial<Filters>) =>
     setFilters((f) => ({ ...f, ...patch }));
+  const { dict } = useI18n();
+  const t = dict.catalog;
 
   return (
     <aside className="cat-sidebar">
@@ -870,7 +889,7 @@ function Sidebar({
             className="serif"
             style={{ fontSize: 21, letterSpacing: "-0.02em", color: "var(--text-primary)" }}
           >
-            Filters
+            {t.filters}
           </span>
           {activeCount > 0 ? (
             <span
@@ -882,7 +901,7 @@ function Sidebar({
                 letterSpacing: "0.04em",
               }}
             >
-              {activeCount} active
+              {activeCount} {t.active}
             </span>
           ) : null}
         </div>
@@ -903,14 +922,14 @@ function Sidebar({
                 fontFamily: "inherit",
               }}
             >
-              Clear all
+              {t.clearAll}
             </button>
           ) : null}
           <button
             type="button"
             className="sidebar-close"
             onClick={onClose}
-            aria-label="Close filters"
+            aria-label={t.closeFilters}
           >
             ×
           </button>
@@ -919,7 +938,7 @@ function Sidebar({
 
       <div className="sidebar-scroll">
         {districts.length > 1 ? (
-          <FilterSection title="District" active={filters.city !== "All"}>
+          <FilterSection title={t.district} active={filters.city !== "All"}>
             <PillRow
               options={districts}
               value={filters.city}
@@ -930,7 +949,7 @@ function Sidebar({
 
         {typeOptions.length > 0 ? (
           <FilterSection
-            title="Property type"
+            title={t.propertyType}
             active={filters.types.length > 0}
             count={filters.types.length}
           >
@@ -944,7 +963,7 @@ function Sidebar({
         ) : null}
 
         <FilterSection
-          title="Price (USD)"
+          title={t.priceUsd}
           active={filters.price[0] > 0 || filters.price[1] < PRICE_MAX}
         >
           <RangeSlider
@@ -955,7 +974,7 @@ function Sidebar({
           />
         </FilterSection>
 
-        <FilterSection title="Bedrooms" active={filters.beds !== "Any"}>
+        <FilterSection title={t.bedrooms} active={filters.beds !== "Any"}>
           <PillRow
             options={["Any", "1", "2", "3", "4", "5"]}
             value={filters.beds}
@@ -963,7 +982,7 @@ function Sidebar({
           />
         </FilterSection>
 
-        <FilterSection title="Bathrooms" defaultOpen={false} active={filters.baths !== "Any"}>
+        <FilterSection title={t.bathrooms} defaultOpen={false} active={filters.baths !== "Any"}>
           <PillRow
             options={["Any", "1", "2", "3", "4", "5"]}
             value={filters.baths}
@@ -973,7 +992,7 @@ function Sidebar({
 
         {viewOptions.length > 0 ? (
           <FilterSection
-            title="View"
+            title={t.viewLabel}
             defaultOpen={false}
             active={filters.views.length > 0}
             count={filters.views.length}
@@ -987,7 +1006,7 @@ function Sidebar({
           </FilterSection>
         ) : null}
 
-        <FilterSection title="Furnishing" defaultOpen={false} active={filters.furnishing !== "Any"}>
+        <FilterSection title={t.furnishing} defaultOpen={false} active={filters.furnishing !== "Any"}>
           <PillRow
             options={["Any", "Furnished", "Semi-furnished", "Unfurnished"]}
             value={filters.furnishing}
@@ -995,7 +1014,7 @@ function Sidebar({
           />
         </FilterSection>
 
-        <FilterSection title="Handover" defaultOpen={false} active={filters.completion !== "Any"}>
+        <FilterSection title={t.handover} defaultOpen={false} active={filters.completion !== "Any"}>
           <PillRow
             options={["Any", "Ready", "Off-plan"]}
             value={filters.completion}
@@ -1003,7 +1022,7 @@ function Sidebar({
           />
         </FilterSection>
 
-        <FilterSection title="Ownership" defaultOpen={false} active={filters.ownership !== "Any"}>
+        <FilterSection title={t.ownership} defaultOpen={false} active={filters.ownership !== "Any"}>
           <PillRow
             options={["Any", "Freehold", "Leasehold"]}
             value={filters.ownership}
@@ -1011,7 +1030,7 @@ function Sidebar({
           />
         </FilterSection>
 
-        <FilterSection title="Investment yield" defaultOpen={false} active={filters.yield !== "Any"}>
+        <FilterSection title={t.investmentYield} defaultOpen={false} active={filters.yield !== "Any"}>
           <PillRow
             options={["Any", ">5%", ">7%", ">9%"]}
             value={filters.yield}
@@ -1021,7 +1040,7 @@ function Sidebar({
 
         {amenityOptions.length > 0 ? (
           <FilterSection
-            title="Amenities"
+            title={t.amenities}
             defaultOpen={false}
             active={filters.amenities.length > 0}
             count={filters.amenities.length}
@@ -1037,7 +1056,7 @@ function Sidebar({
 
         {tagOptions.length > 0 ? (
           <FilterSection
-            title="Lifestyle"
+            title={t.lifestyle}
             defaultOpen={false}
             active={filters.tags.length > 0}
             count={filters.tags.length}
@@ -1055,8 +1074,8 @@ function Sidebar({
       <div className="sidebar-foot">
         <button type="button" className="sidebar-apply" onClick={onClose}>
           <span>
-            Show {String(count).padStart(2, "0")}{" "}
-            {count === 1 ? "property" : "properties"}
+            {t.show} {String(count).padStart(2, "0")}{" "}
+            {count === 1 ? t.property : t.properties}
           </span>
           <span className="arrow">→</span>
         </button>
@@ -1066,7 +1085,7 @@ function Sidebar({
           </span>
           <span style={{ color: "var(--text-tertiary)" }}>
             {" "}
-            of {String(totalAll).padStart(2, "0")} match
+            {t.ofMatch.replace("{total}", String(totalAll).padStart(2, "0"))}
           </span>
         </div>
         <Link href={contactHref} className="sidebar-ask">
@@ -1154,6 +1173,8 @@ function Toolbar({
   onOpenFilters: () => void;
   activeCount: number;
 }) {
+  const { dict } = useI18n();
+  const t = dict.catalog;
   return (
     <div
       style={{
@@ -1197,14 +1218,14 @@ function Toolbar({
               <line x1="1" y1="10.5" x2="13" y2="10.5" />
               <circle cx="9.5" cy="10.5" r="1.6" fill="var(--bg-elevated)" />
             </svg>
-            Filters
+            {t.filters}
             {activeCount > 0 ? (
               <span className="filter-trigger-badge">{activeCount}</span>
             ) : null}
           </button>
           <span>
-            Showing <span style={{ color: "var(--text-primary)" }}>{totalShown}</span>{" "}
-            result{totalShown !== 1 ? "s" : ""}
+            {t.showing} <span style={{ color: "var(--text-primary)" }}>{totalShown}</span>{" "}
+            {totalShown !== 1 ? t.results : t.result}
           </span>
         </div>
 
@@ -1239,7 +1260,7 @@ function Toolbar({
                     fontFamily: "inherit",
                   }}
                 >
-                  {k}
+                  {k === "list" ? t.viewList : t.viewGrid}
                 </button>
               );
             })}
@@ -1263,7 +1284,7 @@ function Toolbar({
                   marginRight: 8,
                 }}
               >
-                Density
+                {t.density}
               </span>
               {[2, 3].map((d) => {
                 const active = density === d;
@@ -1283,7 +1304,7 @@ function Toolbar({
                       fontFamily: "inherit",
                     }}
                   >
-                    {d} col
+                    {d} {t.col}
                   </button>
                 );
               })}
@@ -1303,7 +1324,7 @@ function Toolbar({
               marginRight: 8,
             }}
           >
-            Applied
+            {t.applied}
           </span>
           {chips.map((c, i) => (
             <button
@@ -1364,12 +1385,14 @@ function SortDropdown({
   setSort: (s: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const { dict } = useI18n();
+  const t = dict.catalog;
   const opts = [
-    { k: "newest", label: "Newest first" },
-    { k: "price-asc", label: "Price ascending" },
-    { k: "price-desc", label: "Price descending" },
-    { k: "sqft-desc", label: "Largest area" },
-    { k: "featured", label: "Featured first" },
+    { k: "newest", label: t.sortNewest },
+    { k: "price-asc", label: t.sortPriceAsc },
+    { k: "price-desc", label: t.sortPriceDesc },
+    { k: "sqft-desc", label: t.sortLargest },
+    { k: "featured", label: t.sortFeatured },
   ];
   const cur = opts.find((o) => o.k === sort) ?? opts[0]!;
   return (
@@ -1393,7 +1416,7 @@ function SortDropdown({
           fontFamily: "inherit",
         }}
       >
-        <span style={{ color: "var(--text-tertiary)", marginRight: 4 }}>Sort:</span>
+        <span style={{ color: "var(--text-tertiary)", marginRight: 4 }}>{t.sort}</span>
         <span>{cur.label}</span>
         <span
           style={{
@@ -1457,10 +1480,11 @@ function SortDropdown({
 // ============================================================
 
 function PriceTag({ prop, big }: { prop: CatalogItem; big?: boolean }) {
+  const { dict } = useI18n();
   if (!prop.priceDisplay) {
     return (
       <span style={{ fontSize: 13, color: "var(--text-tertiary)", fontStyle: "italic" }}>
-        Price on request
+        {dict.catalog.priceOnRequest}
       </span>
     );
   }
@@ -1492,10 +1516,10 @@ function PriceTag({ prop, big }: { prop: CatalogItem; big?: boolean }) {
   );
 }
 
-function specRow(prop: CatalogItem): string[] {
+function specRow(prop: CatalogItem, c: CatalogDict): string[] {
   return [
-    prop.beds > 0 ? `${prop.beds} bed` : null,
-    prop.baths > 0 ? `${prop.baths} bath` : null,
+    prop.beds > 0 ? `${prop.beds} ${c.bed}` : null,
+    prop.baths > 0 ? `${prop.baths} ${c.bath}` : null,
     prop.sqft ? `${prop.sqft.toLocaleString()} ${prop.sizeUnit}` : null,
   ].filter(Boolean) as string[];
 }
@@ -1533,7 +1557,9 @@ function ListCard({
   idx: string;
   total: string;
 }) {
-  const specs = specRow(prop);
+  const { dict } = useI18n();
+  const t = dict.catalog;
+  const specs = specRow(prop, t);
   return (
     <Link
       href={prop.href}
@@ -1584,7 +1610,7 @@ function ListCard({
               marginBottom: 16,
             }}
           >
-            <span className="eyebrow gold">{DEAL_LABEL[prop.deal]}</span>
+            <span className="eyebrow gold">{dealLabel(prop.deal, t)}</span>
             <span
               className="tnum"
               style={{ fontSize: 11, letterSpacing: "0.22em", color: "var(--text-tertiary)" }}
@@ -1649,7 +1675,7 @@ function ListCard({
                   letterSpacing: "0.06em",
                 }}
               >
-                Est. yield {prop.yield}%
+                {t.estYield} {prop.yield}%
               </div>
             ) : null}
           </div>
@@ -1662,7 +1688,7 @@ function ListCard({
               color: "var(--text-primary)",
             }}
           >
-            View details <span className="arrow">→</span>
+            {t.viewDetails} <span className="arrow">→</span>
           </span>
         </div>
       </div>
@@ -1671,6 +1697,8 @@ function ListCard({
 }
 
 function GridCard({ prop }: { prop: CatalogItem }) {
+  const { dict } = useI18n();
+  const t = dict.catalog;
   return (
     <Link
       href={prop.href}
@@ -1709,7 +1737,7 @@ function GridCard({ prop }: { prop: CatalogItem }) {
             padding: "5px 10px",
           }}
         >
-          {DEAL_TAG[prop.deal]}
+          {dealTag(prop.deal, t)}
         </span>
         {prop.deal === "sale" && prop.badge ? (
           <span
@@ -1749,7 +1777,7 @@ function GridCard({ prop }: { prop: CatalogItem }) {
             }}
           >
             <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#7DC383" }} />
-            Available now
+            {t.availableNow}
           </span>
         ) : null}
       </div>
@@ -1797,17 +1825,17 @@ function GridCard({ prop }: { prop: CatalogItem }) {
         >
           {prop.deal === "vacation" ? (
             <>
-              {prop.sleeps ? <span>{prop.sleeps} guests</span> : null}
+              {prop.sleeps ? <span>{prop.sleeps} {t.guests}</span> : null}
               {prop.sleeps && prop.beds > 0 ? <Dot /> : null}
-              {prop.beds > 0 ? <span>{prop.beds} bed</span> : null}
+              {prop.beds > 0 ? <span>{prop.beds} {t.bed}</span> : null}
               {prop.baths > 0 ? <Dot /> : null}
-              {prop.baths > 0 ? <span>{prop.baths} bath</span> : null}
+              {prop.baths > 0 ? <span>{prop.baths} {t.bath}</span> : null}
             </>
           ) : prop.deal === "rent" ? (
             <>
-              {prop.beds > 0 ? <span>{prop.beds} bed</span> : null}
+              {prop.beds > 0 ? <span>{prop.beds} {t.bed}</span> : null}
               {prop.baths > 0 ? <Dot /> : null}
-              {prop.baths > 0 ? <span>{prop.baths} bath</span> : null}
+              {prop.baths > 0 ? <span>{prop.baths} {t.bath}</span> : null}
               {prop.furnishing ? <Dot /> : null}
               {prop.furnishing ? (
                 <span style={{ color: "var(--text-primary)" }}>{prop.furnishing}</span>
@@ -1815,9 +1843,9 @@ function GridCard({ prop }: { prop: CatalogItem }) {
             </>
           ) : (
             <>
-              {prop.beds > 0 ? <span>{prop.beds} bed</span> : null}
+              {prop.beds > 0 ? <span>{prop.beds} {t.bed}</span> : null}
               {prop.baths > 0 ? <Dot /> : null}
-              {prop.baths > 0 ? <span>{prop.baths} bath</span> : null}
+              {prop.baths > 0 ? <span>{prop.baths} {t.bath}</span> : null}
               {prop.sqft ? <Dot /> : null}
               {prop.sqft ? <span>{prop.sqft.toLocaleString()} {prop.sizeUnit}</span> : null}
               {prop.yield ? (
@@ -1831,7 +1859,7 @@ function GridCard({ prop }: { prop: CatalogItem }) {
                     padding: "2px 7px",
                   }}
                 >
-                  {prop.yield}% yield
+                  {prop.yield}% {t.yieldSuffix}
                 </span>
               ) : null}
             </>
@@ -1884,6 +1912,8 @@ function Pagination({
   setPage: (p: number) => void;
   totalPages: number;
 }) {
+  const { dict } = useI18n();
+  const t = dict.catalog;
   if (totalPages <= 1) return null;
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
   return (
@@ -1913,7 +1943,7 @@ function Pagination({
           fontFamily: "inherit",
         }}
       >
-        <span style={{ marginRight: 6 }}>←</span> Previous
+        <span style={{ marginRight: 6 }}>←</span> {t.previous}
       </button>
       <div
         style={{
@@ -1965,7 +1995,7 @@ function Pagination({
           fontFamily: "inherit",
         }}
       >
-        Next <span style={{ marginLeft: 6 }}>→</span>
+        {t.next} <span style={{ marginLeft: 6 }}>→</span>
       </button>
     </nav>
   );
@@ -1978,6 +2008,8 @@ function EmptyState({
   onReset: () => void;
   contactHref: string;
 }) {
+  const { dict } = useI18n();
+  const t = dict.catalog;
   return (
     <div
       style={{
@@ -1986,7 +2018,7 @@ function EmptyState({
         borderBottom: "1px solid var(--border-subtle)",
       }}
     >
-      <span className="eyebrow gold">No matches</span>
+      <span className="eyebrow gold">{t.noMatches}</span>
       <h2
         className="serif"
         style={{
@@ -2013,7 +2045,7 @@ function EmptyState({
       </p>
       <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center" }}>
         <button type="button" onClick={onReset} className="btn btn-ghost">
-          Reset filters
+          {t.resetFilters}
         </button>
         <Link href={contactHref} className="btn btn-primary">
           Speak with Alexey <span className="arrow">→</span>
