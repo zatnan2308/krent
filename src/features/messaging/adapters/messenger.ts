@@ -15,11 +15,12 @@ interface FbSendResponse {
   error?: { message?: string };
 }
 
-/** POST в Page messages endpoint. */
+/** POST в Page messages endpoint. С message tag — отправка вне 24ч-окна. */
 async function fbSend(
   config: MessengerConfig,
   message: Record<string, unknown>,
   recipientId: string,
+  options?: { tag?: string },
 ): Promise<SendResult> {
   try {
     const response = await fetch(
@@ -32,7 +33,8 @@ async function fbSend(
         },
         body: JSON.stringify({
           recipient: { id: recipientId },
-          messaging_type: "RESPONSE",
+          messaging_type: options?.tag ? "MESSAGE_TAG" : "RESPONSE",
+          ...(options?.tag ? { tag: options.tag } : {}),
           message,
         }),
       },
@@ -52,6 +54,19 @@ async function fbSend(
         error instanceof Error ? error.message : "Messenger request failed.",
     };
   }
+}
+
+/** Отправка текста с message tag (повторный контакт вне 24ч-окна). */
+export async function messengerSendTaggedText(
+  recipientId: string,
+  text: string,
+  tag: string,
+): Promise<SendResult> {
+  const config = getMessengerConfig();
+  if (!config) {
+    return { ok: false, error: "Messenger is not configured." };
+  }
+  return fbSend(config, { text }, recipientId, { tag });
 }
 
 /** Имя страницы для карточки. */

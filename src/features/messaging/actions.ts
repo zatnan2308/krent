@@ -11,6 +11,7 @@ import { hasPermission } from "@/server/permissions";
 
 import {
   messengerGetPageInfo,
+  messengerSendTaggedText,
   messengerSubscribeApp,
 } from "./adapters/messenger";
 import { telegramGetMe, telegramSetWebhook } from "./adapters/telegram";
@@ -48,6 +49,12 @@ const ALLOWED_MEDIA_MIME = new Set([
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "text/plain",
+]);
+const MESSENGER_TAGS = new Set([
+  "HUMAN_AGENT",
+  "ACCOUNT_UPDATE",
+  "CONFIRMED_EVENT_UPDATE",
+  "POST_PURCHASE_UPDATE",
 ]);
 
 const INTEGRATIONS_PATH = "/dashboard/integrations";
@@ -643,6 +650,95 @@ export async function sendChannelTemplate(input: {
       entityType: "contact",
       entityId: conversation.contact_id,
       metadata: { channel: "whatsapp_cloud", template: templateName },
+    });
+  }
+  revalidatePath(MESSAGES_PATH);
+  return { ok: true };
+}
+
+/**
+ * Отправляет текст в Messenger с message tag (повторный контакт вне 24ч-окна).
+ * Только Messenger; тег выбирает оператор по политике Messenger Platform.
+ */
+export async function sendChannelTag(input: {
+  conversationId: string;
+  text: string;
+  tag: string;
+}): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to send messages." };
+  }
+  const text = input.text.trim();
+  if (!text) {
+    return { ok: false, error: "Message is empty." };
+  }
+  if (!MESSENGER_TAGS.has(input.tag)) {
+    return { ok: false, error: "Pick a valid message tag." };
+  }
+  const organizationId = context.organization.id;
+  const admin = createAdminClient();
+
+  const { data: conversation } = await admin
+    .from("messaging_conversations")
+    .select("id, channel, channel_identity_id, contact_id")
+    .eq("organization_id", organizationId)
+    .eq("id", input.conversationId)
+    .maybeSingle();
+  if (!conversation || !conversation.channel_identity_id) {
+    return { ok: false, error: "Conversation not found." };
+  }
+  if (conversation.channel !== "messenger") {
+    return { ok: false, error: "Message tags are available for Messenger only." };
+  }
+
+  const { data: identity } = await admin
+    .from("contact_channel_identities")
+    .select("external_id")
+    .eq("id", conversation.channel_identity_id)
+    .maybeSingle();
+  if (!identity?.external_id) {
+    return { ok: false, error: "Recipient identity not found." };
+  }
+  const { data: connection } = await admin
+    .from("messaging_connections")
+    .select("status")
+    .eq("organization_id", organizationId)
+    .eq("channel", "messenger")
+    .maybeSingle();
+  if (!connection || connection.status !== "connected") {
+    return { ok: false, error: "This channel is not connected." };
+  }
+
+  const result = await messengerSendTaggedText(
+    identity.external_id,
+    text,
+    input.tag,
+  );
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the message." };
+  }
+
+  await recordOutboundMessage(admin, {
+    organizationId,
+    channel: "messenger",
+    conversationId: conversation.id,
+    senderUserId: context.user.id,
+    body: text,
+    externalMessageId: result.externalMessageId ?? null,
+    status: "sent",
+  });
+  if (conversation.contact_id) {
+    await logAudit({
+      organizationId,
+      userId: context.user.id,
+      action: "messaging.sent",
+      entityType: "contact",
+      entityId: conversation.contact_id,
+      metadata: { channel: "messenger", tag: input.tag },
     });
   }
   revalidatePath(MESSAGES_PATH);

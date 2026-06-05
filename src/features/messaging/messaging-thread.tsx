@@ -8,6 +8,7 @@ import {
   sendChannelMedia,
   sendChannelMessage,
   sendChannelProperty,
+  sendChannelTag,
   sendChannelTemplate,
 } from "@/features/messaging/actions";
 import { CHANNEL_LABELS } from "@/features/messaging/channels";
@@ -42,6 +43,7 @@ export function MessagingThread({
   const [propertyId, setPropertyId] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
   const [template, setTemplate] = React.useState("");
+  const [tag, setTag] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -121,6 +123,28 @@ export function MessagingThread({
     setPending(false);
     if (result.ok) {
       setPropertyId("");
+      router.refresh();
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleSendTag() {
+    const value = text.trim();
+    if (!value || !tag) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const result = await sendChannelTag({
+      conversationId: view.id,
+      text: value,
+      tag,
+    });
+    setPending(false);
+    if (result.ok) {
+      setText("");
+      setTag("");
       router.refresh();
     } else {
       setError(result.error);
@@ -288,6 +312,46 @@ export function MessagingThread({
                 >
                   Send
                 </Button>
+              </div>
+            ) : null}
+            {view.channel === "messenger" ? (
+              <div className="space-y-2">
+                <textarea
+                  value={text}
+                  rows={2}
+                  placeholder="Message with a tag…"
+                  onChange={(event) => setText(event.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <div className="flex items-center gap-2">
+                  <select
+                    value={tag}
+                    onChange={(event) => setTag(event.target.value)}
+                    aria-label="Message tag"
+                    className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+                  >
+                    <option value="">Choose a message tag…</option>
+                    <option value="HUMAN_AGENT">
+                      Human agent reply (7 days)
+                    </option>
+                    <option value="ACCOUNT_UPDATE">Account update</option>
+                    <option value="CONFIRMED_EVENT_UPDATE">Event update</option>
+                    <option value="POST_PURCHASE_UPDATE">
+                      Post-purchase update
+                    </option>
+                  </select>
+                  <Button
+                    size="sm"
+                    disabled={pending || !tag || !text.trim()}
+                    onClick={handleSendTag}
+                  >
+                    Send
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Use the tag that matches your message, per Messenger Platform
+                  policy.
+                </p>
               </div>
             ) : null}
           </div>
