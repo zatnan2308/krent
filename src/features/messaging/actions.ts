@@ -9,7 +9,11 @@ import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
 import { telegramGetMe, telegramSetWebhook } from "./adapters/telegram";
-import { getTelegramConfig } from "./config";
+import {
+  whatsappGetPhoneInfo,
+  whatsappSubscribeApp,
+} from "./adapters/whatsapp";
+import { getTelegramConfig, getWhatsAppConfig } from "./config";
 import type { ActionResult } from "./schema";
 import type { MessagingChannel } from "./types";
 
@@ -96,6 +100,42 @@ export async function connectTelegram(): Promise<ActionResult> {
   await upsertConnection(admin, access.organizationId, "telegram", {
     bot_username: me.username,
     display_name: `@${me.username}`,
+    status: "connected",
+    error_message: null,
+    created_by: access.userId,
+  });
+  revalidatePath(INTEGRATIONS_PATH);
+  return { ok: true };
+}
+
+/**
+ * Подключает WhatsApp Cloud API: креды из env (номер/токен/app secret/verify
+ * token покупателя). Тянет display_phone_number/verified_name, подписывает
+ * приложение на вебхуки WABA (best-effort) и помечает подключение connected.
+ * Сам вебхук покупатель прописывает в консоли Meta — см. SETUP.md.
+ */
+export async function connectWhatsApp(): Promise<ActionResult> {
+  const access = await requireChannelAccess();
+  if (!access.ok) {
+    return access;
+  }
+  const config = getWhatsAppConfig();
+  if (!config) {
+    return {
+      ok: false,
+      error:
+        "Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in the environment first (see SETUP.md).",
+    };
+  }
+  const info = await whatsappGetPhoneInfo(config);
+  await whatsappSubscribeApp(config);
+
+  const admin = createAdminClient();
+  await upsertConnection(admin, access.organizationId, "whatsapp_cloud", {
+    phone_number_id: config.phoneNumberId,
+    waba_id: config.wabaId,
+    phone_display: info.displayPhone,
+    display_name: info.verifiedName ?? info.displayPhone ?? "WhatsApp",
     status: "connected",
     error_message: null,
     created_by: access.userId,

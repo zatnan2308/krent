@@ -1,6 +1,7 @@
 import type { MessagingChannel } from "../types";
 import { telegramAdapter } from "./telegram";
 import type { MessageChannelAdapter } from "./types";
+import { whatsappAdapter } from "./whatsapp";
 
 /**
  * Реестр адаптеров каналов (зеркалит getIntegrationAdapter).
@@ -15,6 +16,8 @@ export function getMessageAdapter(
   switch (channel) {
     case "telegram":
       return telegramAdapter();
+    case "whatsapp_cloud":
+      return whatsappAdapter();
     default:
       throw new Error(`Messaging adapter is not implemented yet: ${channel}`);
   }

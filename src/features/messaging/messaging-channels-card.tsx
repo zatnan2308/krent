@@ -3,10 +3,17 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
-import { connectTelegram, disconnectChannel } from "@/features/messaging/actions";
+import {
+  connectTelegram,
+  connectWhatsApp,
+  disconnectChannel,
+} from "@/features/messaging/actions";
 import { CHANNEL_LABELS } from "@/features/messaging/channels";
 import type { ChannelConnectionView } from "@/features/messaging/queries";
-import type { MessagingConnectionStatus } from "@/features/messaging/types";
+import type {
+  MessagingChannel,
+  MessagingConnectionStatus,
+} from "@/features/messaging/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -34,19 +41,31 @@ export function MessagingChannelsCard({
   const [pending, setPending] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
 
-  async function handleConnectTelegram() {
-    setPending("telegram");
+  // Telegram и WhatsApp подключаются из UI (валидация env + вебхук/подписка).
+  // Messenger — в своей фазе.
+  const CONNECTORS: Partial<Record<MessagingChannel, () => Promise<{ ok: boolean; error?: string }>>> =
+    {
+      telegram: connectTelegram,
+      whatsapp_cloud: connectWhatsApp,
+    };
+
+  async function handleConnect(channel: MessagingChannel) {
+    const connector = CONNECTORS[channel];
+    if (!connector) {
+      return;
+    }
+    setPending(channel);
     setMessage(null);
-    const result = await connectTelegram();
+    const result = await connector();
     setPending(null);
     if (result.ok) {
       router.refresh();
     } else {
-      setMessage(result.error);
+      setMessage(result.error ?? "Could not connect.");
     }
   }
 
-  async function handleDisconnect(channel: ChannelConnectionView["channel"]) {
+  async function handleDisconnect(channel: MessagingChannel) {
     setPending(channel);
     await disconnectChannel(channel);
     setPending(null);
@@ -81,12 +100,14 @@ export function MessagingChannelsCard({
             </Badge>
           </div>
 
-          {connection.channel === "telegram" ? (
+          {connection.channel in CONNECTORS ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
-                disabled={!connection.configured || pending === "telegram"}
-                onClick={handleConnectTelegram}
+                disabled={
+                  !connection.configured || pending === connection.channel
+                }
+                onClick={() => handleConnect(connection.channel)}
               >
                 {connection.status === "connected" ? "Reconnect" : "Connect"}
               </Button>
@@ -95,13 +116,15 @@ export function MessagingChannelsCard({
                   size="sm"
                   variant="outline"
                   className="text-destructive"
-                  disabled={pending === "telegram"}
-                  onClick={() => handleDisconnect("telegram")}
+                  disabled={pending === connection.channel}
+                  onClick={() => handleDisconnect(connection.channel)}
                 >
                   Disconnect
                 </Button>
               ) : null}
-              {connection.status === "connected" && connection.detail ? (
+              {connection.channel === "telegram" &&
+              connection.status === "connected" &&
+              connection.detail ? (
                 <span className="text-xs text-muted-foreground">
                   Deep link: t.me/{connection.detail.replace("@", "")}
                   ?start=p_&lt;propertyId&gt;
