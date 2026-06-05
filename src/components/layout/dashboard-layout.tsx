@@ -14,6 +14,7 @@ interface DashboardLayoutProps {
   publicSiteUrl?: string | null;
   sidebarBadges?: Record<string, number>;
   permissions?: string[];
+  modules?: string[];
   isSuperAdmin?: boolean;
   children: ReactNode;
 }
@@ -28,6 +29,7 @@ export function DashboardLayout({
   publicSiteUrl,
   sidebarBadges,
   permissions,
+  modules,
   isSuperAdmin,
   children,
 }: DashboardLayoutProps) {
@@ -43,6 +45,7 @@ export function DashboardLayout({
       publicSiteUrl={publicSiteUrl}
       sidebarBadges={sidebarBadges}
       permissions={permissions}
+      modules={modules}
       isSuperAdmin={isSuperAdmin}
     >
       {children}

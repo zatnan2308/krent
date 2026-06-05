@@ -14,12 +14,31 @@ import { DEFAULT_BRANDING } from "@/lib/branding";
 import { ROUTES } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils";
 
+/** Карта пункт→модуль: пункт скрывается, если модуль выключен в Settings.
+ *  Пункты без записи (Dashboard/Settings/контент/портал) гейту по модулям не
+ *  подлежат. */
+const MODULE_BY_HREF: Record<string, string> = {
+  [ROUTES.dashboard.crm]: "crm",
+  [ROUTES.dashboard.properties]: "properties",
+  [ROUTES.dashboard.bookings]: "bookings",
+  [ROUTES.dashboard.calendar]: "calendar",
+  [ROUTES.dashboard.messages]: "chat",
+  [ROUTES.dashboard.email]: "email",
+  [ROUTES.dashboard.marketing]: "marketing",
+  [ROUTES.dashboard.seo]: "seo",
+  [ROUTES.dashboard.analytics]: "analytics",
+  [ROUTES.dashboard.reports]: "analytics",
+  [ROUTES.dashboard.agentSync]: "api_access",
+};
+
 interface AppSidebarProps {
   variant: "dashboard" | "super-admin";
   onNavigate?: () => void;
   badges?: Record<string, number>;
   /** Права текущего пользователя — для фильтрации пунктов dashboard. */
   permissions?: string[];
+  /** Включённые модули организации — пункт скрыт, если его модуль выключен. */
+  modules?: string[];
   /** Super-admin видит все пункты независимо от прав. */
   isSuperAdmin?: boolean;
 }
@@ -29,13 +48,19 @@ export function AppSidebar({
   onNavigate,
   badges,
   permissions = [],
+  modules = [],
   isSuperAdmin = false,
 }: AppSidebarProps) {
   const pathname = usePathname();
 
-  // Видим ли пункт: нет требования к праву, super-admin, либо право есть.
-  const canSee = (item: NavItem): boolean =>
-    !item.permission || isSuperAdmin || permissions.includes(item.permission);
+  // Видим ли пункт: проверка права И модуля (super-admin видит всё).
+  const canSee = (item: NavItem): boolean => {
+    if (isSuperAdmin) return true;
+    if (item.permission && !permissions.includes(item.permission)) return false;
+    const mod = MODULE_BY_HREF[item.href];
+    if (mod && !modules.includes(mod)) return false;
+    return true;
+  };
 
   // Для dashboard — секции с фильтрацией; для super-admin — плоский список.
   const sections: NavSection[] =

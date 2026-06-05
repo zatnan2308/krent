@@ -92,6 +92,7 @@ export default async function DashboardGroupLayout({
       publicSiteUrl={publicSiteUrl}
       sidebarBadges={sidebarBadges}
       permissions={context.permissions}
+      modules={context.modules}
       isSuperAdmin={context.isSuperAdmin}
     >
       {children}

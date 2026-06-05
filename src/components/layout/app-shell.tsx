@@ -20,6 +20,7 @@ interface AppShellProps {
   publicSiteUrl?: string | null;
   sidebarBadges?: Record<string, number>;
   permissions?: string[];
+  modules?: string[];
   isSuperAdmin?: boolean;
   children: React.ReactNode;
 }
@@ -39,6 +40,7 @@ export function AppShell({
   publicSiteUrl,
   sidebarBadges,
   permissions,
+  modules,
   isSuperAdmin,
   children,
 }: AppShellProps) {
@@ -53,6 +55,7 @@ export function AppShell({
             variant={variant}
             badges={sidebarBadges}
             permissions={permissions}
+            modules={modules}
             isSuperAdmin={isSuperAdmin}
           />
         </div>
@@ -73,6 +76,7 @@ export function AppShell({
               onNavigate={() => setMobileOpen(false)}
               badges={sidebarBadges}
               permissions={permissions}
+              modules={modules}
               isSuperAdmin={isSuperAdmin}
             />
           </DialogPrimitive.Content>
