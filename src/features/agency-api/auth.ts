@@ -163,37 +163,27 @@ export function corsHeadersFor(
   return headers;
 }
 
-/** Проверка/инкремент минутного окна. */
+/**
+ * Проверка/инкремент минутного окна — атомарно одним upsert'ом (RPC),
+ * без гонки select→update: параллельные заявки не «теряют» инкремент и не
+ * обходят лимит. На сбой RPC — fail-open (как прежняя логика при сбое чтения).
+ */
 async function checkRateLimit(
   admin: Admin,
   apiKeyId: string,
   options: { organizationId: string; limit: number },
 ): Promise<{ ok: true } | { ok: false }> {
   const windowStart = currentMinuteStart().toISOString();
-  const { data: existing } = await admin
-    .from("api_rate_limits")
-    .select("id, request_count")
-    .eq("api_key_id", apiKeyId)
-    .eq("window_start", windowStart)
-    .maybeSingle();
-
-  if (!existing) {
-    await admin.from("api_rate_limits").insert({
-      organization_id: options.organizationId,
-      api_key_id: apiKeyId,
-      window_start: windowStart,
-      request_count: 1,
-    });
+  const { data, error } = await admin.rpc("api_rate_limit_hit", {
+    p_api_key: apiKeyId,
+    p_org: options.organizationId,
+    p_window: windowStart,
+    p_limit: options.limit,
+  });
+  if (error) {
     return { ok: true };
   }
-  if (existing.request_count >= options.limit) {
-    return { ok: false };
-  }
-  await admin
-    .from("api_rate_limits")
-    .update({ request_count: existing.request_count + 1 })
-    .eq("id", existing.id);
-  return { ok: true };
+  return data ? { ok: true } : { ok: false };
 }
 
 function pathFromRequest(request: Request): string {

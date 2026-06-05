@@ -6611,6 +6611,19 @@ export type Database = {
         Args: { p_primary: string; p_secondary: string; p_org: string }
         Returns: undefined
       }
+      api_rate_limit_hit: {
+        Args: {
+          p_api_key: string
+          p_org: string
+          p_window: string
+          p_limit: number
+        }
+        Returns: boolean
+      }
+      claim_due_webhook_events: {
+        Args: { p_limit: number }
+        Returns: string[]
+      }
     }
     Enums: {
       address_visibility: "exact" | "approximate" | "hidden"

@@ -62,21 +62,19 @@ export async function runWebhookRetryBatch(limit = 25): Promise<{
   processed: number;
 }> {
   const admin = createAdminClient();
-  const now = new Date().toISOString();
-  const { data: due } = await admin
-    .from("webhook_events")
-    .select("id")
-    .eq("status", "pending")
-    .lte("next_attempt_at", now)
-    .order("next_attempt_at", { ascending: true })
-    .limit(limit);
-  if (!due || due.length === 0) {
+  // Атомарный захват пачки (FOR UPDATE SKIP LOCKED + бронь next_attempt_at):
+  // параллельные прогоны не доставят одно событие дважды.
+  const { data: claimed } = await admin.rpc("claim_due_webhook_events", {
+    p_limit: limit,
+  });
+  const ids = claimed ?? [];
+  if (ids.length === 0) {
     return { processed: 0 };
   }
-  for (const row of due) {
-    await tryDeliverEvent(admin, row.id);
+  for (const id of ids) {
+    await tryDeliverEvent(admin, id);
   }
-  return { processed: due.length };
+  return { processed: ids.length };
 }
 
 interface EventForDelivery {
