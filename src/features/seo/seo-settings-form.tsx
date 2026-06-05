@@ -34,11 +34,24 @@ function Field({
 }
 
 /** Редактор глобальных SEO-настроек сайта. */
-export function SeoSettingsForm({ initial }: { initial: SeoSettingsInput }) {
+export function SeoSettingsForm({
+  initial,
+  siteHost,
+}: {
+  initial: SeoSettingsInput;
+  siteHost?: string;
+}) {
   const router = useRouter();
   const [form, setForm] = React.useState<SeoSettingsInput>({ ...initial });
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
+
+  const host = siteHost || "your-domain.com";
+  const previewTitle =
+    `${form.defaultTitle}${form.titleSuffix}`.trim() || "Your page title";
+  const previewDescription =
+    form.defaultDescription.trim() ||
+    "Your page description appears here — keep it under ~160 characters for search results.";
 
   return (
     <form
@@ -122,6 +135,54 @@ export function SeoSettingsForm({ initial }: { initial: SeoSettingsInput }) {
           onChange={(e) => setForm({ ...form, robotsTxt: e.target.value })}
         />
       </Field>
+
+      <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+        <p className="text-xs font-medium text-muted-foreground">
+          Live preview (defaults used when a page sets nothing of its own)
+        </p>
+
+        {/* Google-сниппет */}
+        <div className="rounded-md border bg-background p-3">
+          <p className="truncate text-xs text-muted-foreground">
+            {host} › …
+          </p>
+          <p className="truncate text-lg text-[#1a0dab] dark:text-[#8ab4f8]">
+            {previewTitle}
+          </p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {previewDescription}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Title {previewTitle.length}/60 · Description{" "}
+            {form.defaultDescription.trim().length}/160
+          </p>
+        </div>
+
+        {/* OG / соцкарточка */}
+        <div className="max-w-md overflow-hidden rounded-md border bg-background">
+          {form.defaultOgImageUrl.trim() ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={form.defaultOgImageUrl}
+              alt="Open Graph preview"
+              className="aspect-[1.91/1] w-full bg-muted object-cover"
+            />
+          ) : (
+            <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-muted text-xs text-muted-foreground">
+              No OG image set
+            </div>
+          )}
+          <div className="space-y-0.5 border-t p-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              {host}
+            </p>
+            <p className="truncate text-sm font-medium">{previewTitle}</p>
+            <p className="line-clamp-2 text-xs text-muted-foreground">
+              {previewDescription}
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>

@@ -96,6 +96,17 @@ export default async function SeoPage() {
     googleSiteVerification: seo?.google_site_verification ?? "",
   };
 
+  // Хост для SEO-превью: основной/верифицированный домен организации.
+  const { data: domains } = await admin
+    .from("domains")
+    .select("domain, status, type")
+    .eq("organization_id", context.organization.id);
+  const primaryDomain =
+    domains?.find((d) => d.type === "primary") ??
+    domains?.find((d) => d.status === "verified") ??
+    domains?.[0];
+  const siteHost = primaryDomain?.domain;
+
   const summary = [
     { label: "Published pages", value: audit.publishedPages },
     { label: "Active properties", value: audit.activeProperties },
@@ -124,7 +135,7 @@ export default async function SeoPage() {
           <CardTitle className="text-base">Site SEO defaults</CardTitle>
         </CardHeader>
         <CardContent>
-          <SeoSettingsForm initial={seoInitial} />
+          <SeoSettingsForm initial={seoInitial} siteHost={siteHost} />
         </CardContent>
       </Card>
 
