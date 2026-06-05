@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import {
   deleteWebhookEndpoint,
+  rotateWebhookEndpointSecret,
   saveWebhookEndpoint,
 } from "@/features/agency-api/actions";
 import {
@@ -42,6 +43,11 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
+  // Новый секрет показываем разово после ротации — повторно его не достать.
+  const [rotated, setRotated] = React.useState<{
+    id: string;
+    secret: string;
+  } | null>(null);
 
   function toggleEvent(type: WebhookEventType) {
     setForm((prev) => {
@@ -94,6 +100,20 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
     }
   }
 
+  async function handleRotate(id: string) {
+    setPending(true);
+    setMessage(null);
+    setRotated(null);
+    const result = await rotateWebhookEndpointSecret({ id });
+    setPending(false);
+    if (result.ok) {
+      setRotated({ id, secret: result.secret });
+      router.refresh();
+    } else {
+      setMessage(result.error);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {endpoints.length === 0 ? (
@@ -116,11 +136,33 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
                     ? new Date(row.last_success_at).toLocaleString()
                     : "never"}
                 </p>
+                {rotated?.id === row.id ? (
+                  <div className="mt-1 space-y-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-2">
+                    <p className="text-xs font-medium text-emerald-700">
+                      New secret — copy it now, it won&apos;t be shown again:
+                    </p>
+                    <code className="block break-all text-xs">
+                      {rotated.secret}
+                    </code>
+                    <p className="text-[11px] text-muted-foreground">
+                      The previous secret stays valid briefly so in-flight
+                      deliveries keep verifying.
+                    </p>
+                  </div>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={row.is_active ? "default" : "secondary"}>
                   {row.is_active ? "Active" : "Inactive"}
                 </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => handleRotate(row.id)}
+                >
+                  Rotate secret
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"

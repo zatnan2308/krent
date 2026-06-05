@@ -1,5 +1,7 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/server";
@@ -8,6 +10,7 @@ import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
 import { generateApiKey } from "./keys";
+import { rotateWebhookSecret } from "./webhooks";
 import {
   createApiKeySchema,
   deleteAgentConnectionSchema,
@@ -272,6 +275,51 @@ export async function deleteWebhookEndpoint(
   }
   revalidatePath(ADMIN_PATH);
   return { ok: true };
+}
+
+export type RotateWebhookSecretResult =
+  | { ok: true; secret: string }
+  | { ok: false; error: string };
+
+/** Генерирует надёжный webhook-секрет на сервере (клиент его не выбирает). */
+function generateWebhookSecret(): string {
+  return `whsec_${randomBytes(24).toString("hex")}`;
+}
+
+/**
+ * Ротация секрета webhook-эндпоинта: текущий секрет уходит в previous_secret
+ * (грейс-период для проверки подписи), новый — primary. Возвращает новый
+ * секрет ОДИН РАЗ для показа.
+ */
+export async function rotateWebhookEndpointSecret(
+  input: DeleteWebhookEndpointInput,
+): Promise<RotateWebhookSecretResult> {
+  const parsed = deleteWebhookEndpointSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid webhook id." };
+  }
+  const access = await requireAccess();
+  if (!access.ok) {
+    return access;
+  }
+  const secret = generateWebhookSecret();
+  const result = await rotateWebhookSecret(
+    access.organizationId,
+    parsed.data.id,
+    secret,
+  );
+  if (!result.ok) {
+    return { ok: false, error: "Webhook not found." };
+  }
+  await logAudit({
+    organizationId: access.organizationId,
+    userId: access.userId,
+    action: "webhook.secret_rotated",
+    entityType: "webhook_endpoint",
+    entityId: parsed.data.id,
+  });
+  revalidatePath(ADMIN_PATH);
+  return { ok: true, secret };
 }
 
 // ---- External visibility -----------------------------------
