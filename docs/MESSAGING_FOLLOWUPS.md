@@ -90,16 +90,16 @@ PowerShell ломается на `&` в `-m` — несколько `-m` без 
 9. **Messenger message tags вне окна** — ✅ `79a58be`. `fbSend` с `MESSAGE_TAG`,
    `messengerSendTaggedText`, `sendChannelTag`; picker тегов (HUMAN_AGENT и др.)
    в закрытом окне Messenger.
+7. **Booking-confirmation шаблон** — ✅ `007e1c4`. `whatsappSendTemplate` принимает
+   body-параметры; `sendBookingWhatsAppConfirmation` шлёт шаблон гостю ({{1}} объект,
+   {{2}} заезд, {{3}} выезд, {{4}} референс), создаёт/пишет WhatsApp-диалог. Кнопка
+   на странице брони. Имя/язык шаблона — env `WHATSAPP_BOOKING_TEMPLATE[_LANG]`
+   (self-hosted), задокументировано в SETUP.md.
 
-### Осталось (нужно продуктовое решение)
-7. **Booking-confirmation шаблон** из брони. ⚠️ Реальный шаблон брони требует
-   ПАРАМЕТРОВ (даты/объект/референс) — текущий `whatsappSendTemplate` шлёт by-name
-   без params. Нужно: (а) расширить `whatsappSendTemplate` на body-компоненты;
-   (б) хранить имя шаблона + маппинг переменных (поле в brand/settings, т.к. имя
-   шаблона у каждого покупателя своё). Без этого — только parameterless заглушка.
+### Осталось (низкий приоритет)
 10. **Merge контактов** (TG/Messenger создают новый контакт без совпадения).
     Крупная CRM-фича: перенос идентичностей/диалогов/лидов/сделок с контакта A на B
-    + UI выбора цели. Низкий приоритет.
+    + UI выбора цели. Низкий приоритет — отложено.
 
 **НЕ делать:** Viber, BSP, AI, Embedded Signup/Tech Provider.
 
