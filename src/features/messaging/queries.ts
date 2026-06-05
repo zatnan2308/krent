@@ -416,15 +416,15 @@ export interface PropertyChannelLink {
 }
 
 /**
- * Deep-link «написать про объект» для публичной страницы. Входящий чат
- * привяжется к объекту: вебхуки парсят Telegram `start=p_<id>` и Messenger
- * `ref=p_<id>`. WhatsApp без ref — предзаполняем текст (контекст для агента).
- * Возвращает только подключённые каналы (порядок — как в инбоксе).
+ * Deep-link на подключённые каналы с произвольным ref-токеном (`p_<id>` /
+ * `l_<id>`): Telegram `start=<ref>`, Messenger `ref=<ref>` — входящий чат
+ * привяжется к объекту/лиду (вебхуки парсят их). WhatsApp ref не несёт —
+ * включаем только при `whatsappPrefill` (wa.me с текстом-контекстом).
  */
-export async function getPropertyMessagingLinks(
+async function buildOrgChannelLinks(
   organizationId: string,
-  propertyId: string,
-  prefillText?: string,
+  ref: string,
+  options?: { whatsappPrefill?: string },
 ): Promise<PropertyChannelLink[]> {
   const admin = createAdminClient();
   const { data } = await admin
@@ -445,28 +445,54 @@ export async function getPropertyMessagingLinks(
       links.push({
         channel,
         label: CHANNEL_LABELS.telegram,
-        url: `https://t.me/${row.bot_username}?start=p_${propertyId}`,
+        url: `https://t.me/${row.bot_username}?start=${ref}`,
       });
     } else if (channel === "messenger" && row.page_id) {
       links.push({
         channel,
         label: CHANNEL_LABELS.messenger,
-        url: `https://m.me/${row.page_id}?ref=p_${propertyId}`,
+        url: `https://m.me/${row.page_id}?ref=${ref}`,
       });
-    } else if (channel === "whatsapp_cloud" && row.phone_display) {
+    } else if (
+      channel === "whatsapp_cloud" &&
+      row.phone_display &&
+      options?.whatsappPrefill
+    ) {
       const digits = row.phone_display.replace(/[^\d]/g, "");
       if (digits) {
-        const query = prefillText
-          ? `?text=${encodeURIComponent(prefillText)}`
-          : "";
         links.push({
           channel,
           label: CHANNEL_LABELS.whatsapp_cloud,
-          url: `https://wa.me/${digits}${query}`,
+          url: `https://wa.me/${digits}?text=${encodeURIComponent(options.whatsappPrefill)}`,
         });
       }
     }
   }
 
   return links;
+}
+
+/**
+ * Deep-link «написать про объект» для публичной страницы. Входящий чат
+ * привяжется к объекту (`p_<id>`). WhatsApp — wa.me с предзаполненным текстом.
+ */
+export async function getPropertyMessagingLinks(
+  organizationId: string,
+  propertyId: string,
+  prefillText?: string,
+): Promise<PropertyChannelLink[]> {
+  return buildOrgChannelLinks(organizationId, `p_${propertyId}`, {
+    whatsappPrefill: prefillText,
+  });
+}
+
+/**
+ * Deep-link для лида (`l_<id>`): агент отдаёт ссылку лиду — его ответ в
+ * Telegram/Messenger привяжется к этому лиду. Только ref-несущие каналы.
+ */
+export async function getLeadMessagingLinks(
+  organizationId: string,
+  leadId: string,
+): Promise<PropertyChannelLink[]> {
+  return buildOrgChannelLinks(organizationId, `l_${leadId}`);
 }

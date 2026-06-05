@@ -10,8 +10,12 @@ import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { LeadControls } from "@/features/crm/lead-controls";
 import { NotesPanel } from "@/features/crm/notes-panel";
+import { ChannelDeepLinks } from "@/features/messaging/channel-deep-links";
 import { ContactChannels } from "@/features/messaging/contact-channels";
-import { getContactChannels } from "@/features/messaging/queries";
+import {
+  getContactChannels,
+  getLeadMessagingLinks,
+} from "@/features/messaging/queries";
 import {
   getEntityActivity,
   getLead,
@@ -54,13 +58,15 @@ export default async function LeadDetailPage({
     notFound();
   }
 
-  const [notes, tasks, activity, agents, leadChannels] = await Promise.all([
-    listNotes(context.organization.id, { leadId: params.id }),
-    listTasks(context.organization.id, { leadId: params.id }),
-    getEntityActivity(context.organization.id, [params.id]),
-    getOrgAgents(context.organization.id),
-    getContactChannels(context.organization.id, detail.lead.contact_id),
-  ]);
+  const [notes, tasks, activity, agents, leadChannels, leadDeepLinks] =
+    await Promise.all([
+      listNotes(context.organization.id, { leadId: params.id }),
+      listTasks(context.organization.id, { leadId: params.id }),
+      getEntityActivity(context.organization.id, [params.id]),
+      getOrgAgents(context.organization.id),
+      getContactChannels(context.organization.id, detail.lead.contact_id),
+      getLeadMessagingLinks(context.organization.id, params.id),
+    ]);
   const canManage = hasPermission(context, "crm.manage");
   const { lead, contact, attribution } = detail;
 
@@ -219,8 +225,16 @@ export default async function LeadDetailPage({
           <CardHeader>
             <CardTitle className="text-base">Messaging</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <ContactChannels channels={leadChannels} />
+            {leadDeepLinks.length > 0 ? (
+              <div className="border-t pt-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  Share a chat link
+                </p>
+                <ChannelDeepLinks links={leadDeepLinks} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
