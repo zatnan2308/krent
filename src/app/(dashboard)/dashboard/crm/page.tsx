@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -36,27 +37,29 @@ export default async function CrmDashboardPage() {
   }
 
   const overview = await getCrmOverview(context.organization.id);
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
   const stats = [
     {
-      label: "New leads",
+      label: t.newLeads,
       value: overview.newLeads,
       icon: UserCheck,
       href: ROUTES.dashboard.crmLeads,
     },
     {
-      label: "Total leads",
+      label: t.totalLeads,
       value: overview.totalLeads,
       icon: Users,
       href: ROUTES.dashboard.crmLeads,
     },
     {
-      label: "Open deals",
+      label: t.openDeals,
       value: overview.openDeals,
       icon: TrendingUp,
       href: ROUTES.dashboard.crmDeals,
     },
     {
-      label: "Open tasks",
+      label: t.openTasks,
       value: overview.openTasks,
       icon: ListTodo,
       href: ROUTES.dashboard.crmTasks,
@@ -66,8 +69,8 @@ export default async function CrmDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="CRM"
-        description={`Leads, contacts and deals of ${context.organization.name}.`}
+        title={dict.adminNav.crm}
+        description={t.description.replace("{name}", context.organization.name)}
       />
       <CrmNav />
 
@@ -85,7 +88,7 @@ export default async function CrmDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Recent leads</CardTitle>
+          <CardTitle className="text-base">{t.recentLeads}</CardTitle>
         </CardHeader>
         <CardContent>
           {overview.recentLeads.length > 0 ? (
@@ -114,10 +117,7 @@ export default async function CrmDashboardPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="No leads yet"
-              description="Leads from your website forms will appear here."
-            />
+            <EmptyState title={t.emptyTitle} description={t.emptyDesc} />
           )}
         </CardContent>
       </Card>

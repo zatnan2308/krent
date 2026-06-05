@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -71,12 +72,14 @@ export default async function PropertiesListPage({
   const canCreate = hasPermission(context, "properties.create");
   const canManageAmenities = hasPermission(context, "properties.manage_all");
   const defaultLocale = context.organization.default_language;
+  const dict = await getServerDictionary();
+  const t = dict.dashProperties;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Properties"
-        description={`Listings of ${context.organization.name}.`}
+        title={dict.adminNav.properties}
+        description={t.description.replace("{name}", context.organization.name)}
         actions={
           <>
             {canManageAmenities ? (
@@ -84,7 +87,7 @@ export default async function PropertiesListPage({
                 href={ROUTES.dashboard.propertiesAmenities}
                 className={buttonVariants({ variant: "outline" })}
               >
-                Amenities
+                {t.amenities}
               </Link>
             ) : null}
             {canCreate ? (
@@ -92,7 +95,7 @@ export default async function PropertiesListPage({
                 href={`${ROUTES.dashboard.properties}/new`}
                 className={buttonVariants()}
               >
-                New property
+                {t.newProperty}
               </Link>
             ) : null}
           </>
@@ -107,16 +110,16 @@ export default async function PropertiesListPage({
           type="search"
           name="q"
           defaultValue={q}
-          placeholder="Search by title…"
+          placeholder={t.searchTitle}
           className="h-10 w-56 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <select
           name="status"
           defaultValue={status}
-          aria-label="Status filter"
+          aria-label={t.statusFilter}
           className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <option value="">All statuses</option>
+          <option value="">{t.allStatuses}</option>
           {Object.entries(PROPERTY_STATUS_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -127,7 +130,7 @@ export default async function PropertiesListPage({
           type="submit"
           className={buttonVariants({ variant: "outline" })}
         >
-          Filter
+          {t.filter}
         </button>
       </form>
 
@@ -136,10 +139,10 @@ export default async function PropertiesListPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Purpose</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t.colTitle}</TableHead>
+                <TableHead>{t.colType}</TableHead>
+                <TableHead>{t.colPurpose}</TableHead>
+                <TableHead>{t.colStatus}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,7 +160,7 @@ export default async function PropertiesListPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 inline-flex text-muted-foreground hover:text-foreground"
-                      aria-label="View public page"
+                      aria-label={t.viewPublic}
                     >
                       <ExternalLink className="inline h-3.5 w-3.5" />
                     </a>
@@ -179,10 +182,7 @@ export default async function PropertiesListPage({
           </Table>
         </div>
       ) : (
-        <EmptyState
-          title="No properties yet"
-          description="Create your first property listing to get started."
-        />
+        <EmptyState title={t.emptyTitle} description={t.emptyDesc} />
       )}
     </div>
   );

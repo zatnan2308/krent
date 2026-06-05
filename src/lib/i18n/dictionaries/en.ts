@@ -317,6 +317,32 @@ export const en = {
     guest: "Guest",
     lead: "Lead",
   },
+  dashProperties: {
+    description: "Listings of {name}.",
+    amenities: "Amenities",
+    newProperty: "New property",
+    searchTitle: "Search by title…",
+    statusFilter: "Status filter",
+    allStatuses: "All statuses",
+    filter: "Filter",
+    colTitle: "Title",
+    colType: "Type",
+    colPurpose: "Purpose",
+    colStatus: "Status",
+    viewPublic: "View public page",
+    emptyTitle: "No properties yet",
+    emptyDesc: "Create your first property listing to get started.",
+  },
+  dashCrm: {
+    description: "Leads, contacts and deals of {name}.",
+    newLeads: "New leads",
+    totalLeads: "Total leads",
+    openDeals: "Open deals",
+    openTasks: "Open tasks",
+    recentLeads: "Recent leads",
+    emptyTitle: "No leads yet",
+    emptyDesc: "Leads from your website forms will appear here.",
+  },
 };
 
 export type Dictionary = typeof en;
