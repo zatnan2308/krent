@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -54,6 +55,7 @@ function NameTranslator({
   locale: string;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
   const [value, setValue] = React.useState(initial);
   const [busy, setBusy] = React.useState(false);
   return (
@@ -76,7 +78,7 @@ function NameTranslator({
           router.refresh();
         }}
       >
-        Save
+        {dict.dashAmenities.save}
       </Button>
     </div>
   );
@@ -92,6 +94,8 @@ export function AmenitiesManager({
   amenityTranslations,
 }: AmenitiesManagerProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashAmenities;
   const [categoryName, setCategoryName] = React.useState("");
   const [amenityName, setAmenityName] = React.useState("");
   const [amenityCategoryId, setAmenityCategoryId] = React.useState(
@@ -163,7 +167,7 @@ export function AmenitiesManager({
             size="icon"
             className="h-8 w-8 text-destructive"
             disabled={pending}
-            aria-label="Delete amenity"
+            aria-label={t.deleteAmenity}
             onClick={() => void run(() => deleteAmenity(amenity.id))}
           >
             <Trash2 className="h-4 w-4" />
@@ -193,7 +197,7 @@ export function AmenitiesManager({
                 {category.name}
                 {isSystem ? (
                   <span className="ml-2 text-xs font-normal text-muted-foreground">
-                    System
+                    {t.system}
                   </span>
                 ) : null}
               </CardTitle>
@@ -212,7 +216,7 @@ export function AmenitiesManager({
                   size="icon"
                   className="h-8 w-8 text-destructive"
                   disabled={pending}
-                  aria-label="Delete category"
+                  aria-label={t.deleteCategory}
                   onClick={() =>
                     void run(() => deleteAmenityCategory(category.id))
                   }
@@ -226,7 +230,7 @@ export function AmenitiesManager({
                 <ul className="divide-y">{items.map(amenityRow)}</ul>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No amenities in this category.
+                  {t.noAmenitiesInCategory}
                 </p>
               )}
             </CardContent>
@@ -237,7 +241,7 @@ export function AmenitiesManager({
       {uncategorized.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Uncategorized</CardTitle>
+            <CardTitle className="text-base">{t.uncategorized}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="divide-y">{uncategorized.map(amenityRow)}</ul>
@@ -246,22 +250,19 @@ export function AmenitiesManager({
       ) : null}
 
       {catalog.categories.length === 0 ? (
-        <EmptyState
-          title="No amenity categories"
-          description="System categories load with the platform. Add custom ones below."
-        />
+        <EmptyState title={t.noCategories} description={t.noCategoriesDesc} />
       ) : null}
 
       {canManage && isDefault ? (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Add category</CardTitle>
+              <CardTitle className="text-base">{t.addCategory}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="category-name" className="text-sm font-medium">
-                  Category name
+                  {t.categoryName}
                 </label>
                 <Input
                   id="category-name"
@@ -274,14 +275,14 @@ export function AmenitiesManager({
                 onClick={handleAddCategory}
                 disabled={pending}
               >
-                Add category
+                {t.addCategory}
               </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Add amenity</CardTitle>
+              <CardTitle className="text-base">{t.addAmenity}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -289,7 +290,7 @@ export function AmenitiesManager({
                   htmlFor="amenity-category"
                   className="text-sm font-medium"
                 >
-                  Category
+                  {t.category}
                 </label>
                 <select
                   id="amenity-category"
@@ -308,7 +309,7 @@ export function AmenitiesManager({
               </div>
               <div className="space-y-2">
                 <label htmlFor="amenity-name" className="text-sm font-medium">
-                  Amenity name
+                  {t.amenityName}
                 </label>
                 <Input
                   id="amenity-name"
@@ -321,7 +322,7 @@ export function AmenitiesManager({
                 onClick={handleAddAmenity}
                 disabled={pending}
               >
-                Add amenity
+                {t.addAmenity}
               </Button>
             </CardContent>
           </Card>

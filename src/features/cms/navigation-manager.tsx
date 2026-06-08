@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 import type { Tables } from "@/types/database";
 
 interface NavOption {
@@ -50,6 +51,8 @@ export function NavigationManager({
   locale,
   isDefault,
 }: NavigationManagerProps) {
+  const { dict } = useI18n();
+  const t = dict.dashNavigation;
   // Родители для дропдаунов — верхнеуровневые пункты хедера.
   const parentOptions = header
     .filter((item) => !item.parent_id)
@@ -58,8 +61,8 @@ export function NavigationManager({
     <div className="space-y-10">
       <MenuEditor
         menuKey="header"
-        title="Header menu"
-        hint="Links in the public header. Pick a parent to nest an item as a dropdown, or link it to a page."
+        title={t.headerMenu}
+        hint={t.headerHint}
         items={header}
         parentOptions={parentOptions}
         pageOptions={pages}
@@ -69,40 +72,37 @@ export function NavigationManager({
 
       <div className="space-y-6">
         <div className="border-t pt-6">
-          <h2 className="text-base font-semibold">Footer columns</h2>
-          <p className="text-xs text-muted-foreground">
-            Each column of the public site footer. Leave a column empty to fall
-            back to the built-in defaults.
-          </p>
+          <h2 className="text-base font-semibold">{t.footerColumns}</h2>
+          <p className="text-xs text-muted-foreground">{t.footerColumnsHint}</p>
         </div>
         <MenuEditor
           menuKey="footer_browse"
-          title="Browse column"
-          hint="First footer column — usually listing shortcuts (buy, rent…)."
+          title={t.browseColumn}
+          hint={t.browseHint}
           items={footerBrowse}
           locale={locale}
           isDefault={isDefault}
         />
         <MenuEditor
           menuKey="footer_areas"
-          title="Areas column"
-          hint="Second footer column — usually neighbourhoods or regions you cover."
+          title={t.areasColumn}
+          hint={t.areasHint}
           items={footerAreas}
           locale={locale}
           isDefault={isDefault}
         />
         <MenuEditor
           menuKey="footer"
-          title="Company column"
-          hint="Third footer column — about, contact and company links."
+          title={t.companyColumn}
+          hint={t.companyHint}
           items={footer}
           locale={locale}
           isDefault={isDefault}
         />
         <MenuEditor
           menuKey="footer_legal"
-          title="Legal column"
-          hint="Fourth footer column — privacy, terms and other legal pages."
+          title={t.legalColumn}
+          hint={t.legalHint}
           items={footerLegal}
           locale={locale}
           isDefault={isDefault}
@@ -132,6 +132,8 @@ function MenuEditor({
   isDefault: boolean;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const tn = dict.dashNavigation;
   const [label, setLabel] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [parentId, setParentId] = React.useState("");
@@ -184,7 +186,7 @@ function MenuEditor({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Items</CardTitle>
+          <CardTitle className="text-sm">{tn.items}</CardTitle>
         </CardHeader>
         <CardContent>
           {items.length > 0 ? (
@@ -204,10 +206,7 @@ function MenuEditor({
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="No menu items"
-              description="Add links to build this menu."
-            />
+            <EmptyState title={tn.noItems} description={tn.noItemsDesc} />
           )}
         </CardContent>
       </Card>
@@ -215,7 +214,7 @@ function MenuEditor({
       {isDefault ? (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Add item</CardTitle>
+          <CardTitle className="text-sm">{tn.addItem}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -224,7 +223,7 @@ function MenuEditor({
                 htmlFor={`${menuKey}-label`}
                 className="text-sm font-medium"
               >
-                Label
+                {tn.label}
               </label>
               <Input
                 id={`${menuKey}-label`}
@@ -234,7 +233,7 @@ function MenuEditor({
             </div>
             <div className="space-y-2">
               <label htmlFor={`${menuKey}-url`} className="text-sm font-medium">
-                URL
+                {tn.url}
               </label>
               <Input
                 id={`${menuKey}-url`}
@@ -250,7 +249,7 @@ function MenuEditor({
                   htmlFor={`${menuKey}-page`}
                   className="text-sm font-medium"
                 >
-                  Link to page
+                  {tn.linkToPage}
                 </label>
                 <select
                   id={`${menuKey}-page`}
@@ -258,7 +257,7 @@ function MenuEditor({
                   onChange={(event) => setPageId(event.target.value)}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  <option value="">— Use URL above —</option>
+                  <option value="">{tn.useUrlAbove}</option>
                   {pageOptions.map((page) => (
                     <option key={page.id} value={page.id}>
                       {page.label}
@@ -273,7 +272,7 @@ function MenuEditor({
                   htmlFor={`${menuKey}-parent`}
                   className="text-sm font-medium"
                 >
-                  Parent (for dropdowns)
+                  {tn.parentDropdowns}
                 </label>
                 <select
                   id={`${menuKey}-parent`}
@@ -281,7 +280,7 @@ function MenuEditor({
                   onChange={(event) => setParentId(event.target.value)}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  <option value="">— Top level —</option>
+                  <option value="">{tn.topLevel}</option>
                   {parentOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.label}
@@ -297,14 +296,13 @@ function MenuEditor({
             </p>
           ) : null}
           <Button type="button" onClick={handleAdd} disabled={pending}>
-            {pending ? "Saving..." : "Add item"}
+            {pending ? tn.saving : tn.addItem}
           </Button>
         </CardContent>
       </Card>
       ) : (
         <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-          Menu structure (adding, removing, reordering) is managed in the
-          default language. Here you translate the labels above.
+          {tn.structureNote}
         </p>
       )}
     </div>
@@ -331,6 +329,8 @@ function NavItemRow({
   onDelete: (itemId: string) => void;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const tn = dict.dashNavigation;
   const [editing, setEditing] = React.useState(false);
   const [label, setLabel] = React.useState(item.label ?? "");
   const [url, setUrl] = React.useState(item.url ?? "");
@@ -355,7 +355,7 @@ function NavItemRow({
         ) : null}
         <div className="flex gap-1">
           <Button type="button" size="sm" onClick={save} disabled={busy}>
-            Save
+            {tn.save}
           </Button>
           <Button
             type="button"
@@ -363,7 +363,7 @@ function NavItemRow({
             variant="outline"
             onClick={() => setEditing(false)}
           >
-            Cancel
+            {tn.cancel}
           </Button>
         </div>
       </li>
@@ -392,7 +392,7 @@ function NavItemRow({
               size="icon"
               className="h-8 w-8"
               disabled={pending || index === 0}
-              aria-label="Move up"
+              aria-label={tn.moveUp}
               onClick={() => onMove(item.id, "up")}
             >
               <ChevronUp className="h-4 w-4" />
@@ -403,7 +403,7 @@ function NavItemRow({
               size="icon"
               className="h-8 w-8"
               disabled={pending || index === total - 1}
-              aria-label="Move down"
+              aria-label={tn.moveDown}
               onClick={() => onMove(item.id, "down")}
             >
               <ChevronDown className="h-4 w-4" />
@@ -415,7 +415,7 @@ function NavItemRow({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          aria-label="Edit item"
+          aria-label={tn.editItem}
           onClick={() => setEditing(true)}
         >
           <Pencil className="h-4 w-4" />
@@ -428,7 +428,7 @@ function NavItemRow({
             className="h-8 w-8 text-destructive"
             onClick={() => onDelete(item.id)}
             disabled={pending}
-            aria-label="Remove item"
+            aria-label={tn.removeItem}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
