@@ -36,13 +36,18 @@ interface DealBoardProps {
   canManage: boolean;
 }
 
-/** Базовая воронка сделок: колонки по стадиям, перенос через select. */
+/**
+ * Воронка сделок: колонки по стадиям. Перенос — drag-and-drop (нативный HTML5)
+ * с резервным `<select>` для клавиатуры/мобильных.
+ */
 export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
   const router = useRouter();
   const { dict } = useI18n();
   const t = dict.dashCrm;
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = React.useState<string | null>(null);
 
   async function handleMove(dealId: string, stageId: string) {
     setPending(true);
@@ -55,6 +60,17 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
       // Перенос не прошёл — показываем причину; select откатится на refresh.
       setError(result.error);
       router.refresh();
+    }
+  }
+
+  function handleDrop(stageId: string) {
+    const dealId = draggingId;
+    setDraggingId(null);
+    setDragOverStage(null);
+    if (!dealId) return;
+    const deal = deals.find((item) => item.id === dealId);
+    if (deal && deal.stageId !== stageId) {
+      void handleMove(dealId, stageId);
     }
   }
 
@@ -77,10 +93,43 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
       <div className="flex gap-4 overflow-x-auto pb-2">
         {stages.map((stage) => {
         const stageDeals = deals.filter((deal) => deal.stageId === stage.id);
+        const isDropTarget = canManage && dragOverStage === stage.id;
         return (
           <div
             key={stage.id}
-            className="w-72 shrink-0 space-y-3 rounded-lg border bg-muted/30 p-3"
+            className={`w-72 shrink-0 space-y-3 rounded-lg border p-3 transition-colors ${
+              isDropTarget
+                ? "border-primary bg-primary/5"
+                : "bg-muted/30"
+            }`}
+            onDragOver={
+              canManage
+                ? (event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    if (dragOverStage !== stage.id) {
+                      setDragOverStage(stage.id);
+                    }
+                  }
+                : undefined
+            }
+            onDragLeave={
+              canManage
+                ? (event) => {
+                    // Сброс подсветки только при выходе за пределы колонки.
+                    if (
+                      !event.currentTarget.contains(
+                        event.relatedTarget as Node | null,
+                      )
+                    ) {
+                      setDragOverStage((current) =>
+                        current === stage.id ? null : current,
+                      );
+                    }
+                  }
+                : undefined
+            }
+            onDrop={canManage ? () => handleDrop(stage.id) : undefined}
           >
             <p className="text-sm font-semibold">
               {stage.name}{" "}
@@ -93,7 +142,27 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
               return (
                 <div
                   key={deal.id}
-                  className="space-y-2 rounded-md border bg-background p-3"
+                  draggable={canManage && !pending}
+                  onDragStart={
+                    canManage
+                      ? (event) => {
+                          setDraggingId(deal.id);
+                          event.dataTransfer.effectAllowed = "move";
+                          event.dataTransfer.setData("text/plain", deal.id);
+                        }
+                      : undefined
+                  }
+                  onDragEnd={
+                    canManage
+                      ? () => {
+                          setDraggingId(null);
+                          setDragOverStage(null);
+                        }
+                      : undefined
+                  }
+                  className={`space-y-2 rounded-md border bg-background p-3 ${
+                    canManage ? "cursor-grab active:cursor-grabbing" : ""
+                  } ${draggingId === deal.id ? "opacity-50" : ""}`}
                 >
                   <Link
                     href={`${ROUTES.dashboard.crm}/deals/${deal.id}`}
