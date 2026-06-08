@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -84,17 +85,23 @@ export default async function BookingDetailPage({
       hasPermission(context, "bookings.manage"),
   );
 
+  const dict = await getServerDictionary();
+  const t = dict.dashBookings;
+
   const stayRows: { label: string; value: string }[] = [
-    { label: "Check-in", value: formatDateDisplay(booking.check_in) },
-    { label: "Check-out", value: formatDateDisplay(booking.check_out) },
-    { label: "Nights", value: String(booking.nights) },
+    { label: t.checkIn, value: formatDateDisplay(booking.check_in) },
+    { label: t.checkOut, value: formatDateDisplay(booking.check_out) },
+    { label: t.nightsLabel, value: String(booking.nights) },
     {
-      label: "Guests",
-      value: `${booking.adults} adult(s), ${booking.children} child(ren), ${booking.pets} pet(s)`,
+      label: t.guests,
+      value: t.guestsValue
+        .replace("{adults}", String(booking.adults))
+        .replace("{children}", String(booking.children))
+        .replace("{pets}", String(booking.pets)),
     },
-    { label: "Source", value: BOOKING_SOURCE_LABELS[booking.source] },
+    { label: t.source, value: BOOKING_SOURCE_LABELS[booking.source] },
     {
-      label: "Created",
+      label: t.created,
       value: new Date(booking.created_at).toLocaleString("en-US"),
     },
   ];
@@ -103,7 +110,7 @@ export default async function BookingDetailPage({
     <div className="space-y-6">
       <PageHeader
         breadcrumbs={[
-          { label: "Bookings", href: ROUTES.dashboard.bookings },
+          { label: dict.adminNav.bookings, href: ROUTES.dashboard.bookings },
           { label: booking.reference },
         ]}
         title={booking.reference}
@@ -131,7 +138,7 @@ export default async function BookingDetailPage({
             href={`${ROUTES.dashboard.properties}/${property.id}/calendar`}
             className="hover:underline"
           >
-            Calendar
+            {t.calendar}
           </Link>
         </p>
       ) : null}
@@ -139,7 +146,7 @@ export default async function BookingDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Stay details</CardTitle>
+            <CardTitle className="text-base">{t.stayDetails}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="space-y-2 text-sm">
@@ -155,11 +162,11 @@ export default async function BookingDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Guest</CardTitle>
+            <CardTitle className="text-base">{t.guest}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             <p className="font-medium">
-              {booking.guest_name ?? contact?.full_name ?? "Guest"}
+              {booking.guest_name ?? contact?.full_name ?? t.guestFallback}
             </p>
             {booking.guest_email ? (
               <p className="text-muted-foreground">{booking.guest_email}</p>
@@ -172,7 +179,7 @@ export default async function BookingDetailPage({
                 href={`${ROUTES.dashboard.crmContacts}/${contact.id}`}
                 className="block pt-1 text-primary hover:underline"
               >
-                Open contact
+                {t.openContact}
               </Link>
             ) : null}
             {booking.lead_id ? (
@@ -180,7 +187,7 @@ export default async function BookingDetailPage({
                 href={`${ROUTES.dashboard.crmLeads}/${booking.lead_id}`}
                 className="block text-primary hover:underline"
               >
-                Open lead
+                {t.openLead}
               </Link>
             ) : null}
             {booking.guest_message ? (
@@ -190,13 +197,13 @@ export default async function BookingDetailPage({
             ) : null}
             {guests.length > 0 ? (
               <p className="border-t pt-2 text-xs text-muted-foreground">
-                {guests.length} guest record(s) on file.
+                {t.guestRecords.replace("{n}", String(guests.length))}
               </p>
             ) : null}
             {bookingChannels.length > 0 ? (
               <div className="border-t pt-3">
                 <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  Messaging
+                  {t.messaging}
                 </p>
                 <ContactChannels channels={bookingChannels} />
               </div>
@@ -206,7 +213,7 @@ export default async function BookingDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Manage</CardTitle>
+            <CardTitle className="text-base">{t.manage}</CardTitle>
           </CardHeader>
           <CardContent>
             <BookingManager
@@ -228,13 +235,13 @@ export default async function BookingDetailPage({
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">Price breakdown</CardTitle>
+          <CardTitle className="text-base">{t.priceBreakdown}</CardTitle>
           <div className="flex items-center gap-3 text-sm">
             <Link
               href={`${ROUTES.dashboard.bookings}/${booking.id}/invoice`}
               className="text-primary hover:underline"
             >
-              Invoice
+              {t.invoice}
             </Link>
             <a
               href={`${ROUTES.dashboard.bookings}/${booking.id}/invoice/pdf`}
@@ -262,16 +269,16 @@ export default async function BookingDetailPage({
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No fee breakdown recorded.
+              {t.noFeeBreakdown}
             </p>
           )}
           <div className="mt-3 flex justify-between border-t pt-3 text-sm font-semibold">
-            <span>Total</span>
+            <span>{t.total}</span>
             <span>{formatMoney(booking.total, booking.currency)}</span>
           </div>
           {booking.security_deposit > 0 ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              Refundable security deposit:{" "}
+              {t.refundableDeposit}{" "}
               {formatMoney(booking.security_deposit, booking.currency)}
             </p>
           ) : null}
@@ -281,11 +288,11 @@ export default async function BookingDetailPage({
       {canViewPayments ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Payments &amp; refunds</CardTitle>
+            <CardTitle className="text-base">{t.paymentsRefunds}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="mb-2 text-sm font-medium">Payments</p>
+              <p className="mb-2 text-sm font-medium">{t.payments}</p>
               {paymentData.payments.length > 0 ? (
                 <ul className="divide-y rounded-md border text-sm">
                   {paymentData.payments.map((payment) => (
@@ -295,7 +302,7 @@ export default async function BookingDetailPage({
                     >
                       <span>
                         {PAYMENT_PROVIDER_LABELS[payment.provider]}
-                        {payment.is_manual ? " · manual" : ""}
+                        {payment.is_manual ? ` · ${t.manual}` : ""}
                         <span className="block text-xs text-muted-foreground">
                           {new Date(payment.created_at).toLocaleString(
                             "en-US",
@@ -313,13 +320,13 @@ export default async function BookingDetailPage({
                 </ul>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No payments recorded.
+                  {t.noPayments}
                 </p>
               )}
             </div>
 
             <div>
-              <p className="mb-2 text-sm font-medium">Refunds</p>
+              <p className="mb-2 text-sm font-medium">{t.refunds}</p>
               {paymentData.refunds.length > 0 ? (
                 <ul className="divide-y rounded-md border text-sm">
                   {paymentData.refunds.map((refund) => (
@@ -346,7 +353,7 @@ export default async function BookingDetailPage({
                 </ul>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No refunds issued.
+                  {t.noRefunds}
                 </p>
               )}
             </div>

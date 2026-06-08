@@ -11,6 +11,7 @@ import { PropertyForm } from "@/features/properties/property-form";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -73,16 +74,18 @@ export default async function EditPropertyPage({
     distance: place.distance,
     distanceUnit: place.distance_unit,
   }));
+  const dict = await getServerDictionary();
+  const t = dict.dashProperties;
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumbs={[
-          { label: "Properties", href: ROUTES.dashboard.properties },
+          { label: dict.adminNav.properties, href: ROUTES.dashboard.properties },
           { label: property.property.title },
         ]}
         title={property.property.title}
-        description="Edit listing details, pricing, media and location."
+        description={t.editDescription}
         actions={
           <>
             <Link
@@ -91,13 +94,13 @@ export default async function EditPropertyPage({
               rel="noopener noreferrer"
               className={buttonVariants({ variant: "outline" })}
             >
-              View public page
+              {t.viewPublic}
             </Link>
             <Link
               href={`${ROUTES.dashboard.properties}/${params.id}/calendar`}
               className={buttonVariants({ variant: "outline" })}
             >
-              Rental calendar
+              {t.rentalCalendar}
             </Link>
           </>
         }
