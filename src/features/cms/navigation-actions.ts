@@ -2,6 +2,11 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 
+import {
+  deleteContentTranslations,
+  resolveOrgLocale,
+  saveContentTranslation,
+} from "@/lib/i18n/content-translations";
 import { createClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -101,6 +106,12 @@ export async function deleteMenuItem(itemId: string): Promise<void> {
     .delete()
     .eq("id", itemId)
     .eq("organization_id", context.organization.id);
+  // Чистим переводы label удалённого пункта.
+  await deleteContentTranslations(
+    context.organization.id,
+    "nav_item",
+    itemId,
+  );
 
   revalidatePath("/dashboard/navigation");
   revalidateTag("public-site");
@@ -160,22 +171,34 @@ export async function updateMenuItem(
   itemId: string,
   label: string,
   url: string,
+  locale?: string,
 ): Promise<ActionResult> {
   const context = await requireOrganizationContext();
   if (!context.organization || !hasPermission(context, "navigation.manage")) {
     return { ok: false, error: "You cannot manage navigation." };
   }
-  if (!label.trim()) {
-    return { ok: false, error: "Label is required." };
-  }
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("navigation_items")
-    .update({ label: label.trim(), url: url.trim() || null })
-    .eq("id", itemId)
-    .eq("organization_id", context.organization.id);
-  if (error) {
-    return { ok: false, error: "Could not update the item." };
+  const org = context.organization;
+  const target = resolveOrgLocale(org, locale);
+
+  if (target === org.default_language) {
+    if (!label.trim()) {
+      return { ok: false, error: "Label is required." };
+    }
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("navigation_items")
+      .update({ label: label.trim(), url: url.trim() || null })
+      .eq("id", itemId)
+      .eq("organization_id", org.id);
+    if (error) {
+      return { ok: false, error: "Could not update the item." };
+    }
+  } else {
+    // Перевод пункта меню: только label (url/структура — из базы).
+    const ok = await saveContentTranslation(org.id, "nav_item", itemId, target, {
+      label: label.trim() || null,
+    });
+    if (!ok) return { ok: false, error: "Could not update the item." };
   }
 
   revalidatePath("/dashboard/navigation");

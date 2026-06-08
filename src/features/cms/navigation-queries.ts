@@ -1,5 +1,9 @@
 import { unstable_cache } from "next/cache";
 
+import {
+  getContentTranslations,
+  tr,
+} from "@/lib/i18n/content-translations";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/database";
 
@@ -37,7 +41,12 @@ export interface PublicNavItem {
 
 /** Меню для публичного сайта (admin, мимо RLS), закэшировано per-org/menu. */
 const getPublicNavigationCached = unstable_cache(
-  async (organizationId: string, menuKey: string): Promise<PublicNavItem[]> => {
+  async (
+    organizationId: string,
+    menuKey: string,
+    locale: string,
+    defaultLocale: string,
+  ): Promise<PublicNavItem[]> => {
     const admin = createAdminClient();
     const { data: menu } = await admin
       .from("navigation_menus")
@@ -48,12 +57,21 @@ const getPublicNavigationCached = unstable_cache(
     if (!menu) return [];
     const { data: items } = await admin
       .from("navigation_items")
-      .select("label, url, position")
+      .select("id, label, url, position")
       .eq("menu_id", menu.id)
       .order("position", { ascending: true });
+    const translations = await getContentTranslations(
+      organizationId,
+      "nav_item",
+      locale,
+      defaultLocale,
+    );
     return (items ?? [])
       .filter((item) => Boolean(item.url))
-      .map((item) => ({ label: item.label, url: item.url as string }));
+      .map((item) => ({
+        label: tr(item.label, translations.get(item.id)?.label) ?? item.label,
+        url: item.url as string,
+      }));
   },
   ["public-navigation"],
   { revalidate: 60, tags: ["public-site"] },
@@ -63,8 +81,10 @@ const getPublicNavigationCached = unstable_cache(
 export async function getPublicNavigation(
   organizationId: string,
   menuKey: string,
+  locale: string,
+  defaultLocale: string,
 ): Promise<PublicNavItem[]> {
-  return getPublicNavigationCached(organizationId, menuKey);
+  return getPublicNavigationCached(organizationId, menuKey, locale, defaultLocale);
 }
 
 /** Пункт меню с вложенными детьми (для дропдаунов хедера). */
@@ -84,6 +104,8 @@ const getPublicNavigationTreeCached = unstable_cache(
   async (
     organizationId: string,
     menuKey: string,
+    locale: string,
+    defaultLocale: string,
   ): Promise<PublicNavTreeItem[]> => {
     const admin = createAdminClient();
     const { data: menu } = await admin
@@ -93,6 +115,14 @@ const getPublicNavigationTreeCached = unstable_cache(
       .eq("key", menuKey)
       .maybeSingle();
     if (!menu) return [];
+    const translations = await getContentTranslations(
+      organizationId,
+      "nav_item",
+      locale,
+      defaultLocale,
+    );
+    const trLabel = (id: string, base: string): string =>
+      tr(base, translations.get(id)?.label) ?? base;
 
     const { data: items } = await admin
       .from("navigation_items")
@@ -133,11 +163,14 @@ const getPublicNavigationTreeCached = unstable_cache(
     return rows
       .filter((row) => !row.parent_id)
       .map((parent) => ({
-        label: parent.label,
+        label: trLabel(parent.id, parent.label),
         url: resolveUrl(parent),
         children: rows
           .filter((row) => row.parent_id === parent.id)
-          .map((child) => ({ label: child.label, url: resolveUrl(child) }))
+          .map((child) => ({
+            label: trLabel(child.id, child.label),
+            url: resolveUrl(child),
+          }))
           .filter((child): child is { label: string; url: string } =>
             Boolean(child.url),
           ),
@@ -153,6 +186,13 @@ const getPublicNavigationTreeCached = unstable_cache(
 export async function getPublicNavigationTree(
   organizationId: string,
   menuKey: string,
+  locale: string,
+  defaultLocale: string,
 ): Promise<PublicNavTreeItem[]> {
-  return getPublicNavigationTreeCached(organizationId, menuKey);
+  return getPublicNavigationTreeCached(
+    organizationId,
+    menuKey,
+    locale,
+    defaultLocale,
+  );
 }

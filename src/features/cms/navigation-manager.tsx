@@ -34,6 +34,10 @@ interface NavigationManagerProps {
   footerLegal: Tables<"navigation_items">[];
   /** Опубликованные страницы для привязки пункта (page_id). */
   pages: NavOption[];
+  /** Локаль редактирования label (default → база, иначе → перевод). */
+  locale: string;
+  /** true — язык по умолчанию (полная структура: add/move/delete). */
+  isDefault: boolean;
 }
 
 export function NavigationManager({
@@ -43,6 +47,8 @@ export function NavigationManager({
   footerAreas,
   footerLegal,
   pages,
+  locale,
+  isDefault,
 }: NavigationManagerProps) {
   // Родители для дропдаунов — верхнеуровневые пункты хедера.
   const parentOptions = header
@@ -57,6 +63,8 @@ export function NavigationManager({
         items={header}
         parentOptions={parentOptions}
         pageOptions={pages}
+        locale={locale}
+        isDefault={isDefault}
       />
 
       <div className="space-y-6">
@@ -72,24 +80,32 @@ export function NavigationManager({
           title="Browse column"
           hint="First footer column — usually listing shortcuts (buy, rent…)."
           items={footerBrowse}
+          locale={locale}
+          isDefault={isDefault}
         />
         <MenuEditor
           menuKey="footer_areas"
           title="Areas column"
           hint="Second footer column — usually neighbourhoods or regions you cover."
           items={footerAreas}
+          locale={locale}
+          isDefault={isDefault}
         />
         <MenuEditor
           menuKey="footer"
           title="Company column"
           hint="Third footer column — about, contact and company links."
           items={footer}
+          locale={locale}
+          isDefault={isDefault}
         />
         <MenuEditor
           menuKey="footer_legal"
           title="Legal column"
           hint="Fourth footer column — privacy, terms and other legal pages."
           items={footerLegal}
+          locale={locale}
+          isDefault={isDefault}
         />
       </div>
     </div>
@@ -103,6 +119,8 @@ function MenuEditor({
   items,
   parentOptions,
   pageOptions,
+  locale,
+  isDefault,
 }: {
   menuKey: string;
   title: string;
@@ -110,6 +128,8 @@ function MenuEditor({
   items: Tables<"navigation_items">[];
   parentOptions?: { id: string; label: string }[];
   pageOptions?: { id: string; label: string }[];
+  locale: string;
+  isDefault: boolean;
 }) {
   const router = useRouter();
   const [label, setLabel] = React.useState("");
@@ -176,6 +196,8 @@ function MenuEditor({
                   index={index}
                   total={items.length}
                   pending={pending}
+                  locale={locale}
+                  isDefault={isDefault}
                   onMove={handleMove}
                   onDelete={handleDelete}
                 />
@@ -190,6 +212,7 @@ function MenuEditor({
         </CardContent>
       </Card>
 
+      {isDefault ? (
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Add item</CardTitle>
@@ -278,6 +301,12 @@ function MenuEditor({
           </Button>
         </CardContent>
       </Card>
+      ) : (
+        <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          Menu structure (adding, removing, reordering) is managed in the
+          default language. Here you translate the labels above.
+        </p>
+      )}
     </div>
   );
 }
@@ -287,6 +316,8 @@ function NavItemRow({
   index,
   total,
   pending,
+  locale,
+  isDefault,
   onMove,
   onDelete,
 }: {
@@ -294,6 +325,8 @@ function NavItemRow({
   index: number;
   total: number;
   pending: boolean;
+  locale: string;
+  isDefault: boolean;
   onMove: (itemId: string, direction: "up" | "down") => void;
   onDelete: (itemId: string) => void;
 }) {
@@ -305,7 +338,7 @@ function NavItemRow({
 
   async function save() {
     setBusy(true);
-    const result = await updateMenuItem(item.id, label, url);
+    const result = await updateMenuItem(item.id, label, url, locale);
     setBusy(false);
     if (result.ok) {
       setEditing(false);
@@ -317,7 +350,9 @@ function NavItemRow({
     return (
       <li className="space-y-2 py-2">
         <Input value={label} onChange={(event) => setLabel(event.target.value)} />
-        <Input value={url} onChange={(event) => setUrl(event.target.value)} />
+        {isDefault ? (
+          <Input value={url} onChange={(event) => setUrl(event.target.value)} />
+        ) : null}
         <div className="flex gap-1">
           <Button type="button" size="sm" onClick={save} disabled={busy}>
             Save
@@ -349,28 +384,32 @@ function NavItemRow({
         </p>
       </div>
       <div className="flex shrink-0 gap-0.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={pending || index === 0}
-          aria-label="Move up"
-          onClick={() => onMove(item.id, "up")}
-        >
-          <ChevronUp className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={pending || index === total - 1}
-          aria-label="Move down"
-          onClick={() => onMove(item.id, "down")}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </Button>
+        {isDefault ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={pending || index === 0}
+              aria-label="Move up"
+              onClick={() => onMove(item.id, "up")}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={pending || index === total - 1}
+              aria-label="Move down"
+              onClick={() => onMove(item.id, "down")}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </>
+        ) : null}
         <Button
           type="button"
           variant="ghost"
@@ -381,17 +420,19 @@ function NavItemRow({
         >
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive"
-          onClick={() => onDelete(item.id)}
-          disabled={pending}
-          aria-label="Remove item"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {isDefault ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+            onClick={() => onDelete(item.id)}
+            disabled={pending}
+            aria-label="Remove item"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null}
       </div>
     </li>
   );

@@ -163,19 +163,36 @@ export default async function LocaleLayout({
     NavLink[],
   ] = site
     ? await Promise.all([
-        getPublicNavigationTree(site.organization.id, "header").then(
-          localizeNavTree,
-        ),
-        getPublicNavigation(site.organization.id, "footer").then(localizeNav),
-        getPublicNavigation(site.organization.id, "footer_browse").then(
-          localizeNav,
-        ),
-        getPublicNavigation(site.organization.id, "footer_areas").then(
-          localizeNav,
-        ),
-        getPublicNavigation(site.organization.id, "footer_legal").then(
-          localizeNav,
-        ),
+        getPublicNavigationTree(
+          site.organization.id,
+          "header",
+          localeParam,
+          defaultLang,
+        ).then(localizeNavTree),
+        getPublicNavigation(
+          site.organization.id,
+          "footer",
+          localeParam,
+          defaultLang,
+        ).then(localizeNav),
+        getPublicNavigation(
+          site.organization.id,
+          "footer_browse",
+          localeParam,
+          defaultLang,
+        ).then(localizeNav),
+        getPublicNavigation(
+          site.organization.id,
+          "footer_areas",
+          localeParam,
+          defaultLang,
+        ).then(localizeNav),
+        getPublicNavigation(
+          site.organization.id,
+          "footer_legal",
+          localeParam,
+          defaultLang,
+        ).then(localizeNav),
       ])
     : [[], [], [], [], []];
 
