@@ -4276,6 +4276,68 @@ export type Database = {
         }
         Relationships: []
       }
+      offline_conversions: {
+        Row: {
+          click_id: string | null
+          click_source: string | null
+          contact_id: string | null
+          conversion_type: string
+          created_at: string
+          currency: string | null
+          deal_id: string | null
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          occurred_at: string
+          organization_id: string
+          status: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          click_id?: string | null
+          click_source?: string | null
+          contact_id?: string | null
+          conversion_type: string
+          created_at?: string
+          currency?: string | null
+          deal_id?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          occurred_at?: string
+          organization_id: string
+          status?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          click_id?: string | null
+          click_source?: string | null
+          contact_id?: string | null
+          conversion_type?: string
+          created_at?: string
+          currency?: string | null
+          deal_id?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          occurred_at?: string
+          organization_id?: string
+          status?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_conversions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string

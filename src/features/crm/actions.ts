@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { enqueueDealConversion } from "@/features/integrations/offline-conversions";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
 import { requireOrganizationContext } from "@/server/organization-context";
@@ -389,6 +390,19 @@ export async function moveDeal(
     metadata: { stage: stage.name, status },
   });
 
+  // Закрытие сделки → ставим оффлайн-конверсию (best-effort, идемпотентно).
+  if (status === "won") {
+    try {
+      await enqueueDealConversion(
+        createAdminClient(),
+        context.organization.id,
+        dealId,
+      );
+    } catch {
+      // Не критично для смены стадии.
+    }
+  }
+
   revalidatePath(CRM_DEALS);
   revalidatePath(`${CRM_DEALS}/${dealId}`);
   return { ok: true };
@@ -732,6 +746,19 @@ export async function updateDeal(
     entityId: d.dealId,
     metadata: { title: d.title },
   });
+
+  // Если сделка переведена в выигранную стадию — ставим оффлайн-конверсию.
+  if (updatePayload.status === "won") {
+    try {
+      await enqueueDealConversion(
+        createAdminClient(),
+        context.organization.id,
+        d.dealId,
+      );
+    } catch {
+      // Не критично для сохранения сделки.
+    }
+  }
 
   revalidatePath(CRM_DEALS);
   revalidatePath(`${CRM_DEALS}/${d.dealId}`);
