@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -68,6 +69,8 @@ function BlockEditor({
   onChange: (block: PageBlock) => void;
   onRemove: () => void;
 }) {
+  const { dict } = useI18n();
+  const t = dict.pageEditor;
   return (
     <div className="space-y-2 rounded-md border p-3">
       <div className="flex items-center justify-between">
@@ -80,7 +83,7 @@ function BlockEditor({
           size="icon"
           className="h-7 w-7"
           onClick={onRemove}
-          aria-label="Remove block"
+          aria-label={t.removeBlock}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -104,7 +107,7 @@ function BlockEditor({
           </select>
           <Input
             value={block.text}
-            placeholder="Heading text"
+            placeholder={t.headingText}
             onChange={(event) =>
               onChange({ ...block, text: event.target.value })
             }
@@ -115,7 +118,7 @@ function BlockEditor({
       {block.type === "text" ? (
         <Textarea
           value={block.text}
-          placeholder="Paragraph text"
+          placeholder={t.paragraphText}
           onChange={(event) => onChange({ ...block, text: event.target.value })}
         />
       ) : null}
@@ -124,14 +127,14 @@ function BlockEditor({
         <div className="space-y-2">
           <Input
             value={block.url}
-            placeholder="Image URL"
+            placeholder={t.imageUrl}
             onChange={(event) =>
               onChange({ ...block, url: event.target.value })
             }
           />
           <Input
             value={block.alt}
-            placeholder="Alt text"
+            placeholder={t.altText}
             onChange={(event) =>
               onChange({ ...block, alt: event.target.value })
             }
@@ -153,6 +156,8 @@ export function PageEditor({
   defaultLocale: string;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.pageEditor;
   // Языки редактора: default всегда первым, затем остальные включённые.
   const localeList = React.useMemo(
     () => Array.from(new Set([defaultLocale, ...locales])),
@@ -280,13 +285,13 @@ export function PageEditor({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Page settings</CardTitle>
+          <CardTitle className="text-base">{t.pageSettings}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {localeList.length > 1 ? (
             <div className="space-y-2">
               <label htmlFor="page-locale" className="text-sm font-medium">
-                Content language
+                {t.contentLanguage}
               </label>
               <select
                 id="page-locale"
@@ -297,19 +302,18 @@ export function PageEditor({
                 {localeList.map((code) => (
                   <option key={code} value={code}>
                     {code.toUpperCase()}
-                    {code === defaultLocale ? " (default)" : ""}
+                    {code === defaultLocale ? t.defaultSuffix : ""}
                   </option>
                 ))}
               </select>
               <p className="text-xs text-muted-foreground">
-                Title, SEO and content below are saved per language. Slug, type
-                and status are shared across languages.
+                {t.perLanguageHint}
               </p>
             </div>
           ) : null}
           <div className="space-y-2">
             <label htmlFor="page-title" className="text-sm font-medium">
-              Title
+              {t.title}
             </label>
             <Input
               id="page-title"
@@ -320,7 +324,7 @@ export function PageEditor({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label htmlFor="page-slug" className="text-sm font-medium">
-                Slug
+                {t.slug}
               </label>
               <Input
                 id="page-slug"
@@ -330,7 +334,7 @@ export function PageEditor({
             </div>
             <div className="space-y-2">
               <label htmlFor="page-type" className="text-sm font-medium">
-                Type
+                {t.type}
               </label>
               <select
                 id="page-type"
@@ -349,7 +353,7 @@ export function PageEditor({
             </div>
             <div className="space-y-2">
               <label htmlFor="page-status" className="text-sm font-medium">
-                Status
+                {t.status}
               </label>
               <select
                 id="page-status"
@@ -369,12 +373,12 @@ export function PageEditor({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">SEO</CardTitle>
+          <CardTitle className="text-base">{t.seo}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="seo-title" className="text-sm font-medium">
-              SEO title
+              {t.seoTitle}
             </label>
             <Input
               id="seo-title"
@@ -384,7 +388,7 @@ export function PageEditor({
           </div>
           <div className="space-y-2">
             <label htmlFor="seo-description" className="text-sm font-medium">
-              SEO description
+              {t.seoDescription}
             </label>
             <Textarea
               id="seo-description"
@@ -397,7 +401,7 @@ export function PageEditor({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Content</CardTitle>
+          <CardTitle className="text-base">{t.content}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {blocks.map((block) => (
@@ -427,7 +431,7 @@ export function PageEditor({
                 setBlocks((prev) => [...prev, createBlock("heading")])
               }
             >
-              Add heading
+              {t.addHeading}
             </Button>
             <Button
               type="button"
@@ -437,7 +441,7 @@ export function PageEditor({
                 setBlocks((prev) => [...prev, createBlock("text")])
               }
             >
-              Add text
+              {t.addText}
             </Button>
             <Button
               type="button"
@@ -447,7 +451,7 @@ export function PageEditor({
                 setBlocks((prev) => [...prev, createBlock("image")])
               }
             >
-              Add image
+              {t.addImage}
             </Button>
           </div>
         </CardContent>
@@ -461,7 +465,7 @@ export function PageEditor({
 
       <div className="flex items-center gap-3">
         <Button type="button" onClick={handleSave} disabled={pending}>
-          {pending ? "Saving..." : "Save page"}
+          {pending ? t.saving : t.savePage}
         </Button>
         <Button
           type="button"
@@ -469,7 +473,7 @@ export function PageEditor({
           onClick={() => router.push(ROUTES.dashboard.pages)}
           disabled={pending}
         >
-          Cancel
+          {t.cancel}
         </Button>
         {initial.id ? (
           <Button
@@ -479,7 +483,7 @@ export function PageEditor({
             onClick={handleDelete}
             disabled={pending}
           >
-            Delete
+            {t.deleteBtn}
           </Button>
         ) : null}
       </div>

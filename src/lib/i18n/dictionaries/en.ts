@@ -1000,6 +1000,33 @@ export const en = {
     unsavedConfirm: "You have unsaved changes. Leave without saving?",
     allSaved: "All changes saved.",
   },
+  pageEditor: {
+    pageSettings: "Page settings",
+    seo: "SEO",
+    content: "Content",
+    contentLanguage: "Content language",
+    defaultSuffix: " (default)",
+    perLanguageHint:
+      "Title, SEO and content below are saved per language. Slug, type and status are shared across languages.",
+    title: "Title",
+    slug: "Slug",
+    type: "Type",
+    status: "Status",
+    seoTitle: "SEO title",
+    seoDescription: "SEO description",
+    removeBlock: "Remove block",
+    headingText: "Heading text",
+    paragraphText: "Paragraph text",
+    imageUrl: "Image URL",
+    altText: "Alt text",
+    addHeading: "Add heading",
+    addText: "Add text",
+    addImage: "Add image",
+    saving: "Saving...",
+    savePage: "Save page",
+    cancel: "Cancel",
+    deleteBtn: "Delete",
+  },
 };
 
 export type Dictionary = typeof en;
