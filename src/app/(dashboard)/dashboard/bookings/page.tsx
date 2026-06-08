@@ -3,10 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import {
-  BOOKING_PAYMENT_STATUS_LABELS,
   BOOKING_SOURCE_LABELS,
   BOOKING_STATUS_BADGE,
-  BOOKING_STATUS_LABELS,
   BOOKING_STATUS_OPTIONS,
 } from "@/features/bookings/constants";
 import { listBookings } from "@/features/bookings/queries";
@@ -143,6 +141,34 @@ export default async function BookingsPage({
     : [];
   const dict = await getServerDictionary();
   const t = dict.dashBookings;
+  const statusLabel = (s: BookingStatus): string =>
+    ({
+      draft: t.stDraft,
+      pending: t.stPending,
+      confirmed: t.stConfirmed,
+      cancelled: t.stCancelled,
+      completed: t.stCompleted,
+    })[s];
+  const sourceLabel = (s: string): string =>
+    s === "website"
+      ? t.srcWebsite
+      : s === "agent"
+        ? t.srcAgent
+        : s === "airbnb_import"
+          ? t.srcAirbnb
+          : s === "booking_import"
+            ? t.srcBooking
+            : s;
+  const paymentLabel = (s: string): string =>
+    (
+      ({
+        unpaid: t.payUnpaid,
+        partially_paid: t.payPartiallyPaid,
+        paid: t.payPaid,
+        refunded: t.payRefunded,
+        partially_refunded: t.payPartiallyRefunded,
+      }) as Record<string, string>
+    )[s] ?? s;
 
   return (
     <div className="space-y-6">
@@ -181,7 +207,7 @@ export default async function BookingsPage({
             <option value="">{t.allStatuses}</option>
             {BOOKING_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {statusLabel(option.value)}
               </option>
             ))}
           </select>
@@ -197,9 +223,9 @@ export default async function BookingsPage({
             className={`${FIELD_CLASS} w-48`}
           >
             <option value="">{t.allSources}</option>
-            {Object.entries(BOOKING_SOURCE_LABELS).map(([value, label]) => (
+            {Object.keys(BOOKING_SOURCE_LABELS).map((value) => (
               <option key={value} value={value}>
-                {label}
+                {sourceLabel(value)}
               </option>
             ))}
           </select>
@@ -289,14 +315,14 @@ export default async function BookingsPage({
                     </TableCell>
                     <TableCell>
                       <Badge variant={BOOKING_STATUS_BADGE[booking.status]}>
-                        {BOOKING_STATUS_LABELS[booking.status]}
+                        {statusLabel(booking.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {BOOKING_PAYMENT_STATUS_LABELS[booking.paymentStatus]}
+                      {paymentLabel(booking.paymentStatus)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {BOOKING_SOURCE_LABELS[booking.source]}
+                      {sourceLabel(booking.source)}
                     </TableCell>
                   </TableRow>
                 ))}

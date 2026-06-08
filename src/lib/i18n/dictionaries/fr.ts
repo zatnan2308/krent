@@ -549,6 +549,20 @@ export const fr: DeepPartial<Dictionary> = {
     syncRunning: "En attente",
   },
   dashBookings: {
+    stDraft: "Brouillon",
+    stPending: "En attente",
+    stConfirmed: "Confirmé",
+    stCancelled: "Annulé",
+    stCompleted: "Terminé",
+    srcWebsite: "Site web",
+    srcAgent: "Agent",
+    srcAirbnb: "Import Airbnb",
+    srcBooking: "Import Booking.com",
+    payUnpaid: "Non payé",
+    payPartiallyPaid: "Partiellement payé",
+    payPaid: "Payé",
+    payRefunded: "Remboursé",
+    payPartiallyRefunded: "Partiellement remboursé",
     description:
       "Demandes de réservation directe et paiements en ligne de votre site.",
     search: "Rechercher",
@@ -771,6 +785,12 @@ export const fr: DeepPartial<Dictionary> = {
     description: "Menus d'en-tête et de pied de page de {name}.",
   },
   dashEmail: {
+    sendQueued: "En file",
+    sendSent: "Envoyé",
+    sendFailed: "Échec",
+    alwaysSent: "Toujours envoyé",
+    on: "Activé",
+    off: "Désactivé",
     title: "E-mails et notifications",
     description:
       "Modèles d'e-mails transactionnels, paramètres de notification et journaux de livraison.",

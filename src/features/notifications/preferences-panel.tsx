@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { saveNotificationPreference } from "@/features/notifications/actions";
 import type { EventPreference } from "@/features/notifications/queries";
+import { useI18n } from "@/lib/i18n/provider";
 
 /** Строка настройки одного события уведомления. */
 function PreferenceRow({
@@ -15,6 +16,8 @@ function PreferenceRow({
   canManage: boolean;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashEmail;
   const [enabled, setEnabled] = React.useState(event.enabled);
   const [pending, setPending] = React.useState(false);
 
@@ -41,7 +44,7 @@ function PreferenceRow({
       </div>
       {event.isTransactional ? (
         <span className="shrink-0 text-xs text-muted-foreground">
-          Always sent
+          {t.alwaysSent}
         </span>
       ) : (
         <label className="flex shrink-0 items-center gap-2 text-xs">
@@ -52,7 +55,7 @@ function PreferenceRow({
             disabled={!canManage || pending}
             onChange={(changeEvent) => toggle(changeEvent.target.checked)}
           />
-          {enabled ? "On" : "Off"}
+          {enabled ? t.on : t.off}
         </label>
       )}
     </li>

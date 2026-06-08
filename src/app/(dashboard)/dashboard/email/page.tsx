@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { EMAIL_SEND_STATUS_LABELS } from "@/features/notifications/constants";
 import { PreferencesPanel } from "@/features/notifications/preferences-panel";
 import {
   getNotificationCatalog,
@@ -61,6 +60,8 @@ export default async function EmailPage() {
   ]);
   const dict = await getServerDictionary();
   const t = dict.dashEmail;
+  const sendStatusLabel = (s: EmailSendStatus): string =>
+    s === "queued" ? t.sendQueued : s === "sent" ? t.sendSent : t.sendFailed;
 
   return (
     <div className="space-y-6">
@@ -163,7 +164,7 @@ export default async function EmailPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={STATUS_BADGE[send.status]}>
-                          {EMAIL_SEND_STATUS_LABELS[send.status]}
+                          {sendStatusLabel(send.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">

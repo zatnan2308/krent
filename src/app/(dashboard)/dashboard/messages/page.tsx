@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { getOrgAgents } from "@/features/crm/queries";
 import { renderInbox } from "@/features/messaging/inbox-screen";
 import type { MessagingChannel } from "@/features/messaging/types";
-import { PORTAL_TYPE_LABELS } from "@/features/portal/constants";
 import { listPortalAccounts } from "@/features/portal/queries";
 import { listProperties } from "@/features/properties/dashboard-queries";
 import { PageHeader } from "@/components/ui/page-header";
@@ -47,6 +46,13 @@ export default async function MessagesPage({
     listProperties(context.organization.id),
     getOrgAgents(context.organization.id),
   ]);
+  const dict = await getServerDictionary();
+  const portalLabel = (p: string): string =>
+    p === "buyer"
+      ? dict.dashClients.typeBuyer
+      : p === "seller"
+        ? dict.dashClients.typeSeller
+        : dict.dashClients.typeGuest;
   const orgMembers = agents.filter((agent) => agent.id !== context.user.id);
   const portalAccounts = accounts
     .filter(
@@ -56,8 +62,10 @@ export default async function MessagesPage({
     .map((account) => ({
       id: account.id,
       label:
-        `${account.contactName} · ${PORTAL_TYPE_LABELS[account.portalType]}` +
-        (account.status === "pending" ? " · pending" : ""),
+        `${account.contactName} · ${portalLabel(account.portalType)}` +
+        (account.status === "pending"
+          ? ` · ${dict.dashClients.statusPending.toLowerCase()}`
+          : ""),
     }));
 
   const filterParam =
@@ -65,8 +73,6 @@ export default async function MessagesPage({
   const filter: Filter = VALID_FILTERS.includes(filterParam as Filter)
     ? (filterParam as Filter)
     : "all";
-
-  const dict = await getServerDictionary();
 
   return (
     <div className="space-y-4">
