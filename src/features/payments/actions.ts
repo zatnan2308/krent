@@ -104,6 +104,13 @@ export async function startBookingPayment(
       : "/";
   const successUrl = `${base}${returnPath}?booking=success&ref=${booking.reference}`;
   const cancelUrl = `${base}${returnPath}?booking=cancelled&ref=${booking.reference}`;
+  // PayPal захватывается на возврате: ведём return_url через capture-роут, он
+  // дёрнет capture (PayPal допишет ?token=<order>) и редиректнёт на success.
+  // Stripe захватывается синхронно в Checkout — ему отдаём success напрямую.
+  const providerSuccessUrl =
+    data.provider === "paypal" && base
+      ? `${base}/api/payments/paypal/capture?return=${encodeURIComponent(successUrl)}`
+      : successUrl;
 
   const provider = getPaymentProvider(data.provider);
   const result = await provider.createPayment({
@@ -122,7 +129,7 @@ export async function startBookingPayment(
       cryptoWalletAddress: resolved.account?.crypto_wallet_address ?? null,
       instructions: resolved.row.instructions,
     },
-    successUrl,
+    successUrl: providerSuccessUrl,
     cancelUrl,
   });
 
