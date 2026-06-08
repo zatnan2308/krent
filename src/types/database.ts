@@ -767,6 +767,79 @@ export type Database = {
           },
         ]
       }
+      automation_runs: {
+        Row: {
+          automation_flow_id: string
+          contact_id: string | null
+          context: Json
+          created_at: string
+          id: string
+          last_error: string | null
+          next_run_at: string
+          organization_id: string
+          status: string
+          step_index: number
+          subject_id: string | null
+          subject_type: string | null
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          automation_flow_id: string
+          contact_id?: string | null
+          context?: Json
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_run_at?: string
+          organization_id: string
+          status?: string
+          step_index?: number
+          subject_id?: string | null
+          subject_type?: string | null
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          automation_flow_id?: string
+          contact_id?: string | null
+          context?: Json
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_run_at?: string
+          organization_id?: string
+          status?: string
+          step_index?: number
+          subject_id?: string | null
+          subject_type?: string | null
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_automation_flow_id_fkey"
+            columns: ["automation_flow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_steps: {
         Row: {
           automation_flow_id: string

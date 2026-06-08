@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 
 import { dispatchWebhookEvent } from "@/features/agency-api/webhooks";
+import { enqueueAutomationFlows } from "@/features/automations/engine";
 import { createAdminClient } from "@/lib/supabase/server";
 import { resolvePublicOrganization } from "@/server/public-site";
 
@@ -228,6 +229,25 @@ export async function submitLead(
       lead_type: leadType,
     },
   });
+
+  // ---- Автоматизации (триггер lead.created) ------------------
+  // Best-effort: сбой автоматизаций не должен ломать приём лида.
+  try {
+    const fullName = data.name.trim();
+    await enqueueAutomationFlows(admin, organization.id, "lead.created", {
+      subjectType: "lead",
+      subjectId: lead.id,
+      contactId,
+      variables: {
+        email,
+        full_name: fullName,
+        first_name: fullName.split(/\s+/)[0] ?? fullName,
+        company_name: organization.name,
+      },
+    });
+  } catch {
+    // Игнорируем — автоматизации не критичны для основного потока.
+  }
 
   return { ok: true };
 }
