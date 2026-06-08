@@ -22,12 +22,9 @@ import { useI18n } from "@/lib/i18n/provider";
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-const MANUAL_PROVIDERS: PaymentProviderType[] = [
-  "manual",
-  "crypto",
-  "stripe",
-  "paypal",
-];
+// Офлайн-запись доступна только для ручных способов: stripe/paypal
+// проводятся через онлайн-гейтвей, и recordManualPayment их отклоняет.
+const MANUAL_PROVIDERS: PaymentProviderType[] = ["manual", "crypto"];
 
 interface BookingManagerProps {
   bookingId: string;
