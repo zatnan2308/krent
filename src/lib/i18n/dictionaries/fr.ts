@@ -344,6 +344,13 @@ export const fr: DeepPartial<Dictionary> = {
     createProperty: "Créer l'annonce",
   },
   dashCrm: {
+    documentsTitle: "Documents",
+    docUpload: "Téléverser un document",
+    docUploading: "Téléversement…",
+    docEmpty: "Aucun document pour le moment.",
+    docDownload: "Télécharger",
+    docDelete: "Supprimer",
+    docDeleteConfirm: "Supprimer ce document ? Action irréversible.",
     appointmentLabel: "Rendez-vous de visite",
     saveAppointment: "Enregistrer",
     clearAppointment: "Effacer",

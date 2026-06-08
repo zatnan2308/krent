@@ -344,6 +344,13 @@ export const es: DeepPartial<Dictionary> = {
     createProperty: "Crear propiedad",
   },
   dashCrm: {
+    documentsTitle: "Documentos",
+    docUpload: "Subir documento",
+    docUploading: "Subiendo…",
+    docEmpty: "Aún no hay documentos.",
+    docDownload: "Descargar",
+    docDelete: "Eliminar",
+    docDeleteConfirm: "¿Eliminar este documento? Esta acción no se puede deshacer.",
     appointmentLabel: "Cita de visita",
     saveAppointment: "Guardar hora",
     clearAppointment: "Borrar",

@@ -344,6 +344,13 @@ export const uk: DeepPartial<Dictionary> = {
     createProperty: "Створити об'єкт",
   },
   dashCrm: {
+    documentsTitle: "Документи",
+    docUpload: "Завантажити документ",
+    docUploading: "Завантаження…",
+    docEmpty: "Документів поки немає.",
+    docDownload: "Завантажити",
+    docDelete: "Видалити",
+    docDeleteConfirm: "Видалити цей документ? Дію не можна скасувати.",
     appointmentLabel: "Час показу",
     saveAppointment: "Зберегти час",
     clearAppointment: "Очистити",

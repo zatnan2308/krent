@@ -11,6 +11,7 @@ import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
+import { ContactDocuments } from "@/features/crm/contact-documents";
 import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -21,6 +22,7 @@ import {
   getEntityActivity,
   listNotes,
 } from "@/features/crm/queries";
+import { listContactDocuments } from "@/features/portal/queries";
 import {
   Card,
   CardContent,
@@ -77,6 +79,10 @@ export default async function ContactDetailPage({
   }));
   const canManage = hasPermission(context, "crm.manage");
   const canManageAll = hasPermission(context, "crm.manage_all");
+  const documents = await listContactDocuments(
+    context.organization.id,
+    params.id,
+  );
   const { contact, leads, deals } = detail;
   const activity = await getEntityActivity(context.organization.id, [
     contact.id,
@@ -169,6 +175,19 @@ export default async function ContactDetailPage({
         </CardHeader>
         <CardContent>
           <ContactChannels channels={contactChannels} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.documentsTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactDocuments
+            contactId={contact.id}
+            documents={documents}
+            canManage={canManage}
+          />
         </CardContent>
       </Card>
 

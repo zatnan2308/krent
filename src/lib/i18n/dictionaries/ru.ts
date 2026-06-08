@@ -344,6 +344,13 @@ export const ru: DeepPartial<Dictionary> = {
     createProperty: "Создать объект",
   },
   dashCrm: {
+    documentsTitle: "Документы",
+    docUpload: "Загрузить документ",
+    docUploading: "Загрузка…",
+    docEmpty: "Документов пока нет.",
+    docDownload: "Скачать",
+    docDelete: "Удалить",
+    docDeleteConfirm: "Удалить этот документ? Это действие необратимо.",
     appointmentLabel: "Время показа",
     saveAppointment: "Сохранить время",
     clearAppointment: "Очистить",

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
-import { PlaceholderSection } from "@/features/portal/placeholder-section";
+import { PortalDocuments } from "@/features/portal/portal-documents";
 import {
   getPortalAccount,
   getSellerPortalData,
+  listPortalDocuments,
   type SellerLeadItem,
 } from "@/features/portal/queries";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +59,7 @@ export default async function SellerPortalPage() {
   const showings = data.inquiries.filter(
     (lead) => lead.source === "showing_request",
   );
+  const documents = await listPortalDocuments(resolved.account);
 
   return (
     <div className="space-y-6">
@@ -184,10 +186,14 @@ export default async function SellerPortalPage() {
           </dl>
         </CardContent>
       </Card>
-      <PlaceholderSection
-        title="Documents"
-        description="Document uploads and signed-URL sharing become available once private documents storage is configured for this installation."
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PortalDocuments documents={documents} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

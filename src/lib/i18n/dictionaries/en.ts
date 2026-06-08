@@ -347,6 +347,13 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    documentsTitle: "Documents",
+    docUpload: "Upload document",
+    docUploading: "Uploading…",
+    docEmpty: "No documents yet.",
+    docDownload: "Download",
+    docDelete: "Delete",
+    docDeleteConfirm: "Delete this document? This cannot be undone.",
     appointmentLabel: "Showing appointment",
     saveAppointment: "Save time",
     clearAppointment: "Clear",

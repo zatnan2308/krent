@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { PlaceholderSection } from "@/features/portal/placeholder-section";
+import { PortalDocuments } from "@/features/portal/portal-documents";
 import {
   getGuestPortalData,
   getPortalAccount,
+  listPortalDocuments,
   type GuestBooking,
 } from "@/features/portal/queries";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ export default async function GuestPortalPage() {
   }
 
   const data = await getGuestPortalData(resolved.account);
+  const documents = await listPortalDocuments(resolved.account);
   const locale = resolved.organization.default_language;
   const now = Date.now();
   const isUpcoming = (b: GuestBooking) =>
@@ -91,10 +93,14 @@ export default async function GuestPortalPage() {
         </CardContent>
       </Card>
 
-      <PlaceholderSection
-        title="Documents"
-        description="Booking documents shared by your host will appear here."
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PortalDocuments documents={documents} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

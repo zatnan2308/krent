@@ -399,6 +399,58 @@ export async function getGuestPortalData(
   };
 }
 
+// ---- Документы клиентов ---------------------------------------
+
+export interface ClientDocumentItem {
+  id: string;
+  fileName: string;
+  sizeBytes: number | null;
+  mimeType: string | null;
+  createdAt: string;
+  portalVisible: boolean;
+}
+
+function mapDocument(row: Tables<"client_documents">): ClientDocumentItem {
+  return {
+    id: row.id,
+    fileName: row.file_name,
+    sizeBytes: row.size_bytes,
+    mimeType: row.mime_type,
+    createdAt: row.created_at,
+    portalVisible: row.portal_visible,
+  };
+}
+
+/** Все документы контакта (для CRM-карточки агента). */
+export async function listContactDocuments(
+  organizationId: string,
+  contactId: string,
+): Promise<ClientDocumentItem[]> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("client_documents")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map(mapDocument);
+}
+
+/** Видимые в портале документы аккаунта (buyer/seller/guest). */
+export async function listPortalDocuments(
+  account: PortalAccount,
+): Promise<ClientDocumentItem[]> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("client_documents")
+    .select("*")
+    .eq("organization_id", account.organization_id)
+    .eq("contact_id", account.contact_id)
+    .eq("portal_visible", true)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map(mapDocument);
+}
+
 // ---- Управление аккаунтами в дашборде -------------------------
 
 export interface PortalAccountListItem {

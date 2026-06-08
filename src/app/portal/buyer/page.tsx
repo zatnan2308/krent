@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { PlaceholderSection } from "@/features/portal/placeholder-section";
+import { PortalDocuments } from "@/features/portal/portal-documents";
 import { PortalRemoveButton } from "@/features/portal/portal-remove-button";
 import {
   getBuyerPortalData,
   getPortalAccount,
+  listPortalDocuments,
 } from "@/features/portal/queries";
 import {
   Card,
@@ -41,6 +42,7 @@ export default async function BuyerPortalPage() {
   const appointments = data.leads
     .filter((lead) => lead.scheduledAt !== null)
     .sort((a, b) => (a.scheduledAt ?? "").localeCompare(b.scheduledAt ?? ""));
+  const documents = await listPortalDocuments(resolved.account);
 
   return (
     <div className="space-y-6">
@@ -185,10 +187,14 @@ export default async function BuyerPortalPage() {
           )}
         </CardContent>
       </Card>
-      <PlaceholderSection
-        title="Documents"
-        description="Documents shared by your agent will appear here."
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PortalDocuments documents={documents} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
