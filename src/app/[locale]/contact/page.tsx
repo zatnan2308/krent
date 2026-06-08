@@ -65,7 +65,11 @@ export default async function ContactPage({
   const locale = resolveLocale(params.locale);
   const site = await getPublicSiteContext();
   const content = site
-    ? await getHomeContent(site.organization.id)
+    ? await getHomeContent(
+        site.organization.id,
+        locale,
+        site.organization.default_language,
+      )
     : { about: null };
 
   const brokerName = site?.organization.name ?? "Alexey Kachan";

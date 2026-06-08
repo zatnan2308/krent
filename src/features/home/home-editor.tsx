@@ -39,6 +39,20 @@ import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 type HE = Dictionary["homeEditor"];
 
+/**
+ * Локаль редактирования контента главной. locale прокидывается в save-экшены
+ * (default → базовая таблица, иначе → перевод). isDefault гейтит структуру
+ * списков (add/move/delete доступны только на языке по умолчанию).
+ */
+const HomeLocaleCtx = React.createContext<{
+  locale: string;
+  isDefault: boolean;
+}>({ locale: "", isDefault: true });
+
+function useHomeLocale() {
+  return React.useContext(HomeLocaleCtx);
+}
+
 type Tab =
   | "hero"
   | "intent"
@@ -68,13 +82,24 @@ const TABS: { key: Tab; labelKey: keyof HE }[] = [
   { key: "press", labelKey: "tabPress" },
 ];
 
-export function HomeEditor({ content }: { content: HomeContent }) {
+export function HomeEditor({
+  content,
+  locale,
+  isDefault,
+}: {
+  content: HomeContent;
+  locale: string;
+  isDefault: boolean;
+}) {
   const [tab, setTab] = React.useState<Tab>("hero");
   const { dict } = useI18n();
+  // В режиме перевода прячем вкладку Press (логотипы прессы — бренды, не переводятся).
+  const tabs = isDefault ? TABS : TABS.filter((t) => t.key !== "press");
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-x-1 border-b">
-        {TABS.map((ti) => (
+    <HomeLocaleCtx.Provider value={{ locale, isDefault }}>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-x-1 border-b">
+          {tabs.map((ti) => (
           <button
             key={ti.key}
             type="button"
@@ -105,9 +130,12 @@ export function HomeEditor({ content }: { content: HomeContent }) {
         <TestimonialsSection items={content.testimonials} />
       ) : null}
       {tab === "trust" ? <TrustSection items={content.trust} /> : null}
-      {tab === "press" ? <PressSection items={content.press} /> : null}
+      {tab === "press" && isDefault ? (
+        <PressSection items={content.press} />
+      ) : null}
       {tab === "cta" ? <CtaSection initial={content.cta} /> : null}
-    </div>
+      </div>
+    </HomeLocaleCtx.Provider>
   );
 }
 
@@ -176,6 +204,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<HeroInput>({
     backgroundImageUrl: initial?.background_image_url ?? null,
     eyebrowText: initial?.eyebrow_text ?? "Licensed Realtor",
@@ -197,7 +226,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const result = await saveHero(form);
+        const result = await saveHero(form, locale);
         setPending(false);
         setMsg(result.ok ? "Hero saved." : result.error);
         if (result.ok) router.refresh();
@@ -311,6 +340,7 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<AboutInput>({
     eyebrowText: initial?.eyebrow_text ?? "",
     headline: initial?.headline ?? "",
@@ -337,7 +367,7 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const result = await saveAbout(form);
+        const result = await saveAbout(form, locale);
         setPending(false);
         setMsg(result.ok ? "About saved." : result.error);
         if (result.ok) router.refresh();
@@ -465,6 +495,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<CtaInput>({
     eyebrowText: initial?.eyebrow_text ?? "",
     headlineLeft: initial?.headline_left ?? "Tell me what you",
@@ -484,7 +515,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const result = await saveCta(form);
+        const result = await saveCta(form, locale);
         setPending(false);
         setMsg(result.ok ? "CTA saved." : result.error);
         if (result.ok) router.refresh();
@@ -576,6 +607,7 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   const [draft, setDraft] = React.useState<MarketInput | null>(null);
@@ -599,7 +631,7 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descMarkets}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addMarket}
         </Button>
       </div>
@@ -659,7 +691,7 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === m.id}
+                disabled={!isDefault || pendingId === m.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDelete.replace("{name}", m.name))) return;
                   setPendingId(m.id);
@@ -710,6 +742,7 @@ function MarketForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<MarketInput>(initial);
   return (
     <form
@@ -717,7 +750,7 @@ function MarketForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveMarket(form);
+        const r = await saveMarket(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Market saved.");
@@ -823,6 +856,7 @@ function ProcessSection({ items }: { items: HomeContent["process"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<ProcessInput | null>(null);
 
@@ -841,7 +875,7 @@ function ProcessSection({ items }: { items: HomeContent["process"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descProcess}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addStep}
         </Button>
       </div>
@@ -880,7 +914,7 @@ function ProcessSection({ items }: { items: HomeContent["process"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === s.id}
+                disabled={!isDefault || pendingId === s.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDeleteStep.replace("{name}", s.title))) return;
                   setPendingId(s.id);
@@ -929,6 +963,7 @@ function ProcessForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<ProcessInput>(initial);
   return (
     <form
@@ -936,7 +971,7 @@ function ProcessForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveProcessStep(form);
+        const r = await saveProcessStep(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Step saved.");
@@ -1005,6 +1040,7 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<TestimonialInput | null>(null);
 
@@ -1023,7 +1059,7 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descTestimonials}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addTestimonial}
         </Button>
       </div>
@@ -1061,7 +1097,7 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
                   size="sm"
                   variant="outline"
                   className="text-destructive"
-                  disabled={pendingId === t.id}
+                  disabled={!isDefault || pendingId === t.id}
                   onClick={async () => {
                     if (!confirm("Delete this testimonial?")) return;
                     setPendingId(t.id);
@@ -1111,6 +1147,7 @@ function TestimonialForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<TestimonialInput>(initial);
   return (
     <form
@@ -1118,7 +1155,7 @@ function TestimonialForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveTestimonial(form);
+        const r = await saveTestimonial(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Testimonial saved.");
@@ -1188,6 +1225,7 @@ function TrustSection({ items }: { items: HomeContent["trust"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<TrustInput | null>(null);
 
@@ -1205,7 +1243,7 @@ function TrustSection({ items }: { items: HomeContent["trust"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descTrust}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addBadge}
         </Button>
       </div>
@@ -1240,7 +1278,7 @@ function TrustSection({ items }: { items: HomeContent["trust"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === t.id}
+                disabled={!isDefault || pendingId === t.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDelete.replace("{name}", t.label))) return;
                   setPendingId(t.id);
@@ -1289,6 +1327,7 @@ function TrustForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<TrustInput>(initial);
   return (
     <form
@@ -1296,7 +1335,7 @@ function TrustForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveTrustBadge(form);
+        const r = await saveTrustBadge(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Badge saved.");
@@ -1355,6 +1394,7 @@ function PressSection({ items }: { items: HomeContent["press"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<PressInput | null>(null);
 
@@ -1372,7 +1412,7 @@ function PressSection({ items }: { items: HomeContent["press"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descPress}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addPress}
         </Button>
       </div>
@@ -1416,7 +1456,7 @@ function PressSection({ items }: { items: HomeContent["press"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === p.id}
+                disabled={!isDefault || pendingId === p.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDelete.replace("{name}", p.name))) return;
                   setPendingId(p.id);
@@ -1533,6 +1573,7 @@ function IntentSection({ items }: { items: HomeContent["intent"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<IntentInput | null>(null);
 
@@ -1551,7 +1592,7 @@ function IntentSection({ items }: { items: HomeContent["intent"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descIntent}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addOption}
         </Button>
       </div>
@@ -1591,7 +1632,7 @@ function IntentSection({ items }: { items: HomeContent["intent"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === o.id}
+                disabled={!isDefault || pendingId === o.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDelete.replace("{name}", o.title))) return;
                   setPendingId(o.id);
@@ -1640,6 +1681,7 @@ function IntentForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<IntentInput>(initial);
   return (
     <form
@@ -1647,7 +1689,7 @@ function IntentForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveIntentOption(form);
+        const r = await saveIntentOption(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Option saved.");
@@ -1716,6 +1758,7 @@ function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<ReasonInput | null>(null);
 
@@ -1728,7 +1771,7 @@ function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descReasons}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addReason}
         </Button>
       </div>
@@ -1766,7 +1809,7 @@ function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === r.id}
+                disabled={!isDefault || pendingId === r.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDelete.replace("{name}", r.title))) return;
                   setPendingId(r.id);
@@ -1815,6 +1858,7 @@ function ReasonForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<ReasonInput>(initial);
   return (
     <form
@@ -1822,7 +1866,7 @@ function ReasonForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveReason(form);
+        const r = await saveReason(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Reason saved.");
@@ -1883,6 +1927,7 @@ function StatsSection({ items }: { items: HomeContent["stats"] }) {
   const { msg, setMsg } = useToast();
   const { dict } = useI18n();
   const hed = dict.homeEditor;
+  const { isDefault } = useHomeLocale();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<StatInput | null>(null);
 
@@ -1901,7 +1946,7 @@ function StatsSection({ items }: { items: HomeContent["stats"] }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {hed.descStats}</p>
-        <Button size="sm" type="button" onClick={() => setDraft(blank())}>
+        <Button size="sm" type="button" disabled={!isDefault} onClick={() => setDraft(blank())}>
           {hed.addStat}
         </Button>
       </div>
@@ -1938,7 +1983,7 @@ function StatsSection({ items }: { items: HomeContent["stats"] }) {
                 size="sm"
                 variant="outline"
                 className="text-destructive"
-                disabled={pendingId === s.id}
+                disabled={!isDefault || pendingId === s.id}
                 onClick={async () => {
                   if (!confirm(hed.confirmDelete.replace("{name}", s.label))) return;
                   setPendingId(s.id);
@@ -1987,6 +2032,7 @@ function StatForm({
   const { dict } = useI18n();
   const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<StatInput>(initial);
   return (
     <form
@@ -1994,7 +2040,7 @@ function StatForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveStat(form);
+        const r = await saveStat(form, locale);
         setPending(false);
         if (r.ok) {
           setMsg("Stat saved.");
@@ -2109,6 +2155,7 @@ function SectionHeadingForm({
   const router = useRouter();
   const { msg, setMsg } = useToast();
   const [pending, setPending] = React.useState(false);
+  const { locale } = useHomeLocale();
   const [form, setForm] = React.useState<SectionInput>({
     sectionKey,
     eyebrow: initial?.eyebrow ?? null,
@@ -2124,7 +2171,7 @@ function SectionHeadingForm({
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
-        const r = await saveSection(form);
+        const r = await saveSection(form, locale);
         setPending(false);
         setMsg(r.ok ? "Saved." : r.error);
         if (r.ok) router.refresh();

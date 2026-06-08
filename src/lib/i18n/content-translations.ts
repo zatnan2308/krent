@@ -92,7 +92,7 @@ export async function saveContentTranslation(
   entityType: string,
   entityKey: string,
   locale: string,
-  fields: Record<string, string | null>,
+  fields: Record<string, string | string[] | null>,
 ): Promise<boolean> {
   const admin = createAdminClient();
   const { error } = await admin.from("content_translations").upsert(

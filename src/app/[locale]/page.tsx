@@ -146,7 +146,11 @@ export default async function LocaleHomePage({
 
   const [content, catalog] = site
     ? await Promise.all([
-        getHomeContent(site.organization.id),
+        getHomeContent(
+          site.organization.id,
+          locale,
+          site.organization.default_language,
+        ),
         getPublicProperties(
           site.organization.id,
           locale,

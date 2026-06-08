@@ -3,13 +3,26 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
+import {
+  deleteContentTranslations,
+  resolveOrgLocale,
+  saveContentTranslation,
+} from "@/lib/i18n/content-translations";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
+import type { Tables } from "@/types/database";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-async function gate() {
+type GateOk = {
+  ok: true;
+  organizationId: string;
+  organization: Tables<"organizations">;
+  userId: string;
+};
+
+async function gate(): Promise<GateOk | { ok: false; error: string }> {
   const context = await requireOrganizationContext();
   if (!context.organization) {
     return { ok: false as const, error: "No organization." };
@@ -20,8 +33,45 @@ async function gate() {
   return {
     ok: true as const,
     organizationId: context.organization.id,
+    organization: context.organization,
     userId: context.user.id,
   };
+}
+
+/**
+ * Сохраняет переводимую сущность главной: язык по умолчанию пишется в
+ * базовую таблицу (writeBase, который сам ревалидирует), остальные локали —
+ * оверлеем в content_translations. keyRequired=true для списочных сущностей
+ * (нельзя переводить ещё не созданную строку).
+ */
+async function saveTranslatable(
+  g: GateOk,
+  locale: string | undefined,
+  entityType: string,
+  entityKey: string,
+  translationFields: Record<string, string | string[] | null>,
+  writeBase: () => Promise<ActionResult>,
+  keyRequired = false,
+): Promise<ActionResult> {
+  const target = resolveOrgLocale(g.organization, locale);
+  if (target === g.organization.default_language) {
+    return writeBase();
+  }
+  if (keyRequired && !entityKey) {
+    return { ok: false, error: "Add items in the default language first." };
+  }
+  const ok = await saveContentTranslation(
+    g.organizationId,
+    entityType,
+    entityKey,
+    target,
+    translationFields,
+  );
+  if (!ok) return { ok: false, error: "Could not save translation." };
+  revalidatePath("/dashboard/home");
+  revalidatePath("/", "layout");
+  revalidateTag("home-content");
+  return { ok: true };
 }
 
 // ---- HERO -------------------------------------------------------
@@ -40,33 +90,53 @@ const heroSchema = z.object({
 });
 export type HeroInput = z.infer<typeof heroSchema>;
 
-export async function saveHero(input: HeroInput): Promise<ActionResult> {
-  const parsed = heroSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the hero form." };
+export async function saveHero(
+  input: HeroInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const { error } = await admin.from("home_hero").upsert(
+  return saveTranslatable(
+    g,
+    locale,
+    "home_hero",
+    "",
     {
-      organization_id: g.organizationId,
-      background_image_url: parsed.data.backgroundImageUrl,
-      eyebrow_text: parsed.data.eyebrowText,
-      eyebrow_chips: parsed.data.eyebrowChips,
-      headline_top: parsed.data.headlineTop,
-      headline_bottom_italic: parsed.data.headlineBottomItalic,
-      subtitle: parsed.data.subtitle,
-      primary_cta_label: parsed.data.primaryCtaLabel,
-      primary_cta_href: parsed.data.primaryCtaHref,
-      secondary_cta_label: parsed.data.secondaryCtaLabel,
-      secondary_cta_href: parsed.data.secondaryCtaHref,
+      eyebrow_text: input.eyebrowText,
+      eyebrow_chips: input.eyebrowChips,
+      headline_top: input.headlineTop,
+      headline_bottom_italic: input.headlineBottomItalic,
+      subtitle: input.subtitle,
+      primary_cta_label: input.primaryCtaLabel,
+      secondary_cta_label: input.secondaryCtaLabel,
     },
-    { onConflict: "organization_id" },
+    async () => {
+      const parsed = heroSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the hero form." };
+      const admin = createAdminClient();
+      const { error } = await admin.from("home_hero").upsert(
+        {
+          organization_id: g.organizationId,
+          background_image_url: parsed.data.backgroundImageUrl,
+          eyebrow_text: parsed.data.eyebrowText,
+          eyebrow_chips: parsed.data.eyebrowChips,
+          headline_top: parsed.data.headlineTop,
+          headline_bottom_italic: parsed.data.headlineBottomItalic,
+          subtitle: parsed.data.subtitle,
+          primary_cta_label: parsed.data.primaryCtaLabel,
+          primary_cta_href: parsed.data.primaryCtaHref,
+          secondary_cta_label: parsed.data.secondaryCtaLabel,
+          secondary_cta_href: parsed.data.secondaryCtaHref,
+        },
+        { onConflict: "organization_id" },
+      );
+      if (error) return { ok: false, error: "Could not save hero." };
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
   );
-  if (error) return { ok: false, error: "Could not save hero." };
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
 }
 
 // ---- ABOUT ------------------------------------------------------
@@ -92,40 +162,64 @@ const aboutSchema = z.object({
 });
 export type AboutInput = z.infer<typeof aboutSchema>;
 
-export async function saveAbout(input: AboutInput): Promise<ActionResult> {
-  const parsed = aboutSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the about form." };
+export async function saveAbout(
+  input: AboutInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const { error } = await admin.from("home_about").upsert(
+  return saveTranslatable(
+    g,
+    locale,
+    "home_about",
+    "",
     {
-      organization_id: g.organizationId,
-      eyebrow_text: parsed.data.eyebrowText,
-      headline: parsed.data.headline,
-      body: parsed.data.body,
-      portrait_url: parsed.data.portraitUrl,
-      headline_accent: parsed.data.headlineAccent,
-      headline_suffix: parsed.data.headlineSuffix,
-      body_2: parsed.data.body2,
-      cta_label: parsed.data.ctaLabel,
-      cta_href: parsed.data.ctaHref,
-      metric_1_value: parsed.data.metric1Value,
-      metric_1_label: parsed.data.metric1Label,
-      metric_2_value: parsed.data.metric2Value,
-      metric_2_label: parsed.data.metric2Label,
-      metric_3_value: parsed.data.metric3Value,
-      metric_3_label: parsed.data.metric3Label,
-      metric_4_value: parsed.data.metric4Value,
-      metric_4_label: parsed.data.metric4Label,
+      eyebrow_text: input.eyebrowText,
+      headline: input.headline,
+      body: input.body,
+      headline_accent: input.headlineAccent,
+      headline_suffix: input.headlineSuffix,
+      body_2: input.body2,
+      cta_label: input.ctaLabel,
+      metric_1_label: input.metric1Label,
+      metric_2_label: input.metric2Label,
+      metric_3_label: input.metric3Label,
+      metric_4_label: input.metric4Label,
     },
-    { onConflict: "organization_id" },
+    async () => {
+      const parsed = aboutSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the about form." };
+      const admin = createAdminClient();
+      const { error } = await admin.from("home_about").upsert(
+        {
+          organization_id: g.organizationId,
+          eyebrow_text: parsed.data.eyebrowText,
+          headline: parsed.data.headline,
+          body: parsed.data.body,
+          portrait_url: parsed.data.portraitUrl,
+          headline_accent: parsed.data.headlineAccent,
+          headline_suffix: parsed.data.headlineSuffix,
+          body_2: parsed.data.body2,
+          cta_label: parsed.data.ctaLabel,
+          cta_href: parsed.data.ctaHref,
+          metric_1_value: parsed.data.metric1Value,
+          metric_1_label: parsed.data.metric1Label,
+          metric_2_value: parsed.data.metric2Value,
+          metric_2_label: parsed.data.metric2Label,
+          metric_3_value: parsed.data.metric3Value,
+          metric_3_label: parsed.data.metric3Label,
+          metric_4_value: parsed.data.metric4Value,
+          metric_4_label: parsed.data.metric4Label,
+        },
+        { onConflict: "organization_id" },
+      );
+      if (error) return { ok: false, error: "Could not save about." };
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
   );
-  if (error) return { ok: false, error: "Could not save about." };
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
 }
 
 // ---- CTA --------------------------------------------------------
@@ -143,32 +237,52 @@ const ctaSchema = z.object({
 });
 export type CtaInput = z.infer<typeof ctaSchema>;
 
-export async function saveCta(input: CtaInput): Promise<ActionResult> {
-  const parsed = ctaSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the CTA form." };
+export async function saveCta(
+  input: CtaInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const { error } = await admin.from("home_cta").upsert(
+  return saveTranslatable(
+    g,
+    locale,
+    "home_cta",
+    "",
     {
-      organization_id: g.organizationId,
-      eyebrow_text: parsed.data.eyebrowText,
-      headline_left: parsed.data.headlineLeft,
-      headline_italic: parsed.data.headlineItalic,
-      headline_right: parsed.data.headlineRight,
-      subtitle: parsed.data.subtitle,
-      primary_cta_label: parsed.data.primaryCtaLabel,
-      primary_cta_href: parsed.data.primaryCtaHref,
-      secondary_cta_label: parsed.data.secondaryCtaLabel,
-      secondary_cta_href: parsed.data.secondaryCtaHref,
+      eyebrow_text: input.eyebrowText,
+      headline_left: input.headlineLeft,
+      headline_italic: input.headlineItalic,
+      headline_right: input.headlineRight,
+      subtitle: input.subtitle,
+      primary_cta_label: input.primaryCtaLabel,
+      secondary_cta_label: input.secondaryCtaLabel,
     },
-    { onConflict: "organization_id" },
+    async () => {
+      const parsed = ctaSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the CTA form." };
+      const admin = createAdminClient();
+      const { error } = await admin.from("home_cta").upsert(
+        {
+          organization_id: g.organizationId,
+          eyebrow_text: parsed.data.eyebrowText,
+          headline_left: parsed.data.headlineLeft,
+          headline_italic: parsed.data.headlineItalic,
+          headline_right: parsed.data.headlineRight,
+          subtitle: parsed.data.subtitle,
+          primary_cta_label: parsed.data.primaryCtaLabel,
+          primary_cta_href: parsed.data.primaryCtaHref,
+          secondary_cta_label: parsed.data.secondaryCtaLabel,
+          secondary_cta_href: parsed.data.secondaryCtaHref,
+        },
+        { onConflict: "organization_id" },
+      );
+      if (error) return { ok: false, error: "Could not save CTA." };
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
   );
-  if (error) return { ok: false, error: "Could not save CTA." };
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
 }
 
 // ---- generic helpers for list items -----------------------------
@@ -182,6 +296,18 @@ type ListTable =
   | "home_intent_options"
   | "home_reasons"
   | "home_stats";
+
+/** Тип сущности перевода для списочной таблицы (для очистки переводов). */
+const LIST_ENTITY_TYPE: Record<ListTable, string> = {
+  home_markets: "home_market",
+  home_process_steps: "home_process",
+  home_testimonials: "home_testimonial",
+  home_trust_badges: "home_trust",
+  home_press_logos: "home_press",
+  home_intent_options: "home_intent",
+  home_reasons: "home_reason",
+  home_stats: "home_stat",
+};
 
 export async function deleteHomeItem(
   table: ListTable,
@@ -197,6 +323,8 @@ export async function deleteHomeItem(
     .eq("id", id)
     .eq("organization_id", g.organizationId);
   if (error) return { ok: false, error: "Could not delete." };
+  // Чистим переводы удалённой строки во всех локалях.
+  await deleteContentTranslations(g.organizationId, LIST_ENTITY_TYPE[table], id);
   revalidatePath("/dashboard/home");
   revalidatePath("/", "layout");
   revalidateTag("home-content");
@@ -218,38 +346,56 @@ const marketSchema = z.object({
 });
 export type MarketInput = z.infer<typeof marketSchema>;
 
-export async function saveMarket(input: MarketInput): Promise<ActionResult> {
-  const parsed = marketSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the market form." };
+export async function saveMarket(
+  input: MarketInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    name: parsed.data.name,
-    region: parsed.data.region,
-    badge: parsed.data.badge,
-    blurb: parsed.data.blurb,
-    image_url: parsed.data.imageUrl,
-    href: parsed.data.href,
-    is_featured: parsed.data.isFeatured,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_markets")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save market." };
-  } else {
-    const { error } = await admin.from("home_markets").insert(row);
-    if (error) return { ok: false, error: "Could not create market." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_market",
+    input.id ?? "",
+    {
+      name: input.name,
+      region: input.region,
+      badge: input.badge,
+      blurb: input.blurb,
+    },
+    async () => {
+      const parsed = marketSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the market form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        name: parsed.data.name,
+        region: parsed.data.region,
+        badge: parsed.data.badge,
+        blurb: parsed.data.blurb,
+        image_url: parsed.data.imageUrl,
+        href: parsed.data.href,
+        is_featured: parsed.data.isFeatured,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_markets")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save market." };
+      } else {
+        const { error } = await admin.from("home_markets").insert(row);
+        if (error) return { ok: false, error: "Could not create market." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }
 
 // ---- Process step ----------------------------------------------
@@ -265,34 +411,46 @@ export type ProcessInput = z.infer<typeof processSchema>;
 
 export async function saveProcessStep(
   input: ProcessInput,
+  locale?: string,
 ): Promise<ActionResult> {
-  const parsed = processSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the process form." };
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    step_number: parsed.data.stepNumber,
-    title: parsed.data.title,
-    body: parsed.data.body,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_process_steps")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save step." };
-  } else {
-    const { error } = await admin.from("home_process_steps").insert(row);
-    if (error) return { ok: false, error: "Could not create step." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_process",
+    input.id ?? "",
+    { title: input.title, body: input.body },
+    async () => {
+      const parsed = processSchema.safeParse(input);
+      if (!parsed.success)
+        return { ok: false, error: "Check the process form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        step_number: parsed.data.stepNumber,
+        title: parsed.data.title,
+        body: parsed.data.body,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_process_steps")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save step." };
+      } else {
+        const { error } = await admin.from("home_process_steps").insert(row);
+        if (error) return { ok: false, error: "Could not create step." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }
 
 // ---- Testimonial -----------------------------------------------
@@ -308,34 +466,46 @@ export type TestimonialInput = z.infer<typeof testimonialSchema>;
 
 export async function saveTestimonial(
   input: TestimonialInput,
+  locale?: string,
 ): Promise<ActionResult> {
-  const parsed = testimonialSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the testimonial form." };
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    quote: parsed.data.quote,
-    author_name: parsed.data.authorName,
-    deal_label: parsed.data.dealLabel,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_testimonials")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save testimonial." };
-  } else {
-    const { error } = await admin.from("home_testimonials").insert(row);
-    if (error) return { ok: false, error: "Could not create testimonial." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_testimonial",
+    input.id ?? "",
+    { quote: input.quote, deal_label: input.dealLabel },
+    async () => {
+      const parsed = testimonialSchema.safeParse(input);
+      if (!parsed.success)
+        return { ok: false, error: "Check the testimonial form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        quote: parsed.data.quote,
+        author_name: parsed.data.authorName,
+        deal_label: parsed.data.dealLabel,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_testimonials")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save testimonial." };
+      } else {
+        const { error } = await admin.from("home_testimonials").insert(row);
+        if (error) return { ok: false, error: "Could not create testimonial." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }
 
 // ---- Trust badge ------------------------------------------------
@@ -348,33 +518,46 @@ const trustSchema = z.object({
 });
 export type TrustInput = z.infer<typeof trustSchema>;
 
-export async function saveTrustBadge(input: TrustInput): Promise<ActionResult> {
-  const parsed = trustSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the badge form." };
+export async function saveTrustBadge(
+  input: TrustInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    label: parsed.data.label,
-    sub: parsed.data.sub,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_trust_badges")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save badge." };
-  } else {
-    const { error } = await admin.from("home_trust_badges").insert(row);
-    if (error) return { ok: false, error: "Could not create badge." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_trust",
+    input.id ?? "",
+    { label: input.label, sub: input.sub },
+    async () => {
+      const parsed = trustSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the badge form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        label: parsed.data.label,
+        sub: parsed.data.sub,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_trust_badges")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save badge." };
+      } else {
+        const { error } = await admin.from("home_trust_badges").insert(row);
+        if (error) return { ok: false, error: "Could not create badge." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }
 
 // ---- Press logo -------------------------------------------------
@@ -437,29 +620,47 @@ const sectionSchema = z.object({
 });
 export type SectionInput = z.infer<typeof sectionSchema>;
 
-export async function saveSection(input: SectionInput): Promise<ActionResult> {
-  const parsed = sectionSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the section form." };
+export async function saveSection(
+  input: SectionInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const { error } = await admin.from("home_sections").upsert(
+  return saveTranslatable(
+    g,
+    locale,
+    "home_section",
+    input.sectionKey,
     {
-      organization_id: g.organizationId,
-      section_key: parsed.data.sectionKey,
-      eyebrow: parsed.data.eyebrow,
-      lead: parsed.data.lead,
-      accent: parsed.data.accent,
-      subtitle: parsed.data.subtitle,
-      image_url: parsed.data.imageUrl,
+      eyebrow: input.eyebrow,
+      lead: input.lead,
+      accent: input.accent,
+      subtitle: input.subtitle,
     },
-    { onConflict: "organization_id,section_key" },
+    async () => {
+      const parsed = sectionSchema.safeParse(input);
+      if (!parsed.success)
+        return { ok: false, error: "Check the section form." };
+      const admin = createAdminClient();
+      const { error } = await admin.from("home_sections").upsert(
+        {
+          organization_id: g.organizationId,
+          section_key: parsed.data.sectionKey,
+          eyebrow: parsed.data.eyebrow,
+          lead: parsed.data.lead,
+          accent: parsed.data.accent,
+          subtitle: parsed.data.subtitle,
+          image_url: parsed.data.imageUrl,
+        },
+        { onConflict: "organization_id,section_key" },
+      );
+      if (error) return { ok: false, error: "Could not save section." };
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
   );
-  if (error) return { ok: false, error: "Could not save section." };
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
 }
 
 // ---- Intent option ("How can I help you?") ----------------------
@@ -475,34 +676,45 @@ export type IntentInput = z.infer<typeof intentSchema>;
 
 export async function saveIntentOption(
   input: IntentInput,
+  locale?: string,
 ): Promise<ActionResult> {
-  const parsed = intentSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the intent form." };
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    title: parsed.data.title,
-    description: parsed.data.description,
-    href: parsed.data.href,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_intent_options")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save option." };
-  } else {
-    const { error } = await admin.from("home_intent_options").insert(row);
-    if (error) return { ok: false, error: "Could not create option." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_intent",
+    input.id ?? "",
+    { title: input.title, description: input.description },
+    async () => {
+      const parsed = intentSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the intent form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        href: parsed.data.href,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_intent_options")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save option." };
+      } else {
+        const { error } = await admin.from("home_intent_options").insert(row);
+        if (error) return { ok: false, error: "Could not create option." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }
 
 // ---- Reason ("Why work with Alexey") ----------------------------
@@ -515,33 +727,46 @@ const reasonSchema = z.object({
 });
 export type ReasonInput = z.infer<typeof reasonSchema>;
 
-export async function saveReason(input: ReasonInput): Promise<ActionResult> {
-  const parsed = reasonSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the reason form." };
+export async function saveReason(
+  input: ReasonInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    title: parsed.data.title,
-    body: parsed.data.body,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_reasons")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save reason." };
-  } else {
-    const { error } = await admin.from("home_reasons").insert(row);
-    if (error) return { ok: false, error: "Could not create reason." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_reason",
+    input.id ?? "",
+    { title: input.title, body: input.body },
+    async () => {
+      const parsed = reasonSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the reason form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        title: parsed.data.title,
+        body: parsed.data.body,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_reasons")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save reason." };
+      } else {
+        const { error } = await admin.from("home_reasons").insert(row);
+        if (error) return { ok: false, error: "Could not create reason." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }
 
 // ---- Stat (Advantage big numbers) -------------------------------
@@ -555,32 +780,45 @@ const statSchema = z.object({
 });
 export type StatInput = z.infer<typeof statSchema>;
 
-export async function saveStat(input: StatInput): Promise<ActionResult> {
-  const parsed = statSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the stat form." };
+export async function saveStat(
+  input: StatInput,
+  locale?: string,
+): Promise<ActionResult> {
   const g = await gate();
   if (!g.ok) return g;
-  const admin = createAdminClient();
-  const row = {
-    organization_id: g.organizationId,
-    sort_order: parsed.data.sortOrder,
-    value: parsed.data.value,
-    suffix: parsed.data.suffix,
-    label: parsed.data.label,
-  };
-  if (parsed.data.id) {
-    const { error } = await admin
-      .from("home_stats")
-      .update(row)
-      .eq("id", parsed.data.id)
-      .eq("organization_id", g.organizationId);
-    if (error) return { ok: false, error: "Could not save stat." };
-  } else {
-    const { error } = await admin.from("home_stats").insert(row);
-    if (error) return { ok: false, error: "Could not create stat." };
-  }
-  revalidatePath("/dashboard/home");
-  revalidatePath("/", "layout");
-  revalidateTag("home-content");
-  return { ok: true };
+  return saveTranslatable(
+    g,
+    locale,
+    "home_stat",
+    input.id ?? "",
+    { label: input.label },
+    async () => {
+      const parsed = statSchema.safeParse(input);
+      if (!parsed.success) return { ok: false, error: "Check the stat form." };
+      const admin = createAdminClient();
+      const row = {
+        organization_id: g.organizationId,
+        sort_order: parsed.data.sortOrder,
+        value: parsed.data.value,
+        suffix: parsed.data.suffix,
+        label: parsed.data.label,
+      };
+      if (parsed.data.id) {
+        const { error } = await admin
+          .from("home_stats")
+          .update(row)
+          .eq("id", parsed.data.id)
+          .eq("organization_id", g.organizationId);
+        if (error) return { ok: false, error: "Could not save stat." };
+      } else {
+        const { error } = await admin.from("home_stats").insert(row);
+        if (error) return { ok: false, error: "Could not create stat." };
+      }
+      revalidatePath("/dashboard/home");
+      revalidatePath("/", "layout");
+      revalidateTag("home-content");
+      return { ok: true };
+    },
+    true,
+  );
 }

@@ -84,7 +84,11 @@ export default async function AboutPage({
   const site = await getPublicSiteContext();
 
   const content = site
-    ? await getHomeContent(site.organization.id)
+    ? await getHomeContent(
+        site.organization.id,
+        locale,
+        site.organization.default_language,
+      )
     : {
         hero: null,
         about: null,
