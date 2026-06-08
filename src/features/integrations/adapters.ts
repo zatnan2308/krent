@@ -3,15 +3,16 @@ import { getServerEnv } from "@/lib/env";
 import type { IntegrationProvider } from "./types";
 
 /**
- * Stub-адаптеры провайдеров (GSC / Google Ads / Meta Ads).
+ * Адаптеры провайдеров (GSC / Google Ads / Meta Ads).
  *
  * Дизайн:
  *  - адаптер сам сообщает, готов ли он к работе (`getStatus`); UI
  *    показывает «Requires API credentials», если provider не настроен;
- *  - sync и offline-conversion реализуются здесь, под единый
- *    интерфейс, чтобы вызывающий код не зависел от конкретного SDK;
- *  - реальные API-вызовы подключаются в этих же файлах, как только
- *    клиент даёт OAuth-credentials.
+ *  - OAuth (auth URL + обмен кода) реализован здесь полностью;
+ *  - плановый синк отчётов выполняется в `sync.ts` (реальный вызов
+ *    Search Console API + рефреш токена) и запускается cron-роутом
+ *    `/api/cron/integrations-sync`. Методы `syncReports` ниже оставлены
+ *    как точка ручного запуска и пока делегируют сообщение о расписании.
  */
 
 export interface SyncResult {
