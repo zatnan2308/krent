@@ -486,7 +486,7 @@ export default async function PropertyDetailPage({
         eyebrow={heroEyebrow}
         badge={heroBadge}
         backHref={listingsHref}
-        backLabel="All properties"
+        backLabel={t.allProperties}
       />
 
       {/* 2) INFO — sticky CTA + body ======================== */}

@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { useI18n } from "@/lib/i18n/provider";
+
 interface Props {
   /** Цена объекта в его валюте. */
   price: number;
@@ -29,6 +31,8 @@ function useMoney(currency: string, locale: string) {
 /** Ипотечный калькулятор (клиент): первый взнос, срок, ставка → платёж.
  *  Индикативный расчёт от цены объекта; в БД ничего не пишет. */
 export function MortgageCalculator({ price, currency, locale }: Props) {
+  const { dict } = useI18n();
+  const t = dict.propertyDetail;
   const [downPct, setDownPct] = React.useState(25);
   const [years, setYears] = React.useState(25);
   const [rate, setRate] = React.useState(4.5);
@@ -52,7 +56,7 @@ export function MortgageCalculator({ price, currency, locale }: Props) {
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <Slider
-          label="Down payment"
+          label={t.mDownPayment}
           value={downPct}
           min={20}
           max={80}
@@ -62,16 +66,16 @@ export function MortgageCalculator({ price, currency, locale }: Props) {
           note={money(down)}
         />
         <Slider
-          label="Loan term"
+          label={t.mLoanTerm}
           value={years}
           min={5}
           max={25}
           step={1}
-          suffix=" yrs"
+          suffix={t.mYrs}
           onChange={setYears}
         />
         <Slider
-          label="Interest rate"
+          label={t.mInterestRate}
           value={rate}
           min={2.5}
           max={7}
@@ -99,7 +103,7 @@ export function MortgageCalculator({ price, currency, locale }: Props) {
             color: "var(--text-tertiary)",
           }}
         >
-          Estimated monthly
+          {t.mEstMonthly}
         </div>
         <div
           className="serif tnum"
@@ -122,10 +126,10 @@ export function MortgageCalculator({ price, currency, locale }: Props) {
             fontSize: 13.5,
           }}
         >
-          <MRow label="Loan amount" val={money(loan)} />
-          <MRow label="Down payment" val={`${money(down)} · ${downPct}%`} />
-          <MRow label="Total interest" val={money(monthly * n - loan)} />
-          <MRow label="Total repayable" val={money(monthly * n)} />
+          <MRow label={t.mLoanAmount} val={money(loan)} />
+          <MRow label={t.mDownPayment} val={`${money(down)} · ${downPct}%`} />
+          <MRow label={t.mTotalInterest} val={money(monthly * n - loan)} />
+          <MRow label={t.mTotalRepayable} val={money(monthly * n)} />
         </div>
         <p
           style={{

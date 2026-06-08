@@ -5,6 +5,7 @@ import * as React from "react";
 import { track } from "@/features/analytics/track";
 import { readAttribution } from "@/features/crm/attribution";
 import { submitLead } from "@/features/crm/lead-actions";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface Props {
   propertyId: string;
@@ -14,6 +15,8 @@ interface Props {
 /** Editorial split-form для запроса просмотра объекта. Underline-поля,
  *  отправка через существующий submitLead (kind="showing"). */
 export function PropertyViewingForm({ propertyId, locale }: Props) {
+  const { dict } = useI18n();
+  const t = dict.propertyDetail;
   const [sent, setSent] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -33,7 +36,7 @@ export function PropertyViewingForm({ propertyId, locale }: Props) {
     event.preventDefault();
     setError(null);
     if (!data.name.trim() || !data.contact.trim()) {
-      setError("Name and contact are required.");
+      setError(t.vfNameContactReq);
       return;
     }
 
@@ -88,7 +91,7 @@ export function PropertyViewingForm({ propertyId, locale }: Props) {
           borderBottom: "1px solid var(--accent-line)",
         }}
       >
-        <span className="eyebrow gold">Sent</span>
+        <span className="eyebrow gold">{t.vfSent}</span>
         <h3
           className="serif"
           style={{
@@ -99,7 +102,7 @@ export function PropertyViewingForm({ propertyId, locale }: Props) {
             fontWeight: 350,
           }}
         >
-          Thank you.
+          {t.vfThankYou}
           <br />
           We&apos;ll be in touch within the hour with available slots.
         </h3>
@@ -117,17 +120,17 @@ export function PropertyViewingForm({ propertyId, locale }: Props) {
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}
       >
         <CTAField
-          label="Full name"
+          label={t.vfFullName}
           value={data.name}
           onChange={(v) => upd("name", v)}
-          placeholder="Your name"
+          placeholder={t.vfYourNamePh}
           required
         />
         <CTAField
-          label="Phone or email"
+          label={t.vfPhoneEmail}
           value={data.contact}
           onChange={(v) => upd("contact", v)}
-          placeholder="How to reach you"
+          placeholder={t.vfHowReachPh}
           required
         />
       </div>
@@ -136,23 +139,23 @@ export function PropertyViewingForm({ propertyId, locale }: Props) {
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}
       >
         <CTAField
-          label="Preferred viewing date"
+          label={t.vfPreferredDate}
           value={data.when}
           onChange={(v) => upd("when", v)}
-          placeholder="e.g. next Tuesday afternoon"
+          placeholder={t.vfWhenPh}
         />
         <CTAField
-          label="Format"
+          label={t.vfFormat}
           value={data.format}
           onChange={(v) => upd("format", v)}
-          placeholder="In person / Video walk-through"
+          placeholder={t.vfFormatPh}
         />
       </div>
       <CTAField
-        label="Message"
+        label={t.vfMessage}
         value={data.message}
         onChange={(v) => upd("message", v)}
-        placeholder="Anything we should know in advance"
+        placeholder={t.vfMessagePh}
         textarea
       />
 
@@ -194,7 +197,7 @@ export function PropertyViewingForm({ propertyId, locale }: Props) {
             textTransform: "uppercase",
           }}
         >
-          {pending ? "Sending…" : "Send request"} <span className="arrow">→</span>
+          {pending ? t.vfSending : t.vfSendRequest} <span className="arrow">→</span>
         </button>
       </div>
 

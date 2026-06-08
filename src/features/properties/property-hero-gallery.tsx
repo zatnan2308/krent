@@ -3,6 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 
+import { useI18n } from "@/lib/i18n/provider";
+
 interface GalleryImage {
   url: string;
   alt?: string | null;
@@ -31,6 +33,8 @@ export function PropertyHeroGallery({
   backHref,
   backLabel,
 }: Props) {
+  const { dict } = useI18n();
+  const t = dict.propertyDetail;
   const [idx, setIdx] = React.useState(0);
   const [lightbox, setLightbox] = React.useState(false);
   const total = images.length;
@@ -76,7 +80,7 @@ export function PropertyHeroGallery({
           color: "var(--text-secondary)",
         }}
       >
-        No photos available
+        {t.gNoPhotos}
       </section>
     );
   }
@@ -238,8 +242,8 @@ export function PropertyHeroGallery({
             </span>
           </span>
           <div style={{ display: "flex", gap: 4 }}>
-            <GalleryBtn onClick={prev} label="←" ariaLabel="Previous photo" />
-            <GalleryBtn onClick={next} label="→" ariaLabel="Next photo" />
+            <GalleryBtn onClick={prev} label="←" ariaLabel={t.gPrev} />
+            <GalleryBtn onClick={next} label="→" ariaLabel={t.gNext} />
           </div>
           {total > 1 ? (
             <button
@@ -254,7 +258,7 @@ export function PropertyHeroGallery({
                 whiteSpace: "nowrap",
               }}
             >
-              View all photos
+              {t.gViewAll}
             </button>
           ) : null}
         </div>
@@ -338,7 +342,7 @@ export function PropertyHeroGallery({
           <button
             type="button"
             onClick={() => setLightbox(false)}
-            aria-label="Close gallery"
+            aria-label={t.gClose}
             style={{
               position: "fixed",
               top: 28,
