@@ -277,7 +277,7 @@ export async function recordManualPayment(
   const admin = createAdminClient();
   const { data: booking } = await admin
     .from("rental_bookings")
-    .select("id, currency")
+    .select("id, currency, total")
     .eq("id", data.bookingId)
     .eq("organization_id", access.organizationId)
     .maybeSingle();
@@ -317,7 +317,29 @@ export async function recordManualPayment(
     provider_transaction_id: data.reference,
   });
 
-  await markBookingPaid(access.organizationId, booking.id);
+  // Сверяем сумму всех успешных платежей с total брони: полная оплата →
+  // подтверждаем (markBookingPaid блокирует даты), иначе помечаем
+  // «частично оплачено» — форму доплаты не прячем (она скрыта только при
+  // payment_status === "paid"), даты не блокируем.
+  const { data: paidRows } = await admin
+    .from("rental_payments")
+    .select("amount")
+    .eq("organization_id", access.organizationId)
+    .eq("booking_id", booking.id)
+    .eq("status", "succeeded");
+  const totalPaid = (paidRows ?? []).reduce(
+    (sum, row) => sum + (row.amount ?? 0),
+    0,
+  );
+  if (totalPaid + 0.01 >= booking.total) {
+    await markBookingPaid(access.organizationId, booking.id);
+  } else {
+    await admin
+      .from("rental_bookings")
+      .update({ payment_status: "partially_paid" })
+      .eq("id", booking.id)
+      .eq("organization_id", access.organizationId);
+  }
 
   revalidatePath("/dashboard/bookings");
   revalidatePath(`/dashboard/bookings/${booking.id}`);
