@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LOCALES } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/provider";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -72,6 +74,8 @@ export function CampaignEditor({
   availableLocales,
 }: CampaignEditorProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.campaignEditor;
   // Языки рассылки — только включённые в организации (fallback — каталог).
   const localeOptions =
     availableLocales.length > 0 ? availableLocales : LOCALES;
@@ -182,7 +186,7 @@ export function CampaignEditor({
     setMessage(null);
     const metaResult = await saveCampaign({
       campaignId: campaign.id,
-      name: name.trim() || "Untitled campaign",
+      name: name.trim() || t.untitledCampaign,
       subject: subject.trim(),
       previewText: previewText.trim(),
       language,
@@ -203,7 +207,7 @@ export function CampaignEditor({
     });
     setPending(false);
     if (blocksResult.ok) {
-      setMessage("Campaign saved.");
+      setMessage(t.campaignSaved);
       router.refresh();
     } else {
       setMessage(blocksResult.error);
@@ -212,7 +216,7 @@ export function CampaignEditor({
 
   async function handleSendTest() {
     if (!testEmail.trim()) {
-      setMessage("Enter a test email address.");
+      setMessage(t.enterTestEmail);
       return;
     }
     setPending(true);
@@ -222,13 +226,13 @@ export function CampaignEditor({
       email: testEmail.trim(),
     });
     setPending(false);
-    setMessage(result.ok ? "Test email sent." : result.error);
+    setMessage(result.ok ? t.testEmailSent : result.error);
   }
 
   async function handleSendNow() {
     if (
       !window.confirm(
-        "Send this campaign to the selected segment now? Save your changes first.",
+        t.confirmSend,
       )
     ) {
       return;
@@ -238,7 +242,7 @@ export function CampaignEditor({
     const result = await sendCampaignNow(campaign.id);
     setPending(false);
     if (result.ok) {
-      setMessage("Campaign sent.");
+      setMessage(t.campaignSent);
       router.refresh();
     } else {
       setMessage(result.error);
@@ -247,7 +251,7 @@ export function CampaignEditor({
 
   async function handleSchedule() {
     if (!scheduledAt) {
-      setMessage("Choose a date and time.");
+      setMessage(t.chooseDateTime);
       return;
     }
     setPending(true);
@@ -258,7 +262,7 @@ export function CampaignEditor({
     });
     setPending(false);
     if (result.ok) {
-      setMessage("Campaign scheduled.");
+      setMessage(t.campaignScheduled);
       router.refresh();
     } else {
       setMessage(result.error);
@@ -272,14 +276,14 @@ export function CampaignEditor({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Status: {CAMPAIGN_STATUS_LABELS[campaign.status]}
+          {t.statusLabel}: {CAMPAIGN_STATUS_LABELS[campaign.status]}
         </p>
         <div className="flex items-center gap-3">
           {message ? (
             <span className="text-sm text-muted-foreground">{message}</span>
           ) : null}
           <Button type="button" disabled={pending} onClick={handleSave}>
-            Save campaign
+            {t.saveCampaign}
           </Button>
         </div>
       </div>
@@ -287,23 +291,23 @@ export function CampaignEditor({
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-5">
           <div className="space-y-3 rounded-lg border p-4">
-            <p className="text-sm font-medium">Campaign details</p>
+            <p className="text-sm font-medium">{t.campaignDetails}</p>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Name</label>
+              <label className="text-xs font-medium">{t.name}</label>
               <Input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Subject</label>
+              <label className="text-xs font-medium">{t.subject}</label>
               <Input
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Preview text</label>
+              <label className="text-xs font-medium">{t.previewText}</label>
               <Input
                 value={previewText}
                 onChange={(event) => setPreviewText(event.target.value)}
@@ -311,7 +315,7 @@ export function CampaignEditor({
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium">Language</label>
+                <label className="text-xs font-medium">{t.language}</label>
                 <select
                   className={FIELD_CLASS}
                   value={language}
@@ -325,7 +329,7 @@ export function CampaignEditor({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium">Sender name</label>
+                <label className="text-xs font-medium">{t.senderName}</label>
                 <Input
                   value={senderName}
                   placeholder={companyName}
@@ -334,13 +338,13 @@ export function CampaignEditor({
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Audience segment</label>
+              <label className="text-xs font-medium">{t.audienceSegment}</label>
               <select
                 className={FIELD_CLASS}
                 value={segmentId}
                 onChange={(event) => setSegmentId(event.target.value)}
               >
-                <option value="">No segment selected</option>
+                <option value="">{t.noSegment}</option>
                 {segments.map((segment) => (
                   <option key={segment.id} value={segment.id}>
                     {segment.name}
@@ -351,7 +355,7 @@ export function CampaignEditor({
           </div>
 
           <div className="space-y-3 rounded-lg border p-4">
-            <p className="text-sm font-medium">Email content</p>
+            <p className="text-sm font-medium">{t.emailContent}</p>
             {blocks.map((block, index) => (
               <div key={block.key} className="space-y-2 rounded-md border p-3">
                 <div className="flex items-center justify-between gap-2">
@@ -362,7 +366,7 @@ export function CampaignEditor({
                     <button
                       type="button"
                       className="rounded border px-1.5 text-xs"
-                      aria-label="Move up"
+                      aria-label={t.moveUp}
                       onClick={() => moveBlock(index, -1)}
                     >
                       ↑
@@ -370,7 +374,7 @@ export function CampaignEditor({
                     <button
                       type="button"
                       className="rounded border px-1.5 text-xs"
-                      aria-label="Move down"
+                      aria-label={t.moveDown}
                       onClick={() => moveBlock(index, 1)}
                     >
                       ↓
@@ -378,7 +382,7 @@ export function CampaignEditor({
                     <button
                       type="button"
                       className="rounded border px-1.5 text-xs text-destructive"
-                      aria-label="Remove block"
+                      aria-label={t.removeBlock}
                       onClick={() => removeBlock(block.key)}
                     >
                       ✕
@@ -390,6 +394,7 @@ export function CampaignEditor({
                   setField,
                   toggleGridProperty,
                   properties,
+                  t,
                 )}
               </div>
             ))}
@@ -397,7 +402,7 @@ export function CampaignEditor({
               <select
                 className={`${FIELD_CLASS} w-auto`}
                 value={addType}
-                aria-label="Block type"
+                aria-label={t.blockType}
                 onChange={(event) =>
                   setAddType(event.target.value as BlockType)
                 }
@@ -414,7 +419,7 @@ export function CampaignEditor({
                 size="sm"
                 onClick={addBlock}
               >
-                Add block
+                {t.addBlock}
               </Button>
             </div>
           </div>
@@ -422,27 +427,27 @@ export function CampaignEditor({
 
         <div className="space-y-3 lg:sticky lg:top-20 lg:self-start">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Preview</p>
+            <p className="text-sm font-medium">{t.preview}</p>
             <div className="flex gap-1">
               <button
                 type="button"
                 className={`rounded border px-2 py-1 text-xs ${previewMode === "desktop" ? "bg-primary text-primary-foreground" : ""}`}
                 onClick={() => setPreviewMode("desktop")}
               >
-                Desktop
+                {t.desktop}
               </button>
               <button
                 type="button"
                 className={`rounded border px-2 py-1 text-xs ${previewMode === "mobile" ? "bg-primary text-primary-foreground" : ""}`}
                 onClick={() => setPreviewMode("mobile")}
               >
-                Mobile
+                {t.mobile}
               </button>
             </div>
           </div>
           <div className="rounded-lg border bg-muted/30 p-3">
             <iframe
-              title="Email preview"
+              title={t.emailPreview}
               srcDoc={previewHtml}
               className={`h-[620px] border-0 bg-white ${previewMode === "mobile" ? "mx-auto w-[380px]" : "w-full"}`}
             />
@@ -451,14 +456,14 @@ export function CampaignEditor({
       </div>
 
       <div className="space-y-3 rounded-lg border p-4">
-        <p className="text-sm font-medium">Send</p>
+        <p className="text-sm font-medium">{t.send}</p>
         <div className="flex flex-wrap items-end gap-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Test email</label>
+            <label className="text-xs font-medium">{t.testEmail}</label>
             <Input
               type="email"
               value={testEmail}
-              placeholder="you@example.com"
+              placeholder={t.testEmailPh}
               className="w-56"
               onChange={(event) => setTestEmail(event.target.value)}
             />
@@ -470,12 +475,12 @@ export function CampaignEditor({
             disabled={pending}
             onClick={handleSendTest}
           >
-            Send test
+            {t.sendTest}
           </Button>
         </div>
         <div className="flex flex-wrap items-end gap-2 border-t pt-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Schedule for</label>
+            <label className="text-xs font-medium">{t.scheduleFor}</label>
             <input
               type="datetime-local"
               className={`${FIELD_CLASS} w-56`}
@@ -490,7 +495,7 @@ export function CampaignEditor({
             disabled={pending || alreadySent}
             onClick={handleSchedule}
           >
-            Schedule
+            {t.schedule}
           </Button>
           <Button
             type="button"
@@ -498,14 +503,11 @@ export function CampaignEditor({
             disabled={pending || alreadySent}
             onClick={handleSendNow}
           >
-            Send now
+            {t.sendNow}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Scheduled campaigns are delivered automatically at the chosen time
-          (checked every few minutes); use Send now for immediate delivery.
-          Marketing emails skip unsubscribed contacts and always include an
-          unsubscribe link.
+          {t.sendHelp}
         </p>
       </div>
     </div>
@@ -518,6 +520,7 @@ function renderBlockFields(
   setField: (key: string, field: string, value: unknown) => void,
   toggleGridProperty: (key: string, propertyId: string) => void,
   properties: PropertyEmailData[],
+  t: Dictionary["campaignEditor"],
 ): React.ReactNode {
   const content = block.content;
   const textInput = (field: string, label: string) => (
@@ -532,26 +535,26 @@ function renderBlockFields(
 
   switch (block.type) {
     case "header":
-      return textInput("text", "Heading text");
+      return textInput("text", t.fHeadingText);
     case "logo":
       return (
         <div className="space-y-2">
-          {textInput("url", "Logo image URL")}
-          {textInput("alt", "Alt text")}
+          {textInput("url", t.fLogoUrl)}
+          {textInput("alt", t.fAltText)}
         </div>
       );
     case "hero":
       return (
         <div className="space-y-2">
-          {textInput("url", "Image URL")}
-          {textInput("alt", "Alt text")}
+          {textInput("url", t.fImageUrl)}
+          {textInput("alt", t.fAltText)}
         </div>
       );
     case "text":
     case "footer":
       return (
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Text</label>
+          <label className="text-xs text-muted-foreground">{t.fText}</label>
           <Textarea
             rows={3}
             value={fieldStr(content, "text")}
@@ -564,14 +567,14 @@ function renderBlockFields(
     case "button":
       return (
         <div className="space-y-2">
-          {textInput("label", "Button label")}
-          {textInput("url", "Button URL")}
+          {textInput("label", t.fButtonLabel)}
+          {textInput("url", t.fButtonUrl)}
         </div>
       );
     case "property_card":
       return (
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Property</label>
+          <label className="text-xs text-muted-foreground">{t.fProperty}</label>
           <select
             className={FIELD_CLASS}
             value={fieldStr(content, "propertyId")}
@@ -579,7 +582,7 @@ function renderBlockFields(
               setField(block.key, "propertyId", event.target.value)
             }
           >
-            <option value="">Select a property</option>
+            <option value="">{t.selectProperty}</option>
             {properties.map((property) => (
               <option key={property.id} value={property.id}>
                 {property.title}
@@ -625,18 +628,18 @@ function renderBlockFields(
     case "agent_card":
       return (
         <div className="grid gap-2 sm:grid-cols-2">
-          {textInput("name", "Agent name")}
-          {textInput("title", "Title")}
-          {textInput("email", "Email")}
-          {textInput("phone", "Phone")}
-          {textInput("photoUrl", "Photo URL")}
+          {textInput("name", t.fAgentName)}
+          {textInput("title", t.fTitle)}
+          {textInput("email", t.fEmail)}
+          {textInput("phone", t.fPhone)}
+          {textInput("photoUrl", t.fPhotoUrl)}
         </div>
       );
     case "testimonial":
       return (
         <div className="space-y-2">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Quote</label>
+            <label className="text-xs text-muted-foreground">{t.fQuote}</label>
             <Textarea
               rows={2}
               value={fieldStr(content, "quote")}
@@ -645,7 +648,7 @@ function renderBlockFields(
               }
             />
           </div>
-          {textInput("author", "Author")}
+          {textInput("author", t.fAuthor)}
         </div>
       );
     case "divider":
