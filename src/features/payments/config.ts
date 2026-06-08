@@ -57,8 +57,9 @@ export function getPayPalConfig(): PayPalRuntimeConfig | null {
 /**
  * Готов ли провайдер к реальному приёму платежей.
  *  - stripe: требует секрет в окружении;
- *  - crypto / manual: ручной поток, готов всегда;
- *  - paypal: адаптер-плейсхолдер — онлайн-оплата пока не запущена.
+ *  - paypal: требует client id/secret в окружении (полноценный REST-адаптер
+ *    с redirect-capture, см. providers/paypal.ts);
+ *  - crypto / manual: ручной поток, готов всегда.
  */
 export function isProviderOperational(type: PaymentProviderType): boolean {
   switch (type) {
