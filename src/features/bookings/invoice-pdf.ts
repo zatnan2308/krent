@@ -28,12 +28,47 @@ const MARGIN = 50;
 const RIGHT = PAGE_W - MARGIN;
 
 /**
- * Делает строку безопасной для WinAnsi (Helvetica): маппит частую умную
- * пунктуацию в ASCII, прочие не-Latin-1 символы заменяет на «?». Так PDF
- * генерируется всегда (не-латинские имена деградируют, но без ошибки).
+ * Транслитерация кириллицы (ru/uk) в латиницу. Helvetica/WinAnsi не содержит
+ * кириллических глифов, поэтому без этого имена давали «?». Полная поддержка
+ * любых письменностей потребовала бы встраивания Unicode-TTF через
+ * `@pdf-lib/fontkit` (бинарный ассет + зависимость) — отложено до запроса.
+ */
+const CYRILLIC_MAP: Record<string, string> = {
+  а: "a", б: "b", в: "v", г: "g", ґ: "g", д: "d", е: "e", ё: "e", є: "ye",
+  ж: "zh", з: "z", и: "i", і: "i", ї: "yi", й: "i", к: "k", л: "l", м: "m",
+  н: "n", о: "o", п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh",
+  ц: "ts", ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e",
+  ю: "yu", я: "ya",
+};
+
+/** Заменяет кириллические символы латинской транслитерацией (с учётом регистра). */
+function transliterateCyrillic(text: string): string {
+  let out = "";
+  for (const ch of text) {
+    const lower = ch.toLowerCase();
+    const mapped = CYRILLIC_MAP[lower];
+    if (mapped === undefined) {
+      out += ch;
+    } else if (ch === lower || mapped === "") {
+      out += mapped;
+    } else {
+      // Заглавная буква: капитализируем первую букву транслитерации.
+      out +=
+        mapped.length === 1
+          ? mapped.toUpperCase()
+          : mapped.charAt(0).toUpperCase() + mapped.slice(1);
+    }
+  }
+  return out;
+}
+
+/**
+ * Делает строку безопасной для WinAnsi (Helvetica): транслитерирует кириллицу,
+ * маппит частую умную пунктуацию в ASCII, прочие не-Latin-1 символы заменяет на
+ * «?». Так PDF генерируется всегда (редкие письменности деградируют, но без ошибки).
  */
 function winAnsiSafe(text: string): string {
-  return text
+  return transliterateCyrillic(text)
     .replace(/[‘’‚‛]/g, "'")
     .replace(/[“”„‟]/g, '"')
     .replace(/[–—]/g, "-")
