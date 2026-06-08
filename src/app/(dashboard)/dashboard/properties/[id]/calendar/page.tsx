@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { getPropertyForEdit } from "@/features/properties/dashboard-queries";
 import { CalendarBoard } from "@/features/rental-calendar/calendar-board";
+import { RegenerateExportButton } from "@/features/rental-calendar/export-feed-actions";
 import { ImportManager } from "@/features/rental-calendar/import-manager";
 import {
   getCalendarData,
@@ -116,6 +117,7 @@ export default async function PropertyCalendarPage({
               <p className="mt-1 text-xs text-muted-foreground">
                 Add this URL in Airbnb / Booking.com to share availability.
               </p>
+              <RegenerateExportButton propertyId={params.id} />
             </div>
           ) : null}
           <ImportManager
