@@ -3,6 +3,10 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import {
+  DEFAULT_NAV_MENUS,
+  SEEDABLE_MENU_KEYS,
+} from "@/features/cms/default-navigation";
+import {
   deleteContentTranslations,
   resolveOrgLocale,
   saveContentTranslation,
@@ -199,6 +203,51 @@ export async function updateMenuItem(
       label: label.trim() || null,
     });
     if (!ok) return { ok: false, error: "Could not update the item." };
+  }
+
+  revalidatePath("/dashboard/navigation");
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
+/**
+ * Засевает дефолтное меню сайта (header + колонки футера) в БД из единого
+ * источника default-navigation.ts. Заполняет ТОЛЬКО пустые меню — повторный
+ * вызов не создаёт дубликатов. После этого сайт читает пункты из БД, а
+ * редактор ими управляет (они синхронизированы).
+ */
+export async function seedDefaultNavigation(): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization || !hasPermission(context, "navigation.manage")) {
+    return { ok: false, error: "You cannot manage navigation." };
+  }
+  const orgId = context.organization.id;
+  const supabase = createClient();
+
+  for (const menuKey of SEEDABLE_MENU_KEYS) {
+    const items = DEFAULT_NAV_MENUS[menuKey];
+    if (!items || items.length === 0) continue;
+    const menuId = await ensureMenu(orgId, menuKey);
+    if (!menuId) continue;
+    // Только в пустые меню — чтобы не плодить дубликаты.
+    const { count } = await supabase
+      .from("navigation_items")
+      .select("*", { count: "exact", head: true })
+      .eq("menu_id", menuId);
+    if ((count ?? 0) > 0) continue;
+    const rows = items.map((item, index) => ({
+      menu_id: menuId,
+      organization_id: orgId,
+      parent_id: null,
+      page_id: null,
+      label: item.label,
+      url: item.url,
+      position: index,
+    }));
+    const { error } = await supabase.from("navigation_items").insert(rows);
+    if (error) {
+      return { ok: false, error: "Could not load the default menu." };
+    }
   }
 
   revalidatePath("/dashboard/navigation");

@@ -899,6 +899,10 @@ export const en = {
     removeItem: "Remove item",
     structureNote:
       "Menu structure (adding, removing, reordering) is managed in the default language. Here you translate the labels above.",
+    loadDefaults: "Load the site's default menu",
+    loadDefaultsHint:
+      "Adds the header and footer menus currently shown on your site so you can edit them. Only fills menus that are still empty — it never duplicates.",
+    loadingDefaults: "Loading…",
   },
   dashEmail: {
     title: "Email & notifications",

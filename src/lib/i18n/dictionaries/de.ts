@@ -836,6 +836,9 @@ export const de: DeepPartial<Dictionary> = {
     emptyDesc: "Erstellen Sie Ihre erste öffentliche Seite.",
   },
   dashNavigation: {
+    loadDefaults: "Standardmenü der Website laden",
+    loadDefaultsHint: "Fügt die aktuell auf Ihrer Website angezeigten Header- und Footer-Menüs hinzu, damit Sie sie bearbeiten können. Füllt nur noch leere Menüs — niemals doppelt.",
+    loadingDefaults: "Wird geladen…",
     headerMenu: "Header-Menü",
     headerHint: "Links im öffentlichen Header. Wählen Sie ein übergeordnetes Element, um einen Eintrag als Dropdown zu verschachteln, oder verlinken Sie ihn mit einer Seite.",
     footerColumns: "Footer-Spalten",

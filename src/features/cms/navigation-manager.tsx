@@ -8,6 +8,7 @@ import {
   addMenuItem,
   deleteMenuItem,
   moveMenuItem,
+  seedDefaultNavigation,
   updateMenuItem,
 } from "@/features/cms/navigation-actions";
 import { Button } from "@/components/ui/button";
@@ -51,14 +52,44 @@ export function NavigationManager({
   locale,
   isDefault,
 }: NavigationManagerProps) {
+  const router = useRouter();
   const { dict } = useI18n();
   const t = dict.dashNavigation;
+  const [seeding, setSeeding] = React.useState(false);
+  const allEmpty =
+    header.length === 0 &&
+    footer.length === 0 &&
+    footerBrowse.length === 0 &&
+    footerAreas.length === 0 &&
+    footerLegal.length === 0;
+  async function handleSeed() {
+    setSeeding(true);
+    await seedDefaultNavigation();
+    setSeeding(false);
+    router.refresh();
+  }
   // Родители для дропдаунов — верхнеуровневые пункты хедера.
   const parentOptions = header
     .filter((item) => !item.parent_id)
     .map((item) => ({ id: item.id, label: item.label }));
   return (
     <div className="space-y-10">
+      {isDefault ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed bg-muted/30 p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">{t.loadDefaults}</p>
+            <p className="text-xs text-muted-foreground">{t.loadDefaultsHint}</p>
+          </div>
+          <Button
+            type="button"
+            variant={allEmpty ? "default" : "outline"}
+            disabled={seeding}
+            onClick={handleSeed}
+          >
+            {seeding ? t.loadingDefaults : t.loadDefaults}
+          </Button>
+        </div>
+      ) : null}
       <MenuEditor
         menuKey="header"
         title={t.headerMenu}

@@ -836,6 +836,9 @@ export const fr: DeepPartial<Dictionary> = {
     emptyDesc: "Créez votre première page publique.",
   },
   dashNavigation: {
+    loadDefaults: "Charger le menu par défaut du site",
+    loadDefaultsHint: "Ajoute les menus d'en-tête et de pied de page actuellement affichés sur votre site pour que vous puissiez les modifier. Ne remplit que les menus encore vides — sans jamais dupliquer.",
+    loadingDefaults: "Chargement…",
     headerMenu: "Menu d'en-tête",
     headerHint: "Liens dans l'en-tête public. Choisissez un parent pour imbriquer un élément en menu déroulant, ou liez-le à une page.",
     footerColumns: "Colonnes du pied de page",

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import type { NavLinkNode } from "@/components/layout/public-layout";
+import { DEFAULT_NAV_MENUS } from "@/features/cms/default-navigation";
 import { CurrencySwitcher } from "@/components/shared/currency-switcher";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ROUTES } from "@/lib/constants/routes";
@@ -125,20 +126,13 @@ export function PublicHeader({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const defaultNav: NavLinkNode[] = [
-    { label: "Home", href: buildLocalizedPath(locale, "/"), children: [] },
-    {
-      label: "Properties",
-      href: buildLocalizedPath(locale, "/properties"),
-      children: [],
-    },
-    { label: "About", href: buildLocalizedPath(locale, "/about"), children: [] },
-    {
-      label: "Contact",
-      href: buildLocalizedPath(locale, "/contact"),
-      children: [],
-    },
-  ];
+  // Дефолтное меню шапки — из единого источника (см. default-navigation.ts),
+  // тот же набор, что засевает кнопка «Загрузить меню сайта» в редакторе.
+  const defaultNav: NavLinkNode[] = DEFAULT_NAV_MENUS.header!.map((item) => ({
+    label: item.label,
+    href: buildLocalizedPath(locale, item.url),
+    children: [],
+  }));
   const navItems =
     navItemsProp && navItemsProp.length > 0 ? navItemsProp : defaultNav;
 

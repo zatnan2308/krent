@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { SiteContactInfo } from "@/components/layout/public-layout";
+import { DEFAULT_NAV_MENUS } from "@/features/cms/default-navigation";
 import type { Locale } from "@/lib/i18n";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { buildLocalizedPath } from "@/lib/seo";
@@ -134,81 +135,21 @@ export function PublicFooter({
       ? currencies.map((code) => code.toUpperCase())
       : ["USD", "AED", "EUR"];
   const bottomStrip = [...localeLabels, ...currencyLabels].join(" · ");
+  // Дефолтные колонки футера — из единого источника (default-navigation.ts),
+  // тот же набор, что засевает кнопка «Загрузить меню сайта» в редакторе.
+  const fromDefault = (key: string) =>
+    (DEFAULT_NAV_MENUS[key] ?? []).map((item) => ({
+      label: item.label,
+      href: buildLocalizedPath(locale, item.url),
+    }));
   const colBrowse =
-    browseNav && browseNav.length > 0
-      ? browseNav
-      : [
-          {
-            label: "All properties",
-            href: buildLocalizedPath(locale, "/properties"),
-          },
-          {
-            label: "Buy",
-            href: buildLocalizedPath(locale, "/properties?purpose=sale"),
-          },
-          {
-            label: "Long-term rent",
-            href: buildLocalizedPath(
-              locale,
-              "/properties?purpose=long_term_rent",
-            ),
-          },
-          {
-            label: "Vacation rentals",
-            href: buildLocalizedPath(
-              locale,
-              "/properties?purpose=short_term_rental",
-            ),
-          },
-        ];
+    browseNav && browseNav.length > 0 ? browseNav : fromDefault("footer_browse");
   const colMarkets =
-    areasNav && areasNav.length > 0
-      ? areasNav
-      : [
-          {
-            label: "Downtown Dubai",
-            href: buildLocalizedPath(locale, "/properties?area=Downtown Dubai"),
-          },
-          {
-            label: "Dubai Marina",
-            href: buildLocalizedPath(locale, "/properties?area=Dubai Marina"),
-          },
-          {
-            label: "Palm Jumeirah",
-            href: buildLocalizedPath(locale, "/properties?area=Palm Jumeirah"),
-          },
-          {
-            label: "Emirates Hills",
-            href: buildLocalizedPath(locale, "/properties?area=Emirates Hills"),
-          },
-        ];
+    areasNav && areasNav.length > 0 ? areasNav : fromDefault("footer_areas");
   const colCompany =
-    footerNav.length > 0
-      ? footerNav
-      : [
-          {
-            label: dictionary.nav.about,
-            href: buildLocalizedPath(locale, "/about"),
-          },
-          {
-            label: dictionary.nav.contact,
-            href: buildLocalizedPath(locale, "/contact"),
-          },
-        ];
+    footerNav.length > 0 ? footerNav : fromDefault("footer");
   const colLegal =
-    legalNav && legalNav.length > 0
-      ? legalNav
-      : [
-          {
-            label: "Privacy policy",
-            href: buildLocalizedPath(locale, "/privacy"),
-          },
-          {
-            label: "Terms of service",
-            href: buildLocalizedPath(locale, "/terms"),
-          },
-          { label: "Cookies", href: buildLocalizedPath(locale, "/cookies") },
-        ];
+    legalNav && legalNav.length > 0 ? legalNav : fromDefault("footer_legal");
 
   return (
     <footer

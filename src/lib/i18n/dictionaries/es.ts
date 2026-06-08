@@ -834,6 +834,9 @@ export const es: DeepPartial<Dictionary> = {
     emptyDesc: "Cree su primera página pública.",
   },
   dashNavigation: {
+    loadDefaults: "Cargar el menú predeterminado del sitio",
+    loadDefaultsHint: "Añade los menús de cabecera y pie que se muestran actualmente en tu sitio para que puedas editarlos. Solo rellena los menús que aún están vacíos — nunca duplica.",
+    loadingDefaults: "Cargando…",
     headerMenu: "Menú de cabecera",
     headerHint: "Enlaces en la cabecera pública. Elige un elemento padre para anidar un elemento como menú desplegable, o vincúlalo a una página.",
     footerColumns: "Columnas del pie",
