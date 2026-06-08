@@ -344,6 +344,12 @@ export const fr: DeepPartial<Dictionary> = {
     createProperty: "Créer l'annonce",
   },
   dashCrm: {
+    deleteContactBtn: "Supprimer le contact",
+    deleteLeadBtn: "Supprimer le lead",
+    deleteDealBtn: "Supprimer l'affaire",
+    deleteContactConfirm: "Supprimer ce contact ? Les leads, affaires, tâches et notes associés seront aussi supprimés. Action irréversible.",
+    deleteLeadConfirm: "Supprimer ce lead ? Ses tâches et notes seront aussi supprimées. Action irréversible.",
+    deleteDealConfirm: "Supprimer cette affaire ? Ses tâches et notes seront aussi supprimées. Action irréversible.",
     checkAmount: "Saisissez un montant valide.",
     newDealBtn: "Nouvelle affaire",
     newDealTitle: "Créer une affaire",

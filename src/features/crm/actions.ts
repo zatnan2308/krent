@@ -493,6 +493,111 @@ export async function createDeal(
   return { ok: true, id: deal.id };
 }
 
+/** Удаляет лид (manager-only). Сделка по лиду сохраняется (lead_id → null). */
+export async function deleteLead(leadId: string): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage_all")) {
+    return { ok: false, error: "Only managers can delete leads." };
+  }
+  const supabase = createClient();
+  const { data: deleted, error } = await supabase
+    .from("leads")
+    .delete()
+    .eq("id", leadId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not delete the lead." };
+  }
+  if (!deleted || deleted.length === 0) {
+    return { ok: false, error: "Lead not found or not deletable." };
+  }
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "lead.deleted",
+    entityType: "lead",
+    entityId: leadId,
+    metadata: {},
+  });
+  revalidatePath(CRM_LEADS);
+  return { ok: true };
+}
+
+/** Удаляет сделку (manager-only). Задачи/заметки сделки каскадно удаляются. */
+export async function deleteDeal(dealId: string): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage_all")) {
+    return { ok: false, error: "Only managers can delete deals." };
+  }
+  const supabase = createClient();
+  const { data: deleted, error } = await supabase
+    .from("deals")
+    .delete()
+    .eq("id", dealId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not delete the deal." };
+  }
+  if (!deleted || deleted.length === 0) {
+    return { ok: false, error: "Deal not found or not deletable." };
+  }
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "deal.deleted",
+    entityType: "deal",
+    entityId: dealId,
+    metadata: {},
+  });
+  revalidatePath(CRM_DEALS);
+  return { ok: true };
+}
+
+/**
+ * Удаляет контакт (manager-only). Связанные записи каскадят/обнуляются по FK
+ * (лиды/сделки/задачи/заметки/переписки — cascade; брони — set null).
+ */
+export async function deleteContact(contactId: string): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage_all")) {
+    return { ok: false, error: "Only managers can delete contacts." };
+  }
+  const supabase = createClient();
+  const { data: deleted, error } = await supabase
+    .from("contacts")
+    .delete()
+    .eq("id", contactId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not delete the contact." };
+  }
+  if (!deleted || deleted.length === 0) {
+    return { ok: false, error: "Contact not found or not deletable." };
+  }
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "contact.deleted",
+    entityType: "contact",
+    entityId: contactId,
+    metadata: {},
+  });
+  revalidatePath(CRM_CONTACTS);
+  return { ok: true };
+}
+
 const updateDealSchema = z.object({
   dealId: z.guid(),
   title: z.string().trim().min(1).max(200),

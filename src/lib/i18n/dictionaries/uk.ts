@@ -344,6 +344,12 @@ export const uk: DeepPartial<Dictionary> = {
     createProperty: "Створити об'єкт",
   },
   dashCrm: {
+    deleteContactBtn: "Видалити контакт",
+    deleteLeadBtn: "Видалити лід",
+    deleteDealBtn: "Видалити угоду",
+    deleteContactConfirm: "Видалити цей контакт? Пов'язані ліди, угоди, завдання та нотатки також буде видалено. Дію не можна скасувати.",
+    deleteLeadConfirm: "Видалити цей лід? Його завдання та нотатки також буде видалено. Дію не можна скасувати.",
+    deleteDealConfirm: "Видалити цю угоду? Її завдання та нотатки також буде видалено. Дію не можна скасувати.",
     checkAmount: "Введіть коректну суму.",
     newDealBtn: "Нова угода",
     newDealTitle: "Створити угоду",

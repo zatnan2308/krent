@@ -11,6 +11,7 @@ import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
+import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
 import { ContactChannels } from "@/features/messaging/contact-channels";
@@ -221,17 +222,27 @@ export default async function ContactDetailPage({
       </Card>
 
       {canManageAll ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t.mergeContact}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ContactMergeCard
-              contactId={contact.id}
-              contactName={contact.full_name}
-            />
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t.mergeContact}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ContactMergeCard
+                contactId={contact.id}
+                contactName={contact.full_name}
+              />
+            </CardContent>
+          </Card>
+          <Card className="border-destructive/30">
+            <CardHeader>
+              <CardTitle className="text-base">{t.deleteContactBtn}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CrmDeleteButton entity="contact" id={contact.id} />
+            </CardContent>
+          </Card>
+        </>
       ) : null}
     </div>
   );

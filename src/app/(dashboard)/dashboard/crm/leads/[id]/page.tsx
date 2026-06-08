@@ -7,6 +7,7 @@ import {
   LEAD_TYPE_LABELS,
 } from "@/features/crm/constants";
 import { ActivityTimeline } from "@/features/crm/activity-timeline";
+import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { LeadControls } from "@/features/crm/lead-controls";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -221,6 +222,11 @@ export default async function LeadDetailPage({
               agents={agents}
               assignedAgentId={lead.assigned_agent_id}
             />
+            {hasPermission(context, "crm.manage_all") ? (
+              <div className="mt-4 border-t pt-4">
+                <CrmDeleteButton entity="lead" id={lead.id} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

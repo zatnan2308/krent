@@ -344,6 +344,12 @@ export const ru: DeepPartial<Dictionary> = {
     createProperty: "Создать объект",
   },
   dashCrm: {
+    deleteContactBtn: "Удалить контакт",
+    deleteLeadBtn: "Удалить лид",
+    deleteDealBtn: "Удалить сделку",
+    deleteContactConfirm: "Удалить этот контакт? Связанные лиды, сделки, задачи и заметки также будут удалены. Это действие необратимо.",
+    deleteLeadConfirm: "Удалить этот лид? Его задачи и заметки также будут удалены. Это действие необратимо.",
+    deleteDealConfirm: "Удалить эту сделку? Её задачи и заметки также будут удалены. Это действие необратимо.",
     checkAmount: "Введите корректную сумму.",
     newDealBtn: "Новая сделка",
     newDealTitle: "Создать сделку",

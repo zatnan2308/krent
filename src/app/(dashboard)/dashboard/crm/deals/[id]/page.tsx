@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { ActivityTimeline } from "@/features/crm/activity-timeline";
+import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { DealEditor } from "@/features/crm/deal-editor";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -154,6 +155,17 @@ export default async function DealDetailPage({
           <ActivityTimeline items={activity} t={t} />
         </CardContent>
       </Card>
+
+      {hasPermission(context, "crm.manage_all") ? (
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="text-base">{t.deleteDealBtn}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CrmDeleteButton entity="deal" id={deal.id} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

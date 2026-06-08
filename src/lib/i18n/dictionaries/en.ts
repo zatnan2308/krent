@@ -347,6 +347,12 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    deleteContactBtn: "Delete contact",
+    deleteLeadBtn: "Delete lead",
+    deleteDealBtn: "Delete deal",
+    deleteContactConfirm: "Delete this contact? Linked leads, deals, tasks and notes are removed too. This cannot be undone.",
+    deleteLeadConfirm: "Delete this lead? Its tasks and notes are removed too. This cannot be undone.",
+    deleteDealConfirm: "Delete this deal? Its tasks and notes are removed too. This cannot be undone.",
     checkAmount: "Enter a valid amount.",
     newDealBtn: "New deal",
     newDealTitle: "Create a deal",
