@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { setContactConsentAction } from "@/features/campaigns/actions";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 /** Кнопка переключения согласия контакта на маркетинг. */
 export function ConsentToggle({
@@ -17,6 +18,8 @@ export function ConsentToggle({
   disabled?: boolean;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashMarketing;
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState(false);
 
@@ -41,10 +44,10 @@ export function ConsentToggle({
       onClick={toggle}
     >
       {error
-        ? "Try again"
+        ? t.tryAgain
         : subscribed
-          ? "Unsubscribe"
-          : "Resubscribe"}
+          ? t.unsubscribe
+          : t.resubscribe}
     </Button>
   );
 }

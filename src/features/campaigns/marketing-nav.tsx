@@ -4,25 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
-  { label: "Campaigns", href: ROUTES.dashboard.marketing, key: "campaigns" },
-  {
-    label: "Segments",
-    href: `${ROUTES.dashboard.marketing}/segments`,
-    key: "segments",
-  },
-  {
-    label: "Contacts",
-    href: `${ROUTES.dashboard.marketing}/contacts`,
-    key: "contacts",
-  },
-];
+  { href: ROUTES.dashboard.marketing, key: "campaigns" },
+  { href: `${ROUTES.dashboard.marketing}/segments`, key: "segments" },
+  { href: `${ROUTES.dashboard.marketing}/contacts`, key: "contacts" },
+] as const;
 
 /** Навигация раздела маркетинга. */
 export function MarketingNav() {
   const pathname = usePathname();
+  const { dict } = useI18n();
+  const labels: Record<(typeof ITEMS)[number]["key"], string> = {
+    campaigns: dict.dashMarketing.navCampaigns,
+    segments: dict.dashMarketing.navSegments,
+    contacts: dict.dashMarketing.navContacts,
+  };
 
   function isActive(key: string): boolean {
     if (key === "segments") {
@@ -51,7 +50,7 @@ export function MarketingNav() {
               : "text-muted-foreground hover:text-foreground after:bg-transparent",
           )}
         >
-          {item.label}
+          {labels[item.key]}
         </Link>
       ))}
     </nav>

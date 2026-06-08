@@ -16,19 +16,10 @@ import {
 import type { SegmentListItem } from "@/features/campaigns/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const RULE_HINTS: Record<SegmentRule, string> = {
-  all: "",
-  lead_type: "e.g. buyer, seller, renter, guest, investor",
-  channel: "",
-  language: "e.g. en, fr, es",
-  currency: "e.g. USD, EUR, AED",
-  city: "City name from lead interest",
-  property_type: "e.g. apartment, villa, house",
-};
 
 /** Конструктор и список сегментов контактов. */
 export function SegmentManager({
@@ -37,6 +28,17 @@ export function SegmentManager({
   segments: SegmentListItem[];
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashMarketing;
+  const ruleHints: Record<SegmentRule, string> = {
+    all: "",
+    lead_type: t.hintLeadType,
+    channel: "",
+    language: t.hintLanguage,
+    currency: t.hintCurrency,
+    city: t.hintCity,
+    property_type: t.hintPropertyType,
+  };
   const [name, setName] = React.useState("");
   const [rule, setRule] = React.useState<SegmentRule>("lead_type");
   const [value, setValue] = React.useState("");
@@ -45,7 +47,7 @@ export function SegmentManager({
 
   async function handleCreate() {
     if (!name.trim()) {
-      setError("Enter a segment name.");
+      setError(t.enterSegmentName);
       return;
     }
     setPending(true);
@@ -93,18 +95,18 @@ export function SegmentManager({
   return (
     <div className="space-y-5">
       <div className="space-y-3 rounded-lg border p-4">
-        <p className="text-sm font-medium">Create a segment</p>
+        <p className="text-sm font-medium">{t.createSegment}</p>
         <div className="grid gap-2 sm:grid-cols-3">
           <Input
             value={name}
-            placeholder="Segment name"
-            aria-label="Segment name"
+            placeholder={t.segmentNamePh}
+            aria-label={t.segmentNamePh}
             onChange={(event) => setName(event.target.value)}
           />
           <select
             className={FIELD_CLASS}
             value={rule}
-            aria-label="Segment rule"
+            aria-label={t.segmentRuleAria}
             onChange={(event) => {
               setRule(event.target.value as SegmentRule);
               setValue("");
@@ -118,16 +120,16 @@ export function SegmentManager({
           </select>
           {rule === "all" ? (
             <div className="flex items-center text-sm text-muted-foreground">
-              Every contact
+              {t.everyContact}
             </div>
           ) : rule === "channel" ? (
             <select
               className={FIELD_CLASS}
               value={value}
-              aria-label="Channel"
+              aria-label={t.channelAria}
               onChange={(event) => setValue(event.target.value)}
             >
-              <option value="">Select channel</option>
+              <option value="">{t.selectChannel}</option>
               {SEGMENT_CHANNELS.map((channel) => (
                 <option key={channel.value} value={channel.value}>
                   {channel.label}
@@ -137,14 +139,14 @@ export function SegmentManager({
           ) : (
             <Input
               value={value}
-              placeholder={RULE_HINTS[rule]}
-              aria-label="Segment value"
+              placeholder={ruleHints[rule]}
+              aria-label={t.segmentValueAria}
               onChange={(event) => setValue(event.target.value)}
             />
           )}
         </div>
         <Button type="button" size="sm" disabled={pending} onClick={handleCreate}>
-          Create segment
+          {t.createSegmentBtn}
         </Button>
         {error ? (
           <p className="text-sm text-destructive" role="alert">
@@ -164,12 +166,14 @@ export function SegmentManager({
                 {segment.name}
                 {segment.isSystem ? (
                   <span className="ml-2 text-xs text-muted-foreground">
-                    System
+                    {t.systemLabel}
                   </span>
                 ) : null}
               </p>
               <p className="text-xs text-muted-foreground">
-                {segment.memberCount} contact(s) · rule: {segment.rule}
+                {t.segmentMeta
+                  .replace("{n}", String(segment.memberCount))
+                  .replace("{rule}", segment.rule)}
                 {segment.value ? ` = ${segment.value}` : ""}
               </p>
             </div>
@@ -181,7 +185,7 @@ export function SegmentManager({
                 disabled={pending}
                 onClick={() => handleRefresh(segment.id)}
               >
-                Refresh
+                {t.refresh}
               </Button>
               {!segment.isSystem ? (
                 <Button
@@ -192,7 +196,7 @@ export function SegmentManager({
                   disabled={pending}
                   onClick={() => handleDelete(segment.id)}
                 >
-                  Delete
+                  {t.deleteBtn}
                 </Button>
               ) : null}
             </div>
