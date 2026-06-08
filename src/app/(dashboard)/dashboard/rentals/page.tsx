@@ -14,6 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -28,12 +29,6 @@ const RENTABLE_PURPOSES = [
   "mixed",
 ] as const;
 const BUSY_STATUSES = ["booked", "pending"];
-
-const PURPOSE_LABEL: Record<string, string> = {
-  short_term_rental: "Short-term",
-  long_term_rent: "Long-term",
-  mixed: "Mixed",
-};
 
 /** Вариант бейджа для статуса iCal-синхронизации. */
 function syncBadgeVariant(
@@ -52,6 +47,22 @@ export default async function RentalsPage() {
   }
   const orgId = context.organization.id;
   const admin = createAdminClient();
+  const dict = await getServerDictionary();
+  const t = dict.dashRentals;
+  const purposeLabel = (p: string): string =>
+    p === "short_term_rental"
+      ? t.purposeShort
+      : p === "long_term_rent"
+        ? t.purposeLong
+        : p === "mixed"
+          ? t.purposeMixed
+          : p;
+  const syncStatusLabel = (s: string): string =>
+    s === "success" || s === "ok"
+      ? t.syncSuccess
+      : s === "error" || s === "failed"
+        ? t.syncError
+        : t.syncRunning;
 
   const today = new Date();
   const startIso = new Date(
@@ -174,22 +185,22 @@ export default async function RentalsPage() {
 
   const summary = [
     {
-      label: "Rentable properties",
+      label: t.statRentable,
       value: propList.length,
       icon: KeyRound,
     },
     {
-      label: `Avg occupancy · ${DAYS}d`,
+      label: t.statOccupancy.replace("{n}", String(DAYS)),
       value: `${avgOccupancy}%`,
       icon: CalendarDays,
     },
     {
-      label: "Upcoming bookings",
+      label: t.statUpcoming,
       value: bookingList.length,
       icon: CalendarCheck,
     },
     {
-      label: "Active iCal sources",
+      label: t.statSources,
       value: activeSources,
       icon: Plug,
     },
@@ -198,8 +209,8 @@ export default async function RentalsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Rentals"
-        description="Occupancy, upcoming bookings and channel sync across every rentable property."
+        title={t.title}
+        description={t.description}
         actions={
           <>
             <Link
@@ -207,14 +218,14 @@ export default async function RentalsPage() {
               className={buttonVariants({ variant: "outline" })}
             >
               <CalendarDays className="mr-2 h-4 w-4" />
-              Calendar
+              {t.calendar}
             </Link>
             <Link
               href={ROUTES.dashboard.bookings}
               className={buttonVariants({ variant: "outline" })}
             >
               <CalendarCheck className="mr-2 h-4 w-4" />
-              Bookings
+              {t.bookings}
             </Link>
           </>
         }
@@ -233,14 +244,11 @@ export default async function RentalsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Properties</CardTitle>
+          <CardTitle className="text-base">{t.properties}</CardTitle>
         </CardHeader>
         <CardContent>
           {propList.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No rentable properties yet. Set a property&apos;s purpose to
-              short-term, long-term or mixed to manage its rental calendar.
-            </p>
+            <p className="text-sm text-muted-foreground">{t.noRentable}</p>
           ) : (
             <div className="space-y-3">
               {propList.map((p) => {
@@ -260,7 +268,7 @@ export default async function RentalsPage() {
                           {p.title}
                         </Link>
                         <Badge variant="outline" className="shrink-0">
-                          {PURPOSE_LABEL[p.purpose] ?? p.purpose}
+                          {purposeLabel(p.purpose)}
                         </Badge>
                       </div>
                       <div className="mt-2 flex items-center gap-2">
@@ -271,21 +279,24 @@ export default async function RentalsPage() {
                           />
                         </div>
                         <span className="text-xs text-muted-foreground tabular-nums">
-                          {occupancy}% · {bookingsFor(p.id)} upcoming
+                          {occupancy}% · {bookingsFor(p.id)} {t.upcomingShort}
                         </span>
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
                       <span className="text-xs text-muted-foreground">
                         {sources.length === 0
-                          ? "No iCal sources"
-                          : `${sources.length} iCal source${sources.length > 1 ? "s" : ""}`}
+                          ? t.noSources
+                          : t.sourcesCount.replace(
+                              "{n}",
+                              String(sources.length),
+                            )}
                       </span>
                       <Link
                         href={`${ROUTES.dashboard.properties}/${p.id}/calendar`}
                         className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-accent"
                       >
-                        Manage calendar
+                        {t.manageCalendar}
                       </Link>
                     </div>
                   </div>
@@ -298,19 +309,13 @@ export default async function RentalsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Recent channel sync</CardTitle>
+          <CardTitle className="text-base">{t.recentSync}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Latest iCal imports from booking.com, Airbnb and other channels.
-            Scheduled sync runs when the cron job is configured (see deploy
-            docs); you can always sync manually from each property&apos;s
-            calendar.
-          </p>
+          <p className="text-sm text-muted-foreground">{t.recentSyncDesc}</p>
           {syncLogs.length === 0 ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              No sync activity yet. Add an iCal feed URL on a property&apos;s
-              calendar to start importing reservations.
+              {t.noSyncActivity}
             </p>
           ) : (
             <ul className="mt-3 space-y-1 text-sm">
@@ -329,11 +334,14 @@ export default async function RentalsPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {log.eventsImported} events ·{" "}
-                      {new Date(log.createdAt).toLocaleString()}
+                      {t.eventsCount.replace(
+                        "{n}",
+                        String(log.eventsImported),
+                      )}{" "}
+                      · {new Date(log.createdAt).toLocaleString()}
                     </span>
                     <Badge variant={syncBadgeVariant(log.status)}>
-                      {log.status}
+                      {syncStatusLabel(log.status)}
                     </Badge>
                   </div>
                 </li>

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { listContacts } from "@/features/crm/queries";
-import { PORTAL_TYPE_LABELS } from "@/features/portal/constants";
 import { InviteForm } from "@/features/portal/invite-form";
 import { listPortalAccounts } from "@/features/portal/queries";
 import { RevokeButton } from "@/features/portal/revoke-button";
@@ -63,6 +62,14 @@ export default async function ClientsPage() {
   ]);
   const dict = await getServerDictionary();
   const t = dict.dashClients;
+  const statusLabel = (s: PortalAccountStatus): string =>
+    s === "active"
+      ? t.statusActive
+      : s === "pending"
+        ? t.statusPending
+        : t.statusRevoked;
+  const portalLabel = (p: string): string =>
+    p === "buyer" ? t.typeBuyer : p === "seller" ? t.typeSeller : t.typeGuest;
 
   return (
     <div className="space-y-6">
@@ -98,11 +105,11 @@ export default async function ClientsPage() {
                         </p>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {PORTAL_TYPE_LABELS[account.portalType]}
+                        {portalLabel(account.portalType)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusVariant(account.status)}>
-                          {account.status}
+                          {statusLabel(account.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-xs text-xs text-muted-foreground">

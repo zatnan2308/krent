@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 
 import { revokePortalAccount } from "@/features/portal/actions";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 /** Кнопка отзыва доступа клиента к порталу. */
 export function RevokeButton({ accountId }: { accountId: string }) {
   const router = useRouter();
+  const { dict } = useI18n();
   const [pending, setPending] = React.useState(false);
 
   async function handleRevoke() {
@@ -29,7 +31,7 @@ export function RevokeButton({ accountId }: { accountId: string }) {
       disabled={pending}
       onClick={handleRevoke}
     >
-      Revoke
+      {dict.dashClients.revoke}
     </Button>
   );
 }

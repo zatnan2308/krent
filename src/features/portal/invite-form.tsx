@@ -7,6 +7,7 @@ import { inviteToPortal } from "@/features/portal/actions";
 import { PORTAL_TYPE_OPTIONS } from "@/features/portal/constants";
 import type { PortalType } from "@/features/portal/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -19,6 +20,10 @@ interface InviteFormProps {
 /** Форма приглашения контакта в клиентский портал. */
 export function InviteForm({ contacts, properties }: InviteFormProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashClients;
+  const portalLabel = (value: PortalType): string =>
+    value === "buyer" ? t.typeBuyer : value === "seller" ? t.typeSeller : t.typeGuest;
   const [contactId, setContactId] = React.useState(contacts[0]?.id ?? "");
   const [portalType, setPortalType] = React.useState<PortalType>("buyer");
   const [propertyId, setPropertyId] = React.useState("");
@@ -28,15 +33,13 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
 
   if (contacts.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Add a contact in the CRM first, then invite them to a portal.
-      </p>
+      <p className="text-sm text-muted-foreground">{t.addContactFirst}</p>
     );
   }
 
   async function handleInvite() {
     if (!contactId) {
-      setError("Select a contact.");
+      setError(t.selectContact);
       return;
     }
     setPending(true);
@@ -61,7 +64,7 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
     <div className="space-y-4">
       <div className="space-y-1.5">
         <label htmlFor="invite-contact" className="text-sm font-medium">
-          Contact
+          {t.fieldContact}
         </label>
         <select
           id="invite-contact"
@@ -72,7 +75,7 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
           {contacts.map((contact) => (
             <option key={contact.id} value={contact.id}>
               {contact.fullName}
-              {contact.email ? ` (${contact.email})` : " — no email"}
+              {contact.email ? ` (${contact.email})` : t.noEmail}
             </option>
           ))}
         </select>
@@ -80,7 +83,7 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
 
       <div className="space-y-1.5">
         <label htmlFor="invite-type" className="text-sm font-medium">
-          Portal
+          {t.fieldPortal}
         </label>
         <select
           id="invite-type"
@@ -92,7 +95,7 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
         >
           {PORTAL_TYPE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {portalLabel(option.value)}
             </option>
           ))}
         </select>
@@ -101,7 +104,7 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
       {portalType === "seller" ? (
         <div className="space-y-1.5">
           <label htmlFor="invite-property" className="text-sm font-medium">
-            Property (optional)
+            {t.fieldProperty}
           </label>
           <select
             id="invite-property"
@@ -109,16 +112,14 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
             value={propertyId}
             onChange={(event) => setPropertyId(event.target.value)}
           >
-            <option value="">No property</option>
+            <option value="">{t.noProperty}</option>
             {properties.map((property) => (
               <option key={property.id} value={property.id}>
                 {property.title}
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">
-            The selected property will be linked to this seller.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.propertyLinkHint}</p>
         </div>
       ) : null}
 
@@ -128,13 +129,11 @@ export function InviteForm({ contacts, properties }: InviteFormProps) {
         </p>
       ) : null}
       {done ? (
-        <p className="text-sm text-emerald-600">
-          Invitation created. The link is shown in the list above.
-        </p>
+        <p className="text-sm text-emerald-600">{t.inviteCreated}</p>
       ) : null}
 
       <Button type="button" onClick={handleInvite} disabled={pending}>
-        {pending ? "Inviting..." : "Create invitation"}
+        {pending ? t.inviting : t.createInvitation}
       </Button>
     </div>
   );
