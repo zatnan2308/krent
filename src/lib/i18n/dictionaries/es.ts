@@ -484,4 +484,18 @@ export const es: DeepPartial<Dictionary> = {
     sitemapNote:
       "Los mapas del sitio se regeneran en cada solicitud. El seguimiento del estado de envío es un marcador para una futura integración con Search Console.",
   },
+  dashIntegrations: {
+    description:
+      "Conecte Search Console, Google Ads y Meta Ads para los paneles de marketing.",
+    connections: "Conexiones",
+    openProviderDashboard: "Abrir el panel de {provider}",
+    messagingChannels: "Canales de mensajería",
+    messagingBlurb:
+      "Conecte WhatsApp, Telegram y Messenger a la bandeja unificada. Cada canal usa sus propias credenciales, configuradas en el entorno — consulte SETUP.md.",
+    offlineConversions: "Conversiones offline (marcador)",
+    offlineBlurb:
+      "Eventos de CRM que se subirán a Google Ads / Meta Ads como conversiones offline una vez conectado el flujo OAuth:",
+    adapterNote:
+      "Los adaptadores de proveedor exponen un método uploadOfflineConversion() como punto de extensión limpio.",
+  },
 };

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -51,17 +52,19 @@ export default async function IntegrationsPage() {
   const channelConnections = await getChannelConnections(
     context.organization.id,
   );
+  const dict = await getServerDictionary();
+  const t = dict.dashIntegrations;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Integrations"
-        description="Connect Search Console, Google Ads and Meta Ads to power the marketing dashboards."
+        title={dict.adminNav.integrations}
+        description={t.description}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Connections</CardTitle>
+          <CardTitle className="text-base">{t.connections}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {PROVIDERS.map((provider) => {
@@ -80,7 +83,10 @@ export default async function IntegrationsPage() {
                       size: "sm",
                     })}
                   >
-                    Open {PROVIDER_LABELS[provider]} dashboard
+                    {t.openProviderDashboard.replace(
+                      "{provider}",
+                      PROVIDER_LABELS[provider],
+                    )}
                   </Link>
                 ) : null}
               </div>
@@ -91,29 +97,20 @@ export default async function IntegrationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Messaging channels</CardTitle>
+          <CardTitle className="text-base">{t.messagingChannels}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Connect WhatsApp, Telegram and Messenger to the unified inbox. Each
-            channel uses your own credentials, configured in the environment —
-            see <code>SETUP.md</code>.
-          </p>
+          <p className="text-sm text-muted-foreground">{t.messagingBlurb}</p>
           <MessagingChannelsCard connections={channelConnections} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            Offline conversions (placeholder)
-          </CardTitle>
+          <CardTitle className="text-base">{t.offlineConversions}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            CRM events that will be uploaded to Google Ads / Meta Ads as
-            offline conversions once the OAuth flow is wired:
-          </p>
+          <p className="text-sm text-muted-foreground">{t.offlineBlurb}</p>
           <ul className="space-y-2 text-sm">
             {OFFLINE_CONVERSION_TYPES.map((conversion) => (
               <li
@@ -127,11 +124,7 @@ export default async function IntegrationsPage() {
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted-foreground">
-            Provider adapters expose an{" "}
-            <code>uploadOfflineConversion()</code> method as a clean
-            extension point.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.adapterNote}</p>
         </CardContent>
       </Card>
     </div>

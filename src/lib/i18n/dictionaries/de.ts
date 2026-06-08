@@ -486,4 +486,18 @@ export const de: DeepPartial<Dictionary> = {
     sitemapNote:
       "Sitemaps werden bei jeder Anfrage neu generiert. Die Statusverfolgung der Einreichung ist ein Platzhalter für eine künftige Search-Console-Integration.",
   },
+  dashIntegrations: {
+    description:
+      "Verbinden Sie Search Console, Google Ads und Meta Ads für die Marketing-Dashboards.",
+    connections: "Verbindungen",
+    openProviderDashboard: "{provider}-Dashboard öffnen",
+    messagingChannels: "Messaging-Kanäle",
+    messagingBlurb:
+      "Verbinden Sie WhatsApp, Telegram und Messenger mit dem zentralen Posteingang. Jeder Kanal nutzt Ihre eigenen Zugangsdaten aus der Umgebung — siehe SETUP.md.",
+    offlineConversions: "Offline-Conversions (Platzhalter)",
+    offlineBlurb:
+      "CRM-Ereignisse, die nach Einrichtung des OAuth-Flows als Offline-Conversions zu Google Ads / Meta Ads hochgeladen werden:",
+    adapterNote:
+      "Anbieter-Adapter stellen eine uploadOfflineConversion()-Methode als sauberen Erweiterungspunkt bereit.",
+  },
 };

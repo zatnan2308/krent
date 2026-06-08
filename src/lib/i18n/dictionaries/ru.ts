@@ -483,4 +483,18 @@ export const ru: DeepPartial<Dictionary> = {
     sitemapNote:
       "Карты сайта пересоздаются при каждом запросе. Отслеживание статуса отправки — задел для будущей интеграции Search Console.",
   },
+  dashIntegrations: {
+    description:
+      "Подключите Search Console, Google Ads и Meta Ads для маркетинговых дашбордов.",
+    connections: "Подключения",
+    openProviderDashboard: "Открыть дашборд {provider}",
+    messagingChannels: "Каналы сообщений",
+    messagingBlurb:
+      "Подключите WhatsApp, Telegram и Messenger к единому инбоксу. Каждый канал использует ваши собственные креды из окружения — см. SETUP.md.",
+    offlineConversions: "Офлайн-конверсии (задел)",
+    offlineBlurb:
+      "События CRM, которые будут выгружаться в Google Ads / Meta Ads как офлайн-конверсии после подключения OAuth:",
+    adapterNote:
+      "Адаптеры провайдеров предоставляют метод uploadOfflineConversion() как чистую точку расширения.",
+  },
 };

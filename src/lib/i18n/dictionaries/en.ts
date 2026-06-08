@@ -485,6 +485,20 @@ export const en = {
     sitemapNote:
       "Sitemaps regenerate on each request. Submission status tracking is a placeholder for a future Search Console integration.",
   },
+  dashIntegrations: {
+    description:
+      "Connect Search Console, Google Ads and Meta Ads to power the marketing dashboards.",
+    connections: "Connections",
+    openProviderDashboard: "Open {provider} dashboard",
+    messagingChannels: "Messaging channels",
+    messagingBlurb:
+      "Connect WhatsApp, Telegram and Messenger to the unified inbox. Each channel uses your own credentials, configured in the environment — see SETUP.md.",
+    offlineConversions: "Offline conversions (placeholder)",
+    offlineBlurb:
+      "CRM events that will be uploaded to Google Ads / Meta Ads as offline conversions once the OAuth flow is wired:",
+    adapterNote:
+      "Provider adapters expose an uploadOfflineConversion() method as a clean extension point.",
+  },
 };
 
 export type Dictionary = typeof en;

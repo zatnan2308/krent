@@ -486,4 +486,18 @@ export const fr: DeepPartial<Dictionary> = {
     sitemapNote:
       "Les plans du site sont régénérés à chaque requête. Le suivi du statut de soumission est un espace réservé pour une future intégration Search Console.",
   },
+  dashIntegrations: {
+    description:
+      "Connectez Search Console, Google Ads et Meta Ads pour alimenter les tableaux de bord marketing.",
+    connections: "Connexions",
+    openProviderDashboard: "Ouvrir le tableau de bord {provider}",
+    messagingChannels: "Canaux de messagerie",
+    messagingBlurb:
+      "Connectez WhatsApp, Telegram et Messenger à la boîte de réception unifiée. Chaque canal utilise vos propres identifiants, configurés dans l'environnement — voir SETUP.md.",
+    offlineConversions: "Conversions hors ligne (espace réservé)",
+    offlineBlurb:
+      "Événements CRM qui seront envoyés à Google Ads / Meta Ads comme conversions hors ligne une fois le flux OAuth câblé :",
+    adapterNote:
+      "Les adaptateurs de fournisseur exposent une méthode uploadOfflineConversion() comme point d'extension propre.",
+  },
 };
