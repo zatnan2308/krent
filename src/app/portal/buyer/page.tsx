@@ -37,6 +37,10 @@ export default async function BuyerPortalPage() {
   const showingRequests = data.leads.filter(
     (lead) => lead.source === "showing_request",
   );
+  // Встречи: лиды с назначенным агентом временем показа (ближайшие сверху).
+  const appointments = data.leads
+    .filter((lead) => lead.scheduledAt !== null)
+    .sort((a, b) => (a.scheduledAt ?? "").localeCompare(b.scheduledAt ?? ""));
 
   return (
     <div className="space-y-6">
@@ -146,10 +150,41 @@ export default async function BuyerPortalPage() {
         </CardContent>
       </Card>
 
-      <PlaceholderSection
-        title="Appointments"
-        description="Scheduled viewings and meetings will appear here."
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Appointments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {appointments.length > 0 ? (
+            <ul className="divide-y">
+              {appointments.map((lead) => (
+                <li
+                  key={lead.id}
+                  className="flex items-center justify-between gap-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {lead.propertyTitle ?? "Viewing"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {lead.scheduledAt
+                        ? new Date(lead.scheduledAt).toLocaleString("en-US")
+                        : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {lead.status.replace(/_/g, " ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              You have no scheduled appointments yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
       <PlaceholderSection
         title="Documents"
         description="Documents shared by your agent will appear here."

@@ -3211,6 +3211,7 @@ export type Database = {
           message: string | null
           organization_id: string
           property_id: string | null
+          scheduled_at: string | null
           source: string | null
           source_domain: string | null
           status: Database["public"]["Enums"]["lead_status"]
@@ -3230,6 +3231,7 @@ export type Database = {
           message?: string | null
           organization_id: string
           property_id?: string | null
+          scheduled_at?: string | null
           source?: string | null
           source_domain?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
@@ -3249,6 +3251,7 @@ export type Database = {
           message?: string | null
           organization_id?: string
           property_id?: string | null
+          scheduled_at?: string | null
           source?: string | null
           source_domain?: string | null
           status?: Database["public"]["Enums"]["lead_status"]

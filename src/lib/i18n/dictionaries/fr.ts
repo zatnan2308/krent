@@ -344,6 +344,9 @@ export const fr: DeepPartial<Dictionary> = {
     createProperty: "Créer l'annonce",
   },
   dashCrm: {
+    appointmentLabel: "Rendez-vous de visite",
+    saveAppointment: "Enregistrer",
+    clearAppointment: "Effacer",
     deleteContactBtn: "Supprimer le contact",
     deleteLeadBtn: "Supprimer le lead",
     deleteDealBtn: "Supprimer l'affaire",

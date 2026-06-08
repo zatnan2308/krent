@@ -104,6 +104,7 @@ export interface BuyerLeadItem {
   source: string | null;
   propertyTitle: string | null;
   createdAt: string;
+  scheduledAt: string | null;
 }
 
 export interface BuyerPortalData {
@@ -192,6 +193,7 @@ export async function getBuyerPortalData(
           null)
         : null,
       createdAt: lead.created_at,
+      scheduledAt: lead.scheduled_at,
     })),
   };
 }

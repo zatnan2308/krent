@@ -347,6 +347,9 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    appointmentLabel: "Showing appointment",
+    saveAppointment: "Save time",
+    clearAppointment: "Clear",
     deleteContactBtn: "Delete contact",
     deleteLeadBtn: "Delete lead",
     deleteDealBtn: "Delete deal",

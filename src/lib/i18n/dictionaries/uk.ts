@@ -344,6 +344,9 @@ export const uk: DeepPartial<Dictionary> = {
     createProperty: "Створити об'єкт",
   },
   dashCrm: {
+    appointmentLabel: "Час показу",
+    saveAppointment: "Зберегти час",
+    clearAppointment: "Очистити",
     deleteContactBtn: "Видалити контакт",
     deleteLeadBtn: "Видалити лід",
     deleteDealBtn: "Видалити угоду",

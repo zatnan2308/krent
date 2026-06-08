@@ -221,6 +221,7 @@ export default async function LeadDetailPage({
               canManageAll={hasPermission(context, "crm.manage_all")}
               agents={agents}
               assignedAgentId={lead.assigned_agent_id}
+              scheduledAt={lead.scheduled_at}
             />
             {hasPermission(context, "crm.manage_all") ? (
               <div className="mt-4 border-t pt-4">

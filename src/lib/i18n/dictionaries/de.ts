@@ -345,6 +345,9 @@ export const de: DeepPartial<Dictionary> = {
     createProperty: "Objekt erstellen",
   },
   dashCrm: {
+    appointmentLabel: "Besichtigungstermin",
+    saveAppointment: "Zeit speichern",
+    clearAppointment: "Löschen",
     deleteContactBtn: "Kontakt löschen",
     deleteLeadBtn: "Lead löschen",
     deleteDealBtn: "Deal löschen",

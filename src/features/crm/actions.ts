@@ -598,6 +598,62 @@ export async function deleteContact(contactId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+const setLeadAppointmentSchema = z.object({
+  leadId: z.guid(),
+  scheduledAt: z.string().trim().min(1).nullable(),
+});
+export type SetLeadAppointmentInput = z.infer<typeof setLeadAppointmentSchema>;
+
+/** Назначает/снимает время показа по лиду (раздел Appointments портала покупателя). */
+export async function setLeadAppointment(
+  input: SetLeadAppointmentInput,
+): Promise<ActionResult> {
+  const parsed = setLeadAppointmentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the appointment date." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to manage leads." };
+  }
+  const { leadId, scheduledAt } = parsed.data;
+  let iso: string | null = null;
+  if (scheduledAt) {
+    // datetime-local — «настенное» время; трактуем как локаль браузера → UTC.
+    const when = new Date(scheduledAt);
+    if (Number.isNaN(when.getTime())) {
+      return { ok: false, error: "Please enter a valid date and time." };
+    }
+    iso = when.toISOString();
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("leads")
+    .update({ scheduled_at: iso })
+    .eq("id", leadId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not update the appointment." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Lead not found or not editable." };
+  }
+  await logAudit({
+    organizationId: context.organization.id,
+    userId: context.user.id,
+    action: "lead.appointment_set",
+    entityType: "lead",
+    entityId: leadId,
+    metadata: { scheduled_at: iso },
+  });
+  revalidatePath(`${CRM_LEADS}/${leadId}`);
+  return { ok: true };
+}
+
 const updateDealSchema = z.object({
   dealId: z.guid(),
   title: z.string().trim().min(1).max(200),

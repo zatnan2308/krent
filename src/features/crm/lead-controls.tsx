@@ -7,6 +7,7 @@ import {
   assignLeadToSelf,
   convertLeadToDeal,
   reassignLead,
+  setLeadAppointment,
   setLeadStatus,
 } from "@/features/crm/actions";
 import { LEAD_STATUS_OPTIONS } from "@/features/crm/constants";
@@ -18,6 +19,18 @@ import { useI18n } from "@/lib/i18n/provider";
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+/** ISO (UTC) → значение для datetime-local (локальная зона браузера). */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (value: number): string => String(value).padStart(2, "0");
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
+}
+
 interface LeadControlsProps {
   leadId: string;
   status: LeadStatus;
@@ -28,6 +41,8 @@ interface LeadControlsProps {
   /** Агенты организации — для селекта реассайна (только при manage_all). */
   agents: { id: string; name: string }[];
   assignedAgentId: string | null;
+  /** Назначенное время показа (ISO) — для раздела Appointments портала. */
+  scheduledAt: string | null;
 }
 
 /** Управление лидом: статус, назначение, конвертация в сделку. */
@@ -39,12 +54,16 @@ export function LeadControls({
   canManageAll,
   agents,
   assignedAgentId,
+  scheduledAt,
 }: LeadControlsProps) {
   const router = useRouter();
   const { dict } = useI18n();
   const t = dict.dashCrm;
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [appointment, setAppointment] = React.useState(
+    toLocalInput(scheduledAt),
+  );
 
   async function run(action: () => Promise<ActionResult>) {
     setPending(true);
@@ -141,6 +160,54 @@ export function LeadControls({
             {t.convertToDeal}
           </Button>
         )}
+      </div>
+
+      <div className="space-y-1.5 border-t pt-3">
+        <label htmlFor="lead-appointment" className="text-sm font-medium">
+          {t.appointmentLabel}
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            id="lead-appointment"
+            type="datetime-local"
+            className={`${FIELD_CLASS} sm:w-auto`}
+            value={appointment}
+            disabled={pending}
+            onChange={(event) => setAppointment(event.target.value)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={() =>
+              run(() =>
+                setLeadAppointment({
+                  leadId,
+                  scheduledAt: appointment || null,
+                }),
+              )
+            }
+          >
+            {t.saveAppointment}
+          </Button>
+          {appointment ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() => {
+                setAppointment("");
+                void run(() =>
+                  setLeadAppointment({ leadId, scheduledAt: null }),
+                );
+              }}
+            >
+              {t.clearAppointment}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {error ? (
