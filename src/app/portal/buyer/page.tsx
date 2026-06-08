@@ -32,6 +32,11 @@ export default async function BuyerPortalPage() {
 
   const data = await getBuyerPortalData(resolved.account);
   const locale = resolved.organization.default_language;
+  // Карточка показывает только запросы на показ (как на портале продавца),
+  // а не все обращения контакта.
+  const showingRequests = data.leads.filter(
+    (lead) => lead.source === "showing_request",
+  );
 
   return (
     <div className="space-y-6">
@@ -111,9 +116,9 @@ export default async function BuyerPortalPage() {
           <CardTitle className="text-base">Showing requests</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.leads.length > 0 ? (
+          {showingRequests.length > 0 ? (
             <ul className="divide-y">
-              {data.leads.map((lead) => (
+              {showingRequests.map((lead) => (
                 <li
                   key={lead.id}
                   className="flex items-center justify-between gap-3 py-2"
