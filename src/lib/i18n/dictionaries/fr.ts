@@ -1286,6 +1286,7 @@ export const fr: DeepPartial<Dictionary> = {
     language: "Langue",
     senderName: "Nom de l'expéditeur",
     audienceSegment: "Segment d'audience",
+    audienceCount: "≈ {n} destinataires dans ce segment",
     noSegment: "Aucun segment sélectionné",
     emailContent: "Contenu de l'e-mail",
     blockType: "Type de bloc",

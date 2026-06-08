@@ -43,7 +43,7 @@ interface EditorBlock {
 interface CampaignEditorProps {
   campaign: Campaign;
   initialBlocks: { type: BlockType; content: Record<string, unknown> }[];
-  segments: { id: string; name: string }[];
+  segments: { id: string; name: string; count: number }[];
   properties: PropertyEmailData[];
   companyName: string;
   /** Включённые языки организации — для выбора языка рассылки. */
@@ -359,6 +359,16 @@ export function CampaignEditor({
                   </option>
                 ))}
               </select>
+              {segmentId ? (
+                <p className="text-xs text-muted-foreground">
+                  {t.audienceCount.replace(
+                    "{n}",
+                    String(
+                      segments.find((s) => s.id === segmentId)?.count ?? 0,
+                    ),
+                  )}
+                </p>
+              ) : null}
             </div>
           </div>
 

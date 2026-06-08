@@ -156,7 +156,7 @@ export async function listCampaigns(
 export interface CampaignEditorData {
   campaign: Campaign;
   blocks: CampaignBlockData[];
-  segments: { id: string; name: string }[];
+  segments: { id: string; name: string; count: number }[];
   report: CampaignReport | null;
   properties: PropertyEmailData[];
 }
@@ -204,10 +204,22 @@ export async function getCampaignEditorData(
       content: (row.content ?? {}) as Record<string, unknown>,
     }));
 
+  // Текущее (материализованное) число получателей по каждому сегменту —
+  // для отображения в редакторе перед отправкой.
+  const segments = await Promise.all(
+    (segmentsResult.data ?? []).map(async (segment) => {
+      const { count } = await admin
+        .from("contact_segment_members")
+        .select("*", { count: "exact", head: true })
+        .eq("segment_id", segment.id);
+      return { id: segment.id, name: segment.name, count: count ?? 0 };
+    }),
+  );
+
   return {
     campaign,
     blocks,
-    segments: segmentsResult.data ?? [],
+    segments,
     report: reportResult.data,
     properties,
   };

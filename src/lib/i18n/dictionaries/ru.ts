@@ -1279,6 +1279,7 @@ export const ru: DeepPartial<Dictionary> = {
     language: "Язык",
     senderName: "Имя отправителя",
     audienceSegment: "Сегмент аудитории",
+    audienceCount: "≈ {n} получателей в этом сегменте",
     noSegment: "Сегмент не выбран",
     emailContent: "Содержимое письма",
     blockType: "Тип блока",

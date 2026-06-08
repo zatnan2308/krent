@@ -1322,6 +1322,7 @@ export const en = {
     language: "Language",
     senderName: "Sender name",
     audienceSegment: "Audience segment",
+    audienceCount: "≈ {n} recipients in this segment",
     noSegment: "No segment selected",
     emailContent: "Email content",
     blockType: "Block type",
