@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 import type { Tables } from "@/types/database";
 
 interface Props {
@@ -57,6 +58,8 @@ function Labelled({
 
 function PageTextSection({ initial }: { initial: AboutPageInput }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.aboutEditor;
   const [form, setForm] = React.useState<AboutPageInput>({ ...initial });
   const [pending, setPending] = React.useState(false);
   const [msg, setMsg] = React.useState<string | null>(null);
@@ -67,7 +70,7 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Page text</CardTitle>
+        <CardTitle className="text-base">{t.pageText}</CardTitle>
       </CardHeader>
       <CardContent>
         <form
@@ -77,13 +80,13 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
             setPending(true);
             const result = await updateAboutPage(form);
             setPending(false);
-            setMsg(result.ok ? "Saved." : result.error);
+            setMsg(result.ok ? t.saved : result.error);
             if (result.ok) router.refresh();
           }}
         >
           <Labelled
-            label="Hero title"
-            hint="One line per row. Leave blank to keep the default."
+            label={t.heroTitle}
+            hint={t.heroHint}
           >
             <textarea
               className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -92,7 +95,7 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
               placeholder={"One person.\nTwelve clients.\nOne city."}
             />
           </Labelled>
-          <Labelled label="Story heading">
+          <Labelled label={t.storyHeading}>
             <Input
               value={form.storyHeading ?? ""}
               onChange={(e) => set("storyHeading")(e.target.value)}
@@ -100,8 +103,8 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
             />
           </Labelled>
           <Labelled
-            label="Story body"
-            hint="Separate paragraphs with a blank line."
+            label={t.storyBody}
+            hint={t.storyBodyHint}
           >
             <textarea
               className="min-h-[160px] w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -111,14 +114,14 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
             />
           </Labelled>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Labelled label="Pull-quote 1" hint="Shown after the first paragraph.">
+            <Labelled label={t.pullQuote1} hint={t.pullQuote1Hint}>
               <textarea
                 className="min-h-[70px] w-full rounded-md border bg-background px-3 py-2 text-sm"
                 value={form.quote1 ?? ""}
                 onChange={(e) => set("quote1")(e.target.value)}
               />
             </Labelled>
-            <Labelled label="Pull-quote 2" hint="Shown later in the story.">
+            <Labelled label={t.pullQuote2} hint={t.pullQuote2Hint}>
               <textarea
                 className="min-h-[70px] w-full rounded-md border bg-background px-3 py-2 text-sm"
                 value={form.quote2 ?? ""}
@@ -128,7 +131,7 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" type="submit" disabled={pending}>
-              Save
+              {t.save}
             </Button>
             {msg ? (
               <span className="text-xs text-muted-foreground">{msg}</span>
@@ -156,6 +159,8 @@ function MilestoneRow({
   onDelete: (id: string) => void;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.aboutEditor;
   const [editing, setEditing] = React.useState(false);
   const [year, setYear] = React.useState(milestone.year);
   const [title, setTitle] = React.useState(milestone.title);
@@ -179,22 +184,22 @@ function MilestoneRow({
           <Input
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            placeholder="Year"
+            placeholder={t.year}
           />
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
+            placeholder={t.title}
           />
         </div>
         <Input
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Body"
+          placeholder={t.body}
         />
         <div className="flex gap-1">
           <Button type="button" size="sm" onClick={save} disabled={busy}>
-            Save
+            {t.save}
           </Button>
           <Button
             type="button"
@@ -202,7 +207,7 @@ function MilestoneRow({
             variant="outline"
             onClick={() => setEditing(false)}
           >
-            Cancel
+            {t.cancel}
           </Button>
         </div>
       </li>
@@ -227,7 +232,7 @@ function MilestoneRow({
           size="icon"
           className="h-8 w-8"
           disabled={pending || index === 0}
-          aria-label="Move up"
+          aria-label={t.moveUp}
           onClick={() => onMove(milestone.id, "up")}
         >
           <ChevronUp className="h-4 w-4" />
@@ -238,7 +243,7 @@ function MilestoneRow({
           size="icon"
           className="h-8 w-8"
           disabled={pending || index === total - 1}
-          aria-label="Move down"
+          aria-label={t.moveDown}
           onClick={() => onMove(milestone.id, "down")}
         >
           <ChevronDown className="h-4 w-4" />
@@ -248,7 +253,7 @@ function MilestoneRow({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          aria-label="Edit milestone"
+          aria-label={t.editMilestone}
           onClick={() => setEditing(true)}
         >
           <Pencil className="h-4 w-4" />
@@ -260,7 +265,7 @@ function MilestoneRow({
           className="h-8 w-8 text-destructive"
           onClick={() => onDelete(milestone.id)}
           disabled={pending}
-          aria-label="Remove milestone"
+          aria-label={t.removeMilestone}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -275,6 +280,8 @@ function MilestonesSection({
   milestones: Tables<"about_milestones">[];
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.aboutEditor;
   const [year, setYear] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [body, setBody] = React.useState("");
@@ -313,16 +320,15 @@ function MilestonesSection({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-semibold">Timeline milestones</h2>
+        <h2 className="text-base font-semibold">{t.timelineMilestones}</h2>
         <p className="text-xs text-muted-foreground">
-          The dated milestones on the public About page. Leave empty to use the
-          built-in defaults.
+          {t.timelineDesc}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Milestones</CardTitle>
+          <CardTitle className="text-sm">{t.milestones}</CardTitle>
         </CardHeader>
         <CardContent>
           {milestones.length > 0 ? (
@@ -341,8 +347,8 @@ function MilestonesSection({
             </ul>
           ) : (
             <EmptyState
-              title="No milestones"
-              description="Add milestones to build the timeline."
+              title={t.noMilestones}
+              description={t.noMilestonesDesc}
             />
           )}
         </CardContent>
@@ -350,13 +356,13 @@ function MilestonesSection({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Add milestone</CardTitle>
+          <CardTitle className="text-sm">{t.addMilestone}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
             <div className="space-y-2">
               <label htmlFor="ms-year" className="text-sm font-medium">
-                Year
+                {t.year}
               </label>
               <Input
                 id="ms-year"
@@ -367,7 +373,7 @@ function MilestonesSection({
             </div>
             <div className="space-y-2">
               <label htmlFor="ms-title" className="text-sm font-medium">
-                Title
+                {t.title}
               </label>
               <Input
                 id="ms-title"
@@ -379,7 +385,7 @@ function MilestonesSection({
           </div>
           <div className="space-y-2">
             <label htmlFor="ms-body" className="text-sm font-medium">
-              Description
+              {t.description}
             </label>
             <textarea
               id="ms-body"
@@ -394,7 +400,7 @@ function MilestonesSection({
             </p>
           ) : null}
           <Button type="button" onClick={handleAdd} disabled={pending}>
-            {pending ? "Saving..." : "Add milestone"}
+            {pending ? t.saving : t.addMilestone}
           </Button>
         </CardContent>
       </Card>
