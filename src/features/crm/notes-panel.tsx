@@ -9,6 +9,7 @@ import type { NoteItem } from "@/features/crm/queries";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface NotesPanelProps {
   notes: NoteItem[];
@@ -33,6 +34,8 @@ export function NotesPanel({
   dealId = null,
 }: NotesPanelProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [body, setBody] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -76,7 +79,7 @@ export function NotesPanel({
           <Textarea
             value={body}
             rows={3}
-            placeholder="Add a note..."
+            placeholder={t.addNotePh}
             onChange={(event) => setBody(event.target.value)}
           />
           <Button
@@ -85,7 +88,7 @@ export function NotesPanel({
             disabled={pending}
             onClick={handleAdd}
           >
-            Add note
+            {t.addNote}
           </Button>
         </div>
       ) : null}
@@ -110,7 +113,7 @@ export function NotesPanel({
                     size="icon"
                     className="h-7 w-7 shrink-0 text-destructive"
                     disabled={pending}
-                    aria-label="Delete note"
+                    aria-label={t.deleteNoteAria}
                     onClick={() => handleDelete(note.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -118,7 +121,7 @@ export function NotesPanel({
                 ) : null}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {note.authorName ?? "Team member"} ·{" "}
+                {note.authorName ?? t.teamMember} ·{" "}
                 {new Date(note.createdAt).toLocaleDateString("en-US")}
               </p>
             </li>
@@ -126,8 +129,8 @@ export function NotesPanel({
         </ul>
       ) : (
         <EmptyState
-          title="No notes yet"
-          description="Notes added by the team will appear here."
+          title={t.noNotesTitle}
+          description={t.noNotesDesc}
         />
       )}
     </div>

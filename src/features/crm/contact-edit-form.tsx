@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { updateContact } from "@/features/crm/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface ContactEditFormProps {
   contact: {
@@ -22,6 +23,8 @@ interface ContactEditFormProps {
 /** Редактирование данных контакта (для crm.manage); иначе read-only. */
 export function ContactEditForm({ contact, canManage }: ContactEditFormProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [form, setForm] = React.useState({
     fullName: contact.fullName,
     email: contact.email ?? "",
@@ -35,10 +38,10 @@ export function ContactEditForm({ contact, canManage }: ContactEditFormProps) {
   if (!canManage) {
     return (
       <dl className="space-y-1 text-sm">
-        <Row label="Email" value={contact.email} />
-        <Row label="Phone" value={contact.phone} />
-        <Row label="Language" value={contact.language} />
-        <Row label="Currency" value={contact.currency} />
+        <Row label={t.colEmail} value={contact.email} />
+        <Row label={t.colPhone} value={contact.phone} />
+        <Row label={t.language} value={contact.language} />
+        <Row label={t.currency} value={contact.currency} />
       </dl>
     );
   }
@@ -56,7 +59,7 @@ export function ContactEditForm({ contact, canManage }: ContactEditFormProps) {
     });
     setPending(false);
     if (result.ok) {
-      setMsg("Saved.");
+      setMsg(t.saved);
       router.refresh();
     } else {
       setMsg(result.error);
@@ -65,20 +68,20 @@ export function ContactEditForm({ contact, canManage }: ContactEditFormProps) {
 
   return (
     <div className="space-y-2.5">
-      <Field label="Full name">
+      <Field label={t.fullName}>
         <Input
           value={form.fullName}
           onChange={(e) => setForm({ ...form, fullName: e.target.value })}
         />
       </Field>
-      <Field label="Email">
+      <Field label={t.colEmail}>
         <Input
           value={form.email}
           placeholder="—"
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
       </Field>
-      <Field label="Phone">
+      <Field label={t.colPhone}>
         <Input
           value={form.phone}
           placeholder="—"
@@ -86,14 +89,14 @@ export function ContactEditForm({ contact, canManage }: ContactEditFormProps) {
         />
       </Field>
       <div className="grid grid-cols-2 gap-2">
-        <Field label="Language">
+        <Field label={t.language}>
           <Input
             value={form.language}
             placeholder="—"
             onChange={(e) => setForm({ ...form, language: e.target.value })}
           />
         </Field>
-        <Field label="Currency">
+        <Field label={t.currency}>
           <Input
             value={form.currency}
             placeholder="—"
@@ -103,7 +106,7 @@ export function ContactEditForm({ contact, canManage }: ContactEditFormProps) {
       </div>
       <div className="flex items-center gap-2 pt-1">
         <Button size="sm" type="button" onClick={handleSave} disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? t.saving : t.save}
         </Button>
         {msg ? (
           <span className="text-xs text-muted-foreground">{msg}</span>

@@ -9,6 +9,7 @@ import type { DealStage } from "@/features/crm/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CURRENCIES } from "@/lib/currency/config";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -22,6 +23,8 @@ interface DealEditorProps {
 /** Редактор полей сделки: название, сумма, валюта, дата закрытия, стадия. */
 export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [form, setForm] = React.useState({
     title: deal.title,
     amount: deal.amount?.toString() ?? "",
@@ -35,7 +38,7 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
   if (!canManage) {
     return (
       <p className="text-sm text-muted-foreground">
-        You do not have permission to edit deals.
+        {t.noEditDeals}
       </p>
     );
   }
@@ -55,12 +58,12 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
           stageId: form.stageId || null,
         });
         setPending(false);
-        setMsg(result.ok ? "Deal saved." : result.error);
+        setMsg(result.ok ? t.dealSaved : result.error);
         if (result.ok) router.refresh();
       }}
     >
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Title</span>
+        <span className="text-sm font-medium">{t.titleLabel}</span>
         <Input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -69,7 +72,7 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
       </label>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Amount</span>
+          <span className="text-sm font-medium">{t.amount}</span>
           <Input
             type="number"
             min="0"
@@ -79,7 +82,7 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Currency</span>
+          <span className="text-sm font-medium">{t.currency}</span>
           <select
             className={FIELD_CLASS}
             value={form.currency}
@@ -93,7 +96,7 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
           </select>
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Expected close date</span>
+          <span className="text-sm font-medium">{t.expectedCloseDate}</span>
           <Input
             type="date"
             value={form.expectedCloseDate}
@@ -103,13 +106,13 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Stage</span>
+          <span className="text-sm font-medium">{t.stage}</span>
           <select
             className={FIELD_CLASS}
             value={form.stageId}
             onChange={(e) => setForm({ ...form, stageId: e.target.value })}
           >
-            <option value="">No stage</option>
+            <option value="">{t.noStage}</option>
             {stages.map((stage) => (
               <option key={stage.id} value={stage.id}>
                 {stage.name}
@@ -120,7 +123,7 @@ export function DealEditor({ deal, stages, canManage }: DealEditorProps) {
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save deal"}
+          {pending ? t.saving : t.saveDeal}
         </Button>
         {msg ? (
           <span className="text-xs text-muted-foreground">{msg}</span>

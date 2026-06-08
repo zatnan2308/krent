@@ -6,12 +6,9 @@ import { useRouter } from "next/navigation";
 import { inviteToPortal, revokePortalAccount } from "@/features/portal/actions";
 import type { PortalType } from "@/features/portal/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
-const PORTAL_TYPES: { value: PortalType; label: string }[] = [
-  { value: "buyer", label: "Buyer" },
-  { value: "seller", label: "Seller" },
-  { value: "guest", label: "Guest" },
-];
+const PORTAL_TYPES: PortalType[] = ["buyer", "seller", "guest"];
 
 interface AccountRow {
   id: string;
@@ -32,6 +29,13 @@ export function ContactPortalAccess({
   canManage,
 }: ContactPortalAccessProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
+  const portalLabels: Record<PortalType, string> = {
+    buyer: t.portalBuyer,
+    seller: t.portalSeller,
+    guest: t.portalGuest,
+  };
   const [type, setType] = React.useState<PortalType>("buyer");
   const [pending, setPending] = React.useState(false);
   const [msg, setMsg] = React.useState<string | null>(null);
@@ -45,7 +49,7 @@ export function ContactPortalAccess({
       propertyId: null,
     });
     setPending(false);
-    setMsg(result.ok ? "Invitation sent." : result.error);
+    setMsg(result.ok ? t.invitationSent : result.error);
     if (result.ok) router.refresh();
   }
 
@@ -79,27 +83,27 @@ export function ContactPortalAccess({
                   disabled={pending}
                   onClick={() => revoke(account.id)}
                 >
-                  Revoke
+                  {t.revoke}
                 </Button>
               ) : null}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">No portal access yet.</p>
+        <p className="text-sm text-muted-foreground">{t.noPortalAccess}</p>
       )}
 
       {canManage ? (
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={type}
-            aria-label="Portal type"
+            aria-label={t.portalTypeAria}
             onChange={(event) => setType(event.target.value as PortalType)}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           >
-            {PORTAL_TYPES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {PORTAL_TYPES.map((value) => (
+              <option key={value} value={value}>
+                {portalLabels[value]}
               </option>
             ))}
           </select>
@@ -109,7 +113,7 @@ export function ContactPortalAccess({
             disabled={pending}
             onClick={invite}
           >
-            Invite to portal
+            {t.inviteToPortal}
           </Button>
           {msg ? (
             <span className="text-xs text-muted-foreground">{msg}</span>

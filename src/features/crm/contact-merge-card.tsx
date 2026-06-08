@@ -10,6 +10,7 @@ import {
 } from "@/features/crm/actions";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 
 /**
  * Слияние дубликата контакта в другой: ищем цель, подтверждаем, мержим.
@@ -23,6 +24,8 @@ export function ContactMergeCard({
   contactName: string;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<MergeTargetOption[]>([]);
   const [selected, setSelected] = React.useState<MergeTargetOption | null>(null);
@@ -76,10 +79,9 @@ export function ContactMergeCard({
     return (
       <div className="space-y-3 text-sm">
         <p>
-          Merge <span className="font-medium">{contactName}</span> into{" "}
-          <span className="font-medium">{selected.name}</span>? All leads, deals,
-          bookings, conversations and notes move to {selected.name}, and{" "}
-          {contactName} is deleted. This cannot be undone.
+          {t.mergeQuestion
+            .replace(/\{a\}/g, contactName)
+            .replace(/\{b\}/g, selected.name)}
         </p>
         <div className="flex gap-2">
           <Button
@@ -88,7 +90,7 @@ export function ContactMergeCard({
             disabled={pending}
             onClick={handleMerge}
           >
-            {pending ? "Merging…" : "Merge and delete"}
+            {pending ? t.merging : t.mergeAndDelete}
           </Button>
           <Button
             size="sm"
@@ -99,7 +101,7 @@ export function ContactMergeCard({
               setError(null);
             }}
           >
-            Cancel
+            {t.cancel}
           </Button>
         </div>
         {error ? (
@@ -113,14 +115,11 @@ export function ContactMergeCard({
 
   return (
     <div className="space-y-2 text-sm">
-      <p className="text-muted-foreground">
-        Found a duplicate? Merge this contact into another — all data moves to the
-        target and this record is removed.
-      </p>
+      <p className="text-muted-foreground">{t.mergeIntro}</p>
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search a contact by name, email or phone…"
+        placeholder={t.mergeSearchPh}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       {results.length > 0 ? (
@@ -141,13 +140,13 @@ export function ContactMergeCard({
                 variant="outline"
                 onClick={() => setSelected(row)}
               >
-                Merge into
+                {t.mergeInto}
               </Button>
             </li>
           ))}
         </ul>
       ) : query.trim().length >= 2 ? (
-        <p className="text-xs text-muted-foreground">No matching contacts.</p>
+        <p className="text-xs text-muted-foreground">{t.noMatchingContacts}</p>
       ) : null}
     </div>
   );

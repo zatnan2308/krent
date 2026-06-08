@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -81,13 +82,15 @@ export default async function ContactDetailPage({
     ...leads.map((lead) => lead.id),
     ...deals.map((deal) => deal.id),
   ]);
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumbs={[
-          { label: "CRM", href: ROUTES.dashboard.crm },
-          { label: "Contacts", href: ROUTES.dashboard.crmContacts },
+          { label: dict.adminNav.crm, href: ROUTES.dashboard.crm },
+          { label: t.navContacts, href: ROUTES.dashboard.crmContacts },
           { label: contact.full_name },
         ]}
         title={contact.full_name}
@@ -97,7 +100,7 @@ export default async function ContactDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contact details</CardTitle>
+            <CardTitle className="text-base">{t.contactDetails}</CardTitle>
           </CardHeader>
           <CardContent>
             <ContactEditForm
@@ -116,7 +119,7 @@ export default async function ContactDetailPage({
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Leads</CardTitle>
+            <CardTitle className="text-base">{t.navLeads}</CardTitle>
           </CardHeader>
           <CardContent>
             {leads.length > 0 ? (
@@ -140,7 +143,7 @@ export default async function ContactDetailPage({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">No leads yet.</p>
+              <p className="text-sm text-muted-foreground">{t.noLeadsYet}</p>
             )}
           </CardContent>
         </Card>
@@ -148,7 +151,7 @@ export default async function ContactDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Portal access</CardTitle>
+          <CardTitle className="text-base">{t.portalAccess}</CardTitle>
         </CardHeader>
         <CardContent>
           <ContactPortalAccess
@@ -161,7 +164,7 @@ export default async function ContactDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Messaging</CardTitle>
+          <CardTitle className="text-base">{t.messaging}</CardTitle>
         </CardHeader>
         <CardContent>
           <ContactChannels channels={contactChannels} />
@@ -170,7 +173,7 @@ export default async function ContactDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Deals</CardTitle>
+          <CardTitle className="text-base">{t.navDeals}</CardTitle>
         </CardHeader>
         <CardContent>
           {deals.length > 0 ? (
@@ -188,14 +191,14 @@ export default async function ContactDetailPage({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No deals yet.</p>
+            <p className="text-sm text-muted-foreground">{t.noDealsYet}</p>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Notes</CardTitle>
+          <CardTitle className="text-base">{t.notes}</CardTitle>
         </CardHeader>
         <CardContent>
           <NotesPanel
@@ -210,17 +213,17 @@ export default async function ContactDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Activity</CardTitle>
+          <CardTitle className="text-base">{t.activity}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline items={activity} />
+          <ActivityTimeline items={activity} t={t} />
         </CardContent>
       </Card>
 
       {canManageAll ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Merge contact</CardTitle>
+            <CardTitle className="text-base">{t.mergeContact}</CardTitle>
           </CardHeader>
           <CardContent>
             <ContactMergeCard

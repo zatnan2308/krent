@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -60,13 +61,15 @@ export default async function DealDetailPage({
       : Promise.resolve([]),
   ]);
   const canManage = hasPermission(context, "crm.manage");
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumbs={[
-          { label: "CRM", href: ROUTES.dashboard.crm },
-          { label: "Deals", href: ROUTES.dashboard.crmDeals },
+          { label: dict.adminNav.crm, href: ROUTES.dashboard.crm },
+          { label: t.navDeals, href: ROUTES.dashboard.crmDeals },
           { label: deal.title },
         ]}
         title={deal.title}
@@ -77,7 +80,7 @@ export default async function DealDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Deal</CardTitle>
+            <CardTitle className="text-base">{t.dealCard}</CardTitle>
           </CardHeader>
           <CardContent>
             <DealEditor deal={deal} stages={stages} canManage={canManage} />
@@ -86,7 +89,7 @@ export default async function DealDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contact</CardTitle>
+            <CardTitle className="text-base">{t.contactLink}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             <Link
@@ -100,17 +103,17 @@ export default async function DealDetailPage({
             ) : null}
             {deal.propertyTitle ? (
               <p className="border-t pt-2 text-muted-foreground">
-                Property:{" "}
+                {t.propertyLabel}:{" "}
                 <span className="text-foreground">{deal.propertyTitle}</span>
               </p>
             ) : null}
             <p className="text-muted-foreground">
-              Agent: {deal.agentName ?? "Unassigned"}
+              {t.agentLabel}: {deal.agentName ?? t.unassigned}
             </p>
             {dealChannels.length > 0 ? (
               <div className="border-t pt-3">
                 <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  Messaging
+                  {t.messaging}
                 </p>
                 <ContactChannels channels={dealChannels} />
               </div>
@@ -121,7 +124,7 @@ export default async function DealDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Notes</CardTitle>
+          <CardTitle className="text-base">{t.notes}</CardTitle>
         </CardHeader>
         <CardContent>
           <NotesPanel
@@ -136,7 +139,7 @@ export default async function DealDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Tasks</CardTitle>
+          <CardTitle className="text-base">{t.navTasks}</CardTitle>
         </CardHeader>
         <CardContent>
           <TaskManager tasks={tasks} canManage={canManage} dealId={deal.id} />
@@ -145,10 +148,10 @@ export default async function DealDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Activity</CardTitle>
+          <CardTitle className="text-base">{t.activity}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline items={activity} />
+          <ActivityTimeline items={activity} t={t} />
         </CardContent>
       </Card>
     </div>

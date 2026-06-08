@@ -13,6 +13,7 @@ import { LEAD_STATUS_OPTIONS } from "@/features/crm/constants";
 import type { ActionResult } from "@/features/crm/schema";
 import type { LeadStatus } from "@/features/crm/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -40,6 +41,8 @@ export function LeadControls({
   assignedAgentId,
 }: LeadControlsProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -58,7 +61,7 @@ export function LeadControls({
   if (!canManage) {
     return (
       <p className="text-sm text-muted-foreground">
-        You have read-only access to this lead.
+        {t.readOnlyLead}
       </p>
     );
   }
@@ -67,7 +70,7 @@ export function LeadControls({
     <div className="space-y-3">
       <div className="space-y-1.5">
         <label htmlFor="lead-status" className="text-sm font-medium">
-          Status
+          {t.status}
         </label>
         <select
           id="lead-status"
@@ -89,7 +92,7 @@ export function LeadControls({
       {canManageAll ? (
         <div className="space-y-1.5">
           <label htmlFor="lead-agent" className="text-sm font-medium">
-            Assigned agent
+            {t.assignedAgent}
           </label>
           <select
             id="lead-agent"
@@ -102,7 +105,7 @@ export function LeadControls({
               )
             }
           >
-            <option value="">Unassigned</option>
+            <option value="">{t.unassigned}</option>
             {agents.map((agent) => (
               <option key={agent.id} value={agent.id}>
                 {agent.name}
@@ -121,12 +124,12 @@ export function LeadControls({
             disabled={pending}
             onClick={() => run(() => assignLeadToSelf(leadId))}
           >
-            Assign to me
+            {t.assignToMe}
           </Button>
         ) : null}
         {status === "converted" ? (
           <span className="inline-flex items-center text-sm text-muted-foreground">
-            Converted to a deal
+            {t.convertedToDeal}
           </span>
         ) : (
           <Button
@@ -135,7 +138,7 @@ export function LeadControls({
             disabled={pending}
             onClick={() => run(() => convertLeadToDeal(leadId))}
           >
-            Convert to deal
+            {t.convertToDeal}
           </Button>
         )}
       </div>

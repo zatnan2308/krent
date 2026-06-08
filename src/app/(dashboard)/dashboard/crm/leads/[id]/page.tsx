@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -69,34 +70,36 @@ export default async function LeadDetailPage({
     ]);
   const canManage = hasPermission(context, "crm.manage");
   const { lead, contact, attribution } = detail;
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
 
   const detailRows: { label: string; value: string }[] = [
-    { label: "Type", value: LEAD_TYPE_LABELS[lead.type] },
-    { label: "Source", value: lead.source ?? "—" },
+    { label: t.type, value: LEAD_TYPE_LABELS[lead.type] },
+    { label: t.source, value: lead.source ?? "—" },
   ];
   if (lead.source_domain) {
-    detailRows.push({ label: "Source domain", value: lead.source_domain });
+    detailRows.push({ label: t.sourceDomain, value: lead.source_domain });
   }
   if (lead.budget_min !== null || lead.budget_max !== null) {
     detailRows.push({
-      label: "Budget",
+      label: t.budget,
       value: `${lead.budget_min ?? "—"} – ${lead.budget_max ?? "—"}`,
     });
   }
   if (lead.location_interest) {
     detailRows.push({
-      label: "Location interest",
+      label: t.locationInterest,
       value: lead.location_interest,
     });
   }
   if (lead.language) {
-    detailRows.push({ label: "Language", value: lead.language });
+    detailRows.push({ label: t.language, value: lead.language });
   }
   if (lead.currency) {
-    detailRows.push({ label: "Currency", value: lead.currency });
+    detailRows.push({ label: t.currency, value: lead.currency });
   }
   detailRows.push({
-    label: "Created",
+    label: t.colCreated,
     value: new Date(lead.created_at).toLocaleString("en-US"),
   });
 
@@ -133,11 +136,11 @@ export default async function LeadDetailPage({
     <div className="space-y-6">
       <PageHeader
         breadcrumbs={[
-          { label: "CRM", href: ROUTES.dashboard.crm },
-          { label: "Leads", href: ROUTES.dashboard.crmLeads },
-          { label: contact?.full_name ?? "Lead" },
+          { label: dict.adminNav.crm, href: ROUTES.dashboard.crm },
+          { label: t.navLeads, href: ROUTES.dashboard.crmLeads },
+          { label: contact?.full_name ?? t.leadFallback },
         ]}
-        title={contact?.full_name ?? "Lead"}
+        title={contact?.full_name ?? t.leadFallback}
         actions={
           <Badge variant="secondary">{LEAD_STATUS_LABELS[lead.status]}</Badge>
         }
@@ -147,7 +150,7 @@ export default async function LeadDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Lead details</CardTitle>
+            <CardTitle className="text-base">{t.leadDetails}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="space-y-2 text-sm">
@@ -160,7 +163,7 @@ export default async function LeadDetailPage({
             </dl>
             {lead.message ? (
               <div className="mt-3 border-t pt-3">
-                <p className="text-xs text-muted-foreground">Message</p>
+                <p className="text-xs text-muted-foreground">{t.messageLabel}</p>
                 <p className="mt-1 whitespace-pre-line text-sm">
                   {lead.message}
                 </p>
@@ -171,7 +174,7 @@ export default async function LeadDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contact</CardTitle>
+            <CardTitle className="text-base">{t.contactLink}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             {contact ? (
@@ -190,23 +193,23 @@ export default async function LeadDetailPage({
                 ) : null}
               </>
             ) : (
-              <p className="text-muted-foreground">No contact linked.</p>
+              <p className="text-muted-foreground">{t.noContactLinked}</p>
             )}
             {detail.propertyTitle ? (
               <p className="border-t pt-2 text-muted-foreground">
-                Property:{" "}
+                {t.propertyLabel}:{" "}
                 <span className="text-foreground">{detail.propertyTitle}</span>
               </p>
             ) : null}
             <p className="text-muted-foreground">
-              Agent: {detail.agentName ?? "Unassigned"}
+              {t.agentLabel}: {detail.agentName ?? t.unassigned}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Manage</CardTitle>
+            <CardTitle className="text-base">{t.manage}</CardTitle>
           </CardHeader>
           <CardContent>
             <LeadControls
@@ -223,14 +226,14 @@ export default async function LeadDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Messaging</CardTitle>
+            <CardTitle className="text-base">{t.messaging}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <ContactChannels channels={leadChannels} />
             {leadDeepLinks.length > 0 ? (
               <div className="border-t pt-3">
                 <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  Share a chat link
+                  {t.shareChatLink}
                 </p>
                 <ChannelDeepLinks links={leadDeepLinks} />
               </div>
@@ -241,7 +244,7 @@ export default async function LeadDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Attribution</CardTitle>
+          <CardTitle className="text-base">{t.attribution}</CardTitle>
         </CardHeader>
         <CardContent>
           {attributionRows.length > 0 ? (
@@ -262,7 +265,7 @@ export default async function LeadDetailPage({
             </dl>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No marketing attribution captured for this lead.
+              {t.noAttribution}
             </p>
           )}
         </CardContent>
@@ -270,7 +273,7 @@ export default async function LeadDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Notes</CardTitle>
+          <CardTitle className="text-base">{t.notes}</CardTitle>
         </CardHeader>
         <CardContent>
           <NotesPanel
@@ -285,7 +288,7 @@ export default async function LeadDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Tasks</CardTitle>
+          <CardTitle className="text-base">{t.navTasks}</CardTitle>
         </CardHeader>
         <CardContent>
           <TaskManager tasks={tasks} canManage={canManage} leadId={lead.id} />
@@ -294,10 +297,10 @@ export default async function LeadDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Activity</CardTitle>
+          <CardTitle className="text-base">{t.activity}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline items={activity} />
+          <ActivityTimeline items={activity} t={t} />
         </CardContent>
       </Card>
     </div>
