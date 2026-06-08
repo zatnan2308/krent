@@ -100,10 +100,34 @@ export default async function SellerPortalPage() {
         </CardContent>
       </Card>
 
-      <PlaceholderSection
-        title="Property activity"
-        description="Views and engagement stats appear once the analytics module is configured for this installation."
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Property activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.activity.length > 0 ? (
+            <ul className="divide-y">
+              {data.activity.map((item) => (
+                <li
+                  key={item.propertyId}
+                  className="flex items-center justify-between gap-3 py-2"
+                >
+                  <p className="min-w-0 truncate text-sm font-medium">
+                    {item.title}
+                  </p>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {item.views30d} views (30d) · {item.inquiries} inquiries
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No activity yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -133,10 +157,33 @@ export default async function SellerPortalPage() {
         </CardContent>
       </Card>
 
-      <PlaceholderSection
-        title="Seller reports"
-        description="Performance reports for your listings will appear here."
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Seller reports</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-md border p-3">
+              <dt className="text-xs text-muted-foreground">Views (30d)</dt>
+              <dd className="mt-1 text-xl font-semibold">
+                {data.reports.totalViews30d}
+              </dd>
+            </div>
+            <div className="rounded-md border p-3">
+              <dt className="text-xs text-muted-foreground">Inquiries</dt>
+              <dd className="mt-1 text-xl font-semibold">
+                {data.reports.totalInquiries}
+              </dd>
+            </div>
+            <div className="rounded-md border p-3">
+              <dt className="text-xs text-muted-foreground">Showings</dt>
+              <dd className="mt-1 text-xl font-semibold">
+                {data.reports.totalShowings}
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
       <PlaceholderSection
         title="Documents"
         description="Document uploads and signed-URL sharing become available once private documents storage is configured for this installation."

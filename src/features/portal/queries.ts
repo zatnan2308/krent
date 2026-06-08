@@ -215,9 +215,23 @@ export interface SellerLeadItem {
   createdAt: string;
 }
 
+/** Активность по объекту продавца: просмотры за 30 дней и число обращений. */
+export interface SellerActivityItem {
+  propertyId: string;
+  title: string;
+  views30d: number;
+  inquiries: number;
+}
+
 export interface SellerPortalData {
   properties: SellerProperty[];
   inquiries: SellerLeadItem[];
+  activity: SellerActivityItem[];
+  reports: {
+    totalViews30d: number;
+    totalInquiries: number;
+    totalShowings: number;
+  };
 }
 
 /** Данные портала продавца: его объекты и обращения по ним. */
@@ -235,14 +249,30 @@ export async function getSellerPortalData(
   const propertyIds = properties.map((property) => property.id);
 
   let inquiries: SellerLeadItem[] = [];
+  const inquiriesByProperty = new Map<string, number>();
+  const viewsByProperty = new Map<string, number>();
+  let totalShowings = 0;
   if (propertyIds.length > 0) {
-    const { data: leadRows } = await admin
-      .from("leads")
-      .select("*")
-      .eq("organization_id", account.organization_id)
-      .in("property_id", propertyIds)
-      .order("created_at", { ascending: false });
-    inquiries = (leadRows ?? []).map((lead) => ({
+    const since = new Date(
+      Date.now() - 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const [leadsResult, viewsResult] = await Promise.all([
+      admin
+        .from("leads")
+        .select("*")
+        .eq("organization_id", account.organization_id)
+        .in("property_id", propertyIds)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("analytics_events")
+        .select("entity_id")
+        .eq("organization_id", account.organization_id)
+        .eq("event_type", "property_view")
+        .in("entity_id", propertyIds)
+        .gte("occurred_at", since),
+    ]);
+    const leadRows = leadsResult.data ?? [];
+    inquiries = leadRows.map((lead) => ({
       id: lead.id,
       type: lead.type,
       status: lead.status,
@@ -252,6 +282,34 @@ export async function getSellerPortalData(
         "Property",
       createdAt: lead.created_at,
     }));
+    for (const lead of leadRows) {
+      if (lead.property_id) {
+        inquiriesByProperty.set(
+          lead.property_id,
+          (inquiriesByProperty.get(lead.property_id) ?? 0) + 1,
+        );
+      }
+      if (lead.source === "showing_request") totalShowings += 1;
+    }
+    for (const row of viewsResult.data ?? []) {
+      if (row.entity_id) {
+        viewsByProperty.set(
+          row.entity_id,
+          (viewsByProperty.get(row.entity_id) ?? 0) + 1,
+        );
+      }
+    }
+  }
+
+  const activity: SellerActivityItem[] = properties.map((property) => ({
+    propertyId: property.id,
+    title: property.title,
+    views30d: viewsByProperty.get(property.id) ?? 0,
+    inquiries: inquiriesByProperty.get(property.id) ?? 0,
+  }));
+  let totalViews30d = 0;
+  for (const count of viewsByProperty.values()) {
+    totalViews30d += count;
   }
 
   return {
@@ -263,6 +321,12 @@ export async function getSellerPortalData(
       purpose: property.purpose,
     })),
     inquiries,
+    activity,
+    reports: {
+      totalViews30d,
+      totalInquiries: inquiries.length,
+      totalShowings,
+    },
   };
 }
 
