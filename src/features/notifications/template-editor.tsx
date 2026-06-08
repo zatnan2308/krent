@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   resetEmailTemplate,
   saveEmailTemplate,
+  sendTestNotification,
 } from "@/features/notifications/actions";
 import { TEMPLATE_VARIABLES } from "@/features/notifications/constants";
 import type { EffectiveEmailTemplate } from "@/features/notifications/queries";
@@ -44,6 +45,14 @@ export function TemplateEditor({
     } else {
       setMessage(result.error);
     }
+  }
+
+  async function handleTest() {
+    setPending(true);
+    setMessage(null);
+    const result = await sendTestNotification(template.key);
+    setPending(false);
+    setMessage(result.ok ? "Test email sent to your address." : result.error);
   }
 
   async function handleReset() {
@@ -116,6 +125,14 @@ export function TemplateEditor({
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" disabled={pending} onClick={handleSave}>
           Save template
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={handleTest}
+        >
+          Send test
         </Button>
         {customised ? (
           <Button

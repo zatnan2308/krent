@@ -7,6 +7,10 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
+import { TEMPLATE_VARIABLES } from "./constants";
+import { resolveUserRecipient } from "./dispatcher";
+import { sendEmail } from "./email";
+import { htmlToText, renderHtml, renderText, wrapEmailHtml } from "./render";
 import {
   notificationPreferenceSchema,
   saveEmailTemplateSchema,
@@ -120,6 +124,80 @@ export async function resetEmailTemplate(key: string): Promise<ActionResult> {
 
   revalidatePath("/dashboard/email");
   revalidatePath(`/dashboard/email/${key}`);
+  return { ok: true };
+}
+
+/**
+ * Отправляет тестовое письмо текущему пользователю на основе шаблона —
+ * чтобы проверить вёрстку транзакционного письма. Переменные шаблона
+ * подставляются образцами (company_name/first_name — реальные).
+ */
+export async function sendTestNotification(key: string): Promise<ActionResult> {
+  if (!z.string().min(1).max(100).safeParse(key).success) {
+    return { ok: false, error: "Invalid template." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "email.manage")) {
+    return { ok: false, error: "You do not have permission to manage email." };
+  }
+  const recipient = await resolveUserRecipient(context.user.id);
+  if (!recipient) {
+    return { ok: false, error: "Your account has no email for the test." };
+  }
+
+  const admin = createAdminClient();
+  const { data: orgTpl } = await admin
+    .from("email_templates")
+    .select("*")
+    .eq("organization_id", context.organization.id)
+    .eq("key", key)
+    .maybeSingle();
+  let tpl = orgTpl;
+  if (!tpl) {
+    const { data: sysTpl } = await admin
+      .from("email_templates")
+      .select("*")
+      .is("organization_id", null)
+      .eq("key", key)
+      .maybeSingle();
+    tpl = sysTpl;
+  }
+  if (!tpl) {
+    return { ok: false, error: "Unknown email template." };
+  }
+
+  const companyName = context.organization.name;
+  const variables: Record<string, string> = {};
+  for (const variable of TEMPLATE_VARIABLES) {
+    variables[variable] = `[${variable}]`;
+  }
+  variables.company_name = companyName;
+  variables.first_name =
+    (recipient.name ?? "").trim().split(/\s+/)[0] || "there";
+
+  const subject = `[TEST] ${renderText(tpl.subject, variables)}`;
+  const content = renderHtml(tpl.body_html, variables);
+  const html = wrapEmailHtml(content, companyName);
+  const text = tpl.body_text
+    ? renderText(tpl.body_text, variables)
+    : htmlToText(content);
+
+  const result = await sendEmail({
+    organizationId: context.organization.id,
+    notificationEventId: null,
+    templateKey: key,
+    toEmail: recipient.email,
+    fromName: companyName || "Notifications",
+    subject,
+    html,
+    text,
+  });
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? "Could not send the test email." };
+  }
   return { ok: true };
 }
 
