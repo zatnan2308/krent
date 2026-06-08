@@ -344,6 +344,13 @@ export const ru: DeepPartial<Dictionary> = {
     createProperty: "Создать объект",
   },
   dashCrm: {
+    checkAmount: "Введите корректную сумму.",
+    newDealBtn: "Новая сделка",
+    newDealTitle: "Создать сделку",
+    createDeal: "Создать сделку",
+    dealContact: "Контакт",
+    chooseContactPh: "Выберите контакт",
+    dealNoContacts: "Сначала добавьте контакт, чтобы создать сделку.",
     newContactBtn: "Новый контакт",
     newContactTitle: "Добавить контакт",
     contactEmailPh: "Email (необязательно)",

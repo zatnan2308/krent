@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 
 import { CrmNav } from "@/features/crm/crm-nav";
 import { DealBoard } from "@/features/crm/deal-board";
-import { getDealStages, listDeals } from "@/features/crm/queries";
+import { DealCreateForm } from "@/features/crm/deal-create-form";
+import {
+  getDealStages,
+  listContactOptions,
+  listDeals,
+} from "@/features/crm/queries";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { getServerDictionary } from "@/lib/i18n/runtime";
@@ -23,11 +28,12 @@ export default async function CrmDealsPage() {
     redirect(ROUTES.dashboard.root);
   }
 
-  const [stages, deals] = await Promise.all([
+  const canManage = hasPermission(context, "crm.manage");
+  const [stages, deals, contacts] = await Promise.all([
     getDealStages(context.organization.id),
     listDeals(context.organization.id),
+    canManage ? listContactOptions(context.organization.id) : Promise.resolve([]),
   ]);
-  const canManage = hasPermission(context, "crm.manage");
   const dict = await getServerDictionary();
   const t = dict.dashCrm;
 
@@ -38,6 +44,9 @@ export default async function CrmDealsPage() {
         description={t.dealsDesc}
       />
       <CrmNav />
+      {canManage ? (
+        <DealCreateForm stages={stages} contacts={contacts} />
+      ) : null}
       <DealBoard stages={stages} deals={deals} canManage={canManage} />
     </div>
   );

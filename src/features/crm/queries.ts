@@ -473,6 +473,31 @@ export async function getContact(
   return { contact, leads, deals };
 }
 
+/** Лёгкий вариант контакта для выпадашек (создание сделки и т.п.). */
+export interface ContactOption {
+  id: string;
+  name: string;
+  email: string | null;
+}
+
+/** Список контактов организации для выбора в формах. */
+export async function listContactOptions(
+  organizationId: string,
+): Promise<ContactOption[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("contacts")
+    .select("id, full_name, email")
+    .eq("organization_id", organizationId)
+    .order("full_name", { ascending: true })
+    .limit(1000);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.full_name,
+    email: row.email,
+  }));
+}
+
 // ---- Сделки ---------------------------------------------------
 
 /** Стадии воронки: системные + кастомные организации. */

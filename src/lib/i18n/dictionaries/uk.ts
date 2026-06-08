@@ -344,6 +344,13 @@ export const uk: DeepPartial<Dictionary> = {
     createProperty: "Створити об'єкт",
   },
   dashCrm: {
+    checkAmount: "Введіть коректну суму.",
+    newDealBtn: "Нова угода",
+    newDealTitle: "Створити угоду",
+    createDeal: "Створити угоду",
+    dealContact: "Контакт",
+    chooseContactPh: "Виберіть контакт",
+    dealNoContacts: "Спершу додайте контакт, щоб створити угоду.",
     newContactBtn: "Новий контакт",
     newContactTitle: "Додати контакт",
     contactEmailPh: "Email (необов’язково)",

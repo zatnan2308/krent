@@ -347,6 +347,13 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    checkAmount: "Enter a valid amount.",
+    newDealBtn: "New deal",
+    newDealTitle: "Create a deal",
+    createDeal: "Create deal",
+    dealContact: "Contact",
+    chooseContactPh: "Select a contact",
+    dealNoContacts: "Add a contact first to create a deal.",
     newContactBtn: "New contact",
     newContactTitle: "Add a contact",
     contactEmailPh: "Email (optional)",

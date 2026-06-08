@@ -394,6 +394,105 @@ export async function moveDeal(
   return { ok: true };
 }
 
+const createDealSchema = z.object({
+  contactId: z.guid(),
+  title: z.string().trim().min(1).max(200),
+  amount: z.coerce.number().min(0).nullable(),
+  stageId: z.guid().nullable(),
+});
+export type CreateDealInput = z.infer<typeof createDealSchema>;
+
+/** Результат создания сделки — с id для перехода на карточку. */
+export type CreateDealResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+/** Создаёт сделку вручную по контакту (стадия по умолчанию — системная «new»). */
+export async function createDeal(
+  input: CreateDealInput,
+): Promise<CreateDealResult> {
+  const parsed = createDealSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the deal form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to manage deals." };
+  }
+  const organizationId = context.organization.id;
+  const d = parsed.data;
+  const supabase = createClient();
+
+  // Контакт должен принадлежать организации.
+  const { data: contact } = await supabase
+    .from("contacts")
+    .select("id")
+    .eq("id", d.contactId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (!contact) {
+    return { ok: false, error: "Contact not found." };
+  }
+
+  // Стадия: выбранная (проверяем доступность) либо системная «new».
+  let stageId = d.stageId;
+  let status: "open" | "won" | "lost" = "open";
+  if (stageId) {
+    const { data: stage } = await supabase
+      .from("deal_stages")
+      .select("is_won, is_lost")
+      .eq("id", stageId)
+      .or(`organization_id.is.null,organization_id.eq.${organizationId}`)
+      .maybeSingle();
+    if (!stage) {
+      return { ok: false, error: "Stage not found." };
+    }
+    status = stage.is_won ? "won" : stage.is_lost ? "lost" : "open";
+  } else {
+    const { data: defaultStage } = await supabase
+      .from("deal_stages")
+      .select("id")
+      .is("organization_id", null)
+      .eq("key", "new")
+      .maybeSingle();
+    stageId = defaultStage?.id ?? null;
+  }
+
+  const { data: deal, error } = await supabase
+    .from("deals")
+    .insert({
+      organization_id: organizationId,
+      assigned_agent_id: context.user.id,
+      contact_id: d.contactId,
+      lead_id: null,
+      property_id: null,
+      stage_id: stageId,
+      title: d.title,
+      amount: d.amount,
+      currency: context.organization.default_currency,
+      status,
+    })
+    .select("id")
+    .single();
+  if (error || !deal) {
+    return { ok: false, error: "Could not create the deal." };
+  }
+
+  await logAudit({
+    organizationId,
+    userId: context.user.id,
+    action: "deal.created",
+    entityType: "deal",
+    entityId: deal.id,
+    metadata: { title: d.title, manual: true },
+  });
+  revalidatePath(CRM_DEALS);
+  return { ok: true, id: deal.id };
+}
+
 const updateDealSchema = z.object({
   dealId: z.guid(),
   title: z.string().trim().min(1).max(200),
