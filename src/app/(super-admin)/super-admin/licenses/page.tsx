@@ -14,6 +14,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { createAdminClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 
 export const metadata: Metadata = {
   title: "Licenses · Super Admin",
@@ -32,17 +33,19 @@ export default async function LicensesPage() {
       .order("issued_at", { ascending: false }),
     listOrganizationOverviews(),
   ]);
+  const dict = await getServerDictionary();
+  const t = dict.superAdmin;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Licenses"
-        description="Issue and manage installation licenses. A license identifies which client received a copy of the platform — it does not gate individual features. To enable or disable modules, use organization → modules."
+        title={dict.adminNav.licenses}
+        description={t.licensesDesc}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Issue a new license</CardTitle>
+          <CardTitle className="text-base">{t.issueNewLicense}</CardTitle>
         </CardHeader>
         <CardContent>
           <LicenseForm
@@ -56,7 +59,7 @@ export default async function LicensesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">All licenses</CardTitle>
+          <CardTitle className="text-base">{t.allLicenses}</CardTitle>
         </CardHeader>
         <CardContent>
           {licenses && licenses.length > 0 ? (
@@ -72,7 +75,7 @@ export default async function LicensesPage() {
                         </span>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Organization:{" "}
+                        {t.lblOrganization}:{" "}
                         <Link
                           href={ROUTES.superAdmin.organizationDetail(
                             row.organization_id,
@@ -82,20 +85,20 @@ export default async function LicensesPage() {
                           {(row.organizations as { name: string | null } | null)
                             ?.name ?? row.organization_id}
                         </Link>{" "}
-                        · Domain: {row.domain ?? "—"} · Version:{" "}
+                        · {t.lblDomain}: {row.domain ?? "—"} · {t.lblVersion}:{" "}
                         {row.product_version ?? "—"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Issued{" "}
+                        {t.lblIssued}{" "}
                         {new Date(row.issued_at).toLocaleDateString()}
                         {row.support_until
-                          ? ` · Support until ${new Date(row.support_until).toLocaleDateString()}`
+                          ? ` · ${t.lblSupportUntil} ${new Date(row.support_until).toLocaleDateString()}`
                           : ""}
                         {row.updates_until
-                          ? ` · Updates until ${new Date(row.updates_until).toLocaleDateString()}`
+                          ? ` · ${t.lblUpdatesUntil} ${new Date(row.updates_until).toLocaleDateString()}`
                           : ""}
                         {row.expires_at
-                          ? ` · Expires ${new Date(row.expires_at).toLocaleDateString()}`
+                          ? ` · ${t.lblExpires} ${new Date(row.expires_at).toLocaleDateString()}`
                           : ""}
                       </p>
                       <p className="break-all font-mono text-xs text-muted-foreground">
@@ -125,7 +128,7 @@ export default async function LicensesPage() {
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No licenses issued yet.
+              {t.noLicensesYet}
             </p>
           )}
         </CardContent>

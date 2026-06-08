@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveUserNames } from "@/server/user-directory";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +53,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const memberNames = await resolveUserNames(
     detail.members.map((row) => row.userId),
   );
+  const dict = await getServerDictionary();
+  const t = dict.superAdmin;
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumbs={[
-          { label: "Organizations", href: ROUTES.superAdmin.organizations },
+          { label: t.organizations, href: ROUTES.superAdmin.organizations },
           { label: detail.organization.name },
         ]}
         title={detail.organization.name}
@@ -80,9 +83,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         }
       />
       <p className="-mt-3 text-sm text-muted-foreground">
-        Slug: <code>{detail.organization.slug}</code> · Type:{" "}
-        <span className="capitalize">{detail.organization.type}</span> ·
-        Timezone: {detail.organization.timezone} · Created{" "}
+        {t.colSlug}: <code>{detail.organization.slug}</code> · {t.colType}:{" "}
+        <span className="capitalize">{detail.organization.type}</span> ·{" "}
+        {t.lblTimezone}: {detail.organization.timezone} · {t.colCreated}{" "}
         {new Date(detail.organization.created_at).toLocaleDateString()}
       </p>
 
@@ -90,11 +93,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 3. Licenses */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Licenses</CardTitle>
+            <CardTitle className="text-base">{dict.adminNav.licenses}</CardTitle>
           </CardHeader>
           <CardContent>
             {detail.licenses.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No license issued.</p>
+              <p className="text-sm text-muted-foreground">{t.noLicenseIssued}</p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {detail.licenses.map((row) => (
@@ -106,18 +109,18 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                       </span>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Status: {row.status} · Issued{" "}
+                      {t.colStatus}: {row.status} · {t.lblIssued}{" "}
                       {new Date(row.issued_at).toLocaleDateString()}
                       {row.support_until
-                        ? ` · Support until ${new Date(row.support_until).toLocaleDateString()}`
+                        ? ` · ${t.lblSupportUntil} ${new Date(row.support_until).toLocaleDateString()}`
                         : ""}
                       {row.updates_until
-                        ? ` · Updates until ${new Date(row.updates_until).toLocaleDateString()}`
+                        ? ` · ${t.lblUpdatesUntil} ${new Date(row.updates_until).toLocaleDateString()}`
                         : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Domain: {row.domain ?? "—"} · Email:{" "}
-                      {row.client_email ?? "—"} · Version:{" "}
+                      {t.lblDomain}: {row.domain ?? "—"} · {t.lblEmail}:{" "}
+                      {row.client_email ?? "—"} · {t.lblVersion}:{" "}
                       {row.product_version ?? "—"}
                     </p>
                     <p className="break-all font-mono text-xs text-muted-foreground">
@@ -136,12 +139,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 4. Enabled modules */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Enabled modules</CardTitle>
+            <CardTitle className="text-base">{t.secEnabledModules}</CardTitle>
           </CardHeader>
           <CardContent>
             {detail.enabledModules.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No modules registered.
+                {t.noModulesRegistered}
               </p>
             ) : (
               <ul className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">
@@ -154,7 +157,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                       <code className="text-xs">{row.key}</code> · {row.name}
                     </span>
                     <Badge variant={row.enabled ? "default" : "secondary"}>
-                      {row.enabled ? "On" : "Off"}
+                      {row.enabled ? t.onWord : t.offWord}
                     </Badge>
                   </li>
                 ))}
@@ -166,11 +169,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 5. Domains */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Domains</CardTitle>
+            <CardTitle className="text-base">{t.secDomains}</CardTitle>
           </CardHeader>
           <CardContent>
             {detail.domains.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No domains.</p>
+              <p className="text-sm text-muted-foreground">{t.noDomains}</p>
             ) : (
               <ul className="space-y-1 text-sm">
                 {detail.domains.map((row) => (
@@ -192,11 +195,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 6. Users / members */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Members</CardTitle>
+            <CardTitle className="text-base">{t.members}</CardTitle>
           </CardHeader>
           <CardContent>
             {detail.members.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No members.</p>
+              <p className="text-sm text-muted-foreground">{t.noMembers}</p>
             ) : (
               <ul className="space-y-1 text-sm">
                 {detail.members.slice(0, 25).map((row) => (
@@ -218,7 +221,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 7. Storage usage */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Storage usage</CardTitle>
+            <CardTitle className="text-base">{t.secStorageUsage}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1 text-sm">
@@ -229,13 +232,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                 >
                   <code className="text-xs">{row.bucket}</code>
                   <span className="text-xs text-muted-foreground">
-                    {row.files} files · {bytesFormat(row.bytes)}
+                    {row.files} {t.filesWord} · {bytesFormat(row.bytes)}
                   </span>
                 </li>
               ))}
             </ul>
             <p className="mt-2 text-xs text-muted-foreground">
-              Approximate, based on first 1000 entries per bucket.
+              {t.storageApprox}
             </p>
           </CardContent>
         </Card>
@@ -243,12 +246,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 8. Payment providers status */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Payment providers</CardTitle>
+            <CardTitle className="text-base">{t.secPaymentProviders}</CardTitle>
           </CardHeader>
           <CardContent>
             {detail.paymentProviders.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No payment providers configured.
+                {t.noPaymentProviders}
               </p>
             ) : (
               <ul className="space-y-1 text-sm">
@@ -261,9 +264,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                       {row.provider} · {row.mode}
                     </span>
                     <span className="flex items-center gap-2">
-                      {row.isDefault ? <Badge variant="outline">default</Badge> : null}
+                      {row.isDefault ? <Badge variant="outline">{t.providerDefault}</Badge> : null}
                       <Badge variant={row.isEnabled ? "default" : "secondary"}>
-                        {row.isEnabled ? "Enabled" : "Disabled"}
+                        {row.isEnabled ? t.enabledWord : t.disabledWord}
                       </Badge>
                     </span>
                   </li>
@@ -276,12 +279,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 10. Integration status */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Integrations</CardTitle>
+            <CardTitle className="text-base">{dict.adminNav.integrations}</CardTitle>
           </CardHeader>
           <CardContent>
             {detail.integrations.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No integrations connected.
+                {t.noIntegrations}
               </p>
             ) : (
               <ul className="space-y-1 text-sm">
@@ -307,19 +310,19 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* 13. Health summary */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Health</CardTitle>
+            <CardTitle className="text-base">{t.secHealth}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             <p>
-              Webhook events pending:{" "}
+              {t.webhookEventsPending}:{" "}
               <strong>{detail.health.webhookEventsPending}</strong>
             </p>
             <p>
-              Notification events pending:{" "}
+              {t.notificationEventsPending}:{" "}
               <strong>{detail.health.notificationEventsPending}</strong>
             </p>
             <p>
-              Failed webhook deliveries (24h):{" "}
+              {t.failedWebhook24h}:{" "}
               <strong>{detail.health.failedDeliveries24h}</strong>
             </p>
           </CardContent>
@@ -329,11 +332,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       {/* 9. Email logs */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Email logs (recent 25)</CardTitle>
+          <CardTitle className="text-base">{t.secEmailLogs}</CardTitle>
         </CardHeader>
         <CardContent>
           {detail.emailLogs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No email events yet.</p>
+            <p className="text-sm text-muted-foreground">{t.noEmailEvents}</p>
           ) : (
             <ul className="space-y-1 text-xs">
               {detail.emailLogs.map((row) => (
@@ -357,23 +360,23 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       {/* 11. API usage */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">API usage (14 days)</CardTitle>
+          <CardTitle className="text-base">{t.secApiUsage}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <p>
-            Requests: <strong>{detail.apiUsage.totals.requests}</strong> · Errors:{" "}
+            {t.rowRequests}: <strong>{detail.apiUsage.totals.requests}</strong> · {t.rowErrors}:{" "}
             <strong>{detail.apiUsage.totals.errors}</strong>
           </p>
           {detail.apiUsage.series.length > 0 ? (
             <ul className="text-xs text-muted-foreground">
               {detail.apiUsage.series.slice(-7).map((row) => (
                 <li key={row.date}>
-                  {row.date}: {row.total} req · {row.errors} errors
+                  {row.date}: {row.total} {t.reqAbbrev} · {row.errors} {t.errorsWord}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-muted-foreground">No traffic yet.</p>
+            <p className="text-xs text-muted-foreground">{t.noTraffic}</p>
           )}
         </CardContent>
       </Card>
@@ -381,11 +384,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       {/* 12. Webhook logs */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Webhook delivery logs (recent 25)</CardTitle>
+          <CardTitle className="text-base">{t.secWebhookLogs}</CardTitle>
         </CardHeader>
         <CardContent>
           {detail.webhookLogs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No deliveries yet.</p>
+            <p className="text-sm text-muted-foreground">{t.noDeliveries}</p>
           ) : (
             <ul className="space-y-1 text-xs">
               {detail.webhookLogs.map((row) => (
@@ -394,9 +397,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   className="flex flex-wrap items-center justify-between gap-2 border-b pb-1"
                 >
                   <span>
-                    Attempt {row.attempt} ·{" "}
-                    <span className="text-muted-foreground">{row.status}</span> ·
-                    HTTP {row.response_code ?? "—"}
+                    {t.attemptWord} {row.attempt} ·{" "}
+                    <span className="text-muted-foreground">{row.status}</span> ·{" "}
+                    {t.httpWord} {row.response_code ?? "—"}
                   </span>
                   <span className="text-muted-foreground">
                     {new Date(row.attempted_at).toLocaleString()}
