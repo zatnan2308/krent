@@ -3,6 +3,11 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
+import {
+  deleteContentTranslations,
+  resolveOrgLocale,
+  saveContentTranslation,
+} from "@/lib/i18n/content-translations";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -27,6 +32,7 @@ export type AboutPageInput = z.infer<typeof aboutPageSchema>;
 
 export async function updateAboutPage(
   input: AboutPageInput,
+  locale?: string,
 ): Promise<ActionResult> {
   const parsed = aboutPageSchema.safeParse(input);
   if (!parsed.success) {
@@ -36,20 +42,34 @@ export async function updateAboutPage(
   if (!context?.organization) {
     return { ok: false, error: "You cannot edit this page." };
   }
-  const admin = createAdminClient();
-  const { error } = await admin.from("about_page").upsert(
-    {
-      organization_id: context.organization.id,
+  const org = context.organization;
+  const target = resolveOrgLocale(org, locale);
+
+  if (target === org.default_language) {
+    const admin = createAdminClient();
+    const { error } = await admin.from("about_page").upsert(
+      {
+        organization_id: org.id,
+        hero_title: parsed.data.heroTitle,
+        story_heading: parsed.data.storyHeading,
+        story_body: parsed.data.storyBody,
+        quote_1: parsed.data.quote1,
+        quote_2: parsed.data.quote2,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "organization_id" },
+    );
+    if (error) return { ok: false, error: "Could not save the page." };
+  } else {
+    const ok = await saveContentTranslation(org.id, "about_page", "", target, {
       hero_title: parsed.data.heroTitle,
       story_heading: parsed.data.storyHeading,
       story_body: parsed.data.storyBody,
       quote_1: parsed.data.quote1,
       quote_2: parsed.data.quote2,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "organization_id" },
-  );
-  if (error) return { ok: false, error: "Could not save the page." };
+    });
+    if (!ok) return { ok: false, error: "Could not save the page." };
+  }
   revalidatePath("/dashboard/about");
   revalidateTag("about-content");
   return { ok: true };
@@ -102,6 +122,12 @@ export async function deleteMilestone(id: string): Promise<void> {
     .delete()
     .eq("id", id)
     .eq("organization_id", context.organization.id);
+  // Чистим переводы удалённой вехи во всех локалях.
+  await deleteContentTranslations(
+    context.organization.id,
+    "about_milestone",
+    id,
+  );
   revalidatePath("/dashboard/about");
   revalidateTag("about-content");
 }
@@ -109,26 +135,46 @@ export async function deleteMilestone(id: string): Promise<void> {
 export async function updateMilestone(
   id: string,
   input: MilestoneInput,
+  locale?: string,
 ): Promise<ActionResult> {
-  const parsed = milestoneSchema.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, error: "Year and title are required." };
-  }
   const context = await guardAbout();
   if (!context?.organization) {
     return { ok: false, error: "You cannot edit this page." };
   }
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("about_milestones")
-    .update({
-      year: parsed.data.year,
-      title: parsed.data.title,
-      body: parsed.data.body,
-    })
-    .eq("id", id)
-    .eq("organization_id", context.organization.id);
-  if (error) return { ok: false, error: "Could not update the milestone." };
+  const org = context.organization;
+  const target = resolveOrgLocale(org, locale);
+
+  if (target === org.default_language) {
+    const parsed = milestoneSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: "Year and title are required." };
+    }
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("about_milestones")
+      .update({
+        year: parsed.data.year,
+        title: parsed.data.title,
+        body: parsed.data.body,
+      })
+      .eq("id", id)
+      .eq("organization_id", org.id);
+    if (error) return { ok: false, error: "Could not update the milestone." };
+  } else {
+    // Перевод вехи: поля необязательны (пустое → fallback на базу).
+    const ok = await saveContentTranslation(
+      org.id,
+      "about_milestone",
+      id,
+      target,
+      {
+        year: input.year.trim() || null,
+        title: input.title.trim() || null,
+        body: input.body.trim() || null,
+      },
+    );
+    if (!ok) return { ok: false, error: "Could not update the milestone." };
+  }
   revalidatePath("/dashboard/about");
   revalidateTag("about-content");
   return { ok: true };

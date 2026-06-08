@@ -50,7 +50,12 @@ export default async function AgentsPage({
   }
   const [agents, intro] = await Promise.all([
     listPublicAgents(site.organization.id),
-    getPageIntro(site.organization.id, "agents"),
+    getPageIntro(
+      site.organization.id,
+      "agents",
+      locale,
+      site.organization.default_language,
+    ),
   ]);
 
   const eyebrow = intro?.eyebrow ?? "The team";

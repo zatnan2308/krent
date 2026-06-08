@@ -25,7 +25,13 @@ interface IntroEntry {
   value: IntroValue;
 }
 
-export function PageIntrosEditor({ intros }: { intros: IntroEntry[] }) {
+export function PageIntrosEditor({
+  intros,
+  locale,
+}: {
+  intros: IntroEntry[];
+  locale: string;
+}) {
   return (
     <div className="space-y-4">
       <div>
@@ -36,13 +42,13 @@ export function PageIntrosEditor({ intros }: { intros: IntroEntry[] }) {
         </p>
       </div>
       {intros.map((entry) => (
-        <IntroForm key={entry.pageKey} entry={entry} />
+        <IntroForm key={entry.pageKey} entry={entry} locale={locale} />
       ))}
     </div>
   );
 }
 
-function IntroForm({ entry }: { entry: IntroEntry }) {
+function IntroForm({ entry, locale }: { entry: IntroEntry; locale: string }) {
   const router = useRouter();
   const [form, setForm] = React.useState({
     eyebrow: entry.value.eyebrow ?? "",
@@ -63,12 +69,15 @@ function IntroForm({ entry }: { entry: IntroEntry }) {
           onSubmit={async (event) => {
             event.preventDefault();
             setPending(true);
-            const result = await updatePageIntro({
-              pageKey: entry.pageKey,
-              eyebrow: form.eyebrow || null,
-              heading: form.heading || null,
-              subheading: form.subheading || null,
-            });
+            const result = await updatePageIntro(
+              {
+                pageKey: entry.pageKey,
+                eyebrow: form.eyebrow || null,
+                heading: form.heading || null,
+                subheading: form.subheading || null,
+              },
+              locale,
+            );
             setPending(false);
             setMsg(result.ok ? "Saved." : result.error);
             if (result.ok) router.refresh();

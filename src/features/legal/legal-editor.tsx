@@ -26,7 +26,13 @@ interface DocEntry {
   value: DocValue;
 }
 
-export function LegalEditor({ docs }: { docs: DocEntry[] }) {
+export function LegalEditor({
+  docs,
+  locale,
+}: {
+  docs: DocEntry[];
+  locale: string;
+}) {
   return (
     <div className="space-y-4">
       <div>
@@ -38,13 +44,13 @@ export function LegalEditor({ docs }: { docs: DocEntry[] }) {
         </p>
       </div>
       {docs.map((doc) => (
-        <LegalForm key={doc.docKey} entry={doc} />
+        <LegalForm key={doc.docKey} entry={doc} locale={locale} />
       ))}
     </div>
   );
 }
 
-function LegalForm({ entry }: { entry: DocEntry }) {
+function LegalForm({ entry, locale }: { entry: DocEntry; locale: string }) {
   const router = useRouter();
   const [title, setTitle] = React.useState(entry.value.title ?? "");
   const [body, setBody] = React.useState(entry.value.body ?? "");
@@ -62,11 +68,14 @@ function LegalForm({ entry }: { entry: DocEntry }) {
           onSubmit={async (event) => {
             event.preventDefault();
             setPending(true);
-            const result = await updateLegalDocument({
-              docKey: entry.docKey,
-              title: title || null,
-              body: body || null,
-            });
+            const result = await updateLegalDocument(
+              {
+                docKey: entry.docKey,
+                title: title || null,
+                body: body || null,
+              },
+              locale,
+            );
             setPending(false);
             setMsg(result.ok ? "Saved." : result.error);
             if (result.ok) router.refresh();

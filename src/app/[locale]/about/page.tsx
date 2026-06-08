@@ -116,7 +116,11 @@ export default async function AboutPage({
 
   // Редактируемый контент /about (тексты + вехи) с фолбэком на дефолты.
   const aboutContent = site
-    ? await getAboutContent(site.organization.id)
+    ? await getAboutContent(
+        site.organization.id,
+        locale,
+        site.organization.default_language,
+      )
     : { page: null, milestones: [] };
   const timeline =
     aboutContent.milestones.length > 0

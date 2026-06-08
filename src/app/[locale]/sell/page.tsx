@@ -47,7 +47,12 @@ export default async function SellPage({
   if (!site) {
     notFound();
   }
-  const intro = await getPageIntro(site.organization.id, "sell");
+  const intro = await getPageIntro(
+    site.organization.id,
+    "sell",
+    locale,
+    site.organization.default_language,
+  );
   const eyebrow = intro?.eyebrow ?? DEFAULTS.eyebrow;
   const heading = intro?.heading ?? DEFAULTS.heading;
   const subheading = intro?.subheading ?? DEFAULTS.subheading;

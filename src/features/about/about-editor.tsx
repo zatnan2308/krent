@@ -24,16 +24,39 @@ import { Input } from "@/components/ui/input";
 import { useI18n } from "@/lib/i18n/provider";
 import type { Tables } from "@/types/database";
 
+type MilestoneTranslation = {
+  year?: string | null;
+  title?: string | null;
+  body?: string | null;
+};
+
 interface Props {
   page: AboutPageInput;
   milestones: Tables<"about_milestones">[];
+  /** Локаль редактирования (язык по умолчанию или включённый перевод). */
+  locale: string;
+  /** true, когда редактируется язык по умолчанию (полный CRUD вех). */
+  isDefault: boolean;
+  /** Сырые переводы вех по id (для режима перевода). */
+  milestoneTranslations?: Record<string, MilestoneTranslation>;
 }
 
-export function AboutEditor({ page, milestones }: Props) {
+export function AboutEditor({
+  page,
+  milestones,
+  locale,
+  isDefault,
+  milestoneTranslations,
+}: Props) {
   return (
     <div className="space-y-8">
-      <PageTextSection initial={page} />
-      <MilestonesSection milestones={milestones} />
+      <PageTextSection initial={page} locale={locale} />
+      <MilestonesSection
+        milestones={milestones}
+        locale={locale}
+        isDefault={isDefault}
+        translations={milestoneTranslations ?? {}}
+      />
     </div>
   );
 }
@@ -56,7 +79,13 @@ function Labelled({
   );
 }
 
-function PageTextSection({ initial }: { initial: AboutPageInput }) {
+function PageTextSection({
+  initial,
+  locale,
+}: {
+  initial: AboutPageInput;
+  locale: string;
+}) {
   const router = useRouter();
   const { dict } = useI18n();
   const t = dict.aboutEditor;
@@ -78,7 +107,7 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
           onSubmit={async (event) => {
             event.preventDefault();
             setPending(true);
-            const result = await updateAboutPage(form);
+            const result = await updateAboutPage(form, locale);
             setPending(false);
             setMsg(result.ok ? t.saved : result.error);
             if (result.ok) router.refresh();
@@ -145,6 +174,9 @@ function PageTextSection({ initial }: { initial: AboutPageInput }) {
 
 function MilestoneRow({
   milestone,
+  translation,
+  locale,
+  isDefault,
   index,
   total,
   pending,
@@ -152,6 +184,9 @@ function MilestoneRow({
   onDelete,
 }: {
   milestone: Tables<"about_milestones">;
+  translation?: MilestoneTranslation;
+  locale: string;
+  isDefault: boolean;
   index: number;
   total: number;
   pending: boolean;
@@ -162,14 +197,26 @@ function MilestoneRow({
   const { dict } = useI18n();
   const t = dict.aboutEditor;
   const [editing, setEditing] = React.useState(false);
-  const [year, setYear] = React.useState(milestone.year);
-  const [title, setTitle] = React.useState(milestone.title);
-  const [body, setBody] = React.useState(milestone.body ?? "");
+  // В режиме перевода поля стартуют с сырого перевода (пусто, если нет),
+  // база показывается плейсхолдером. В дефолте — базовые значения.
+  const [year, setYear] = React.useState(
+    isDefault ? milestone.year : translation?.year ?? "",
+  );
+  const [title, setTitle] = React.useState(
+    isDefault ? milestone.title : translation?.title ?? "",
+  );
+  const [body, setBody] = React.useState(
+    isDefault ? milestone.body ?? "" : translation?.body ?? "",
+  );
   const [busy, setBusy] = React.useState(false);
 
   async function save() {
     setBusy(true);
-    const result = await updateMilestone(milestone.id, { year, title, body });
+    const result = await updateMilestone(
+      milestone.id,
+      { year, title, body },
+      locale,
+    );
     setBusy(false);
     if (result.ok) {
       setEditing(false);
@@ -184,18 +231,18 @@ function MilestoneRow({
           <Input
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            placeholder={t.year}
+            placeholder={isDefault ? t.year : milestone.year}
           />
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={t.title}
+            placeholder={isDefault ? t.title : milestone.title}
           />
         </div>
         <Input
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder={t.body}
+          placeholder={isDefault ? t.body : milestone.body ?? ""}
         />
         <div className="flex gap-1">
           <Button type="button" size="sm" onClick={save} disabled={busy}>
@@ -226,28 +273,32 @@ function MilestoneRow({
         </p>
       </div>
       <div className="flex shrink-0 gap-0.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={pending || index === 0}
-          aria-label={t.moveUp}
-          onClick={() => onMove(milestone.id, "up")}
-        >
-          <ChevronUp className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={pending || index === total - 1}
-          aria-label={t.moveDown}
-          onClick={() => onMove(milestone.id, "down")}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </Button>
+        {isDefault ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={pending || index === 0}
+              aria-label={t.moveUp}
+              onClick={() => onMove(milestone.id, "up")}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={pending || index === total - 1}
+              aria-label={t.moveDown}
+              onClick={() => onMove(milestone.id, "down")}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </>
+        ) : null}
         <Button
           type="button"
           variant="ghost"
@@ -258,17 +309,19 @@ function MilestoneRow({
         >
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive"
-          onClick={() => onDelete(milestone.id)}
-          disabled={pending}
-          aria-label={t.removeMilestone}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {isDefault ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+            onClick={() => onDelete(milestone.id)}
+            disabled={pending}
+            aria-label={t.removeMilestone}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null}
       </div>
     </li>
   );
@@ -276,8 +329,14 @@ function MilestoneRow({
 
 function MilestonesSection({
   milestones,
+  locale,
+  isDefault,
+  translations,
 }: {
   milestones: Tables<"about_milestones">[];
+  locale: string;
+  isDefault: boolean;
+  translations: Record<string, MilestoneTranslation>;
 }) {
   const router = useRouter();
   const { dict } = useI18n();
@@ -337,6 +396,9 @@ function MilestonesSection({
                 <MilestoneRow
                   key={m.id}
                   milestone={m}
+                  translation={translations[m.id]}
+                  locale={locale}
+                  isDefault={isDefault}
                   index={index}
                   total={milestones.length}
                   pending={pending}
@@ -354,56 +416,63 @@ function MilestonesSection({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">{t.addMilestone}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
-            <div className="space-y-2">
-              <label htmlFor="ms-year" className="text-sm font-medium">
-                {t.year}
-              </label>
-              <Input
-                id="ms-year"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                placeholder="2019"
-              />
+      {isDefault ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t.addMilestone}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
+              <div className="space-y-2">
+                <label htmlFor="ms-year" className="text-sm font-medium">
+                  {t.year}
+                </label>
+                <Input
+                  id="ms-year"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  placeholder="2019"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="ms-title" className="text-sm font-medium">
+                  {t.title}
+                </label>
+                <Input
+                  id="ms-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Went independent"
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <label htmlFor="ms-title" className="text-sm font-medium">
-                {t.title}
+              <label htmlFor="ms-body" className="text-sm font-medium">
+                {t.description}
               </label>
-              <Input
-                id="ms-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Went independent"
+              <textarea
+                id="ms-body"
+                className="min-h-[70px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="ms-body" className="text-sm font-medium">
-              {t.description}
-            </label>
-            <textarea
-              id="ms-body"
-              className="min-h-[70px] w-full rounded-md border bg-background px-3 py-2 text-sm"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
-          </div>
-          {error ? (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <Button type="button" onClick={handleAdd} disabled={pending}>
-            {pending ? t.saving : t.addMilestone}
-          </Button>
-        </CardContent>
-      </Card>
+            {error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <Button type="button" onClick={handleAdd} disabled={pending}>
+              {pending ? t.saving : t.addMilestone}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          Adding, removing and reordering milestones is done in the default
+          language. Here you translate the existing milestones above.
+        </p>
+      )}
     </div>
   );
 }

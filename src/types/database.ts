@@ -90,6 +90,41 @@ export type Database = {
           },
         ]
       }
+      content_translations: {
+        Row: {
+          entity_key: string
+          entity_type: string
+          fields: Json
+          locale: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          entity_key?: string
+          entity_type: string
+          fields?: Json
+          locale: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          entity_key?: string
+          entity_type?: string
+          fields?: Json
+          locale?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_translations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_campaign_reports: {
         Row: {
           clicks: number
