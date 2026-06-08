@@ -514,4 +514,38 @@ export const fr: DeepPartial<Dictionary> = {
   dashNavigation: {
     description: "Menus d'en-tête et de pied de page de {name}.",
   },
+  dashEmail: {
+    title: "E-mails et notifications",
+    description:
+      "Modèles d'e-mails transactionnels, paramètres de notification et journaux de livraison.",
+    templates: "Modèles d'e-mail",
+    colTemplate: "Modèle",
+    colSubject: "Objet",
+    colState: "État",
+    active: "Actif",
+    inactive: "Inactif",
+    customised: "Personnalisé",
+    notificationSettings: "Paramètres de notification",
+    recentLog: "Journal des e-mails",
+    colRecipient: "Destinataire",
+    colStatus: "Statut",
+    colSent: "Envoyé",
+    emptyTitle: "Aucun e-mail envoyé",
+    emptyDesc:
+      "Les e-mails transactionnels apparaîtront ici une fois les événements déclenchés.",
+  },
+  dashMarketing: {
+    title: "Campagnes marketing",
+    description: "Créez et envoyez des newsletters à vos segments de contacts.",
+    startCampaign: "Lancer une campagne",
+    newTemplate: "Nouveau : {name}",
+    blankCampaign: "Campagne vierge",
+    colCampaign: "Campagne",
+    colSegment: "Segment",
+    colStatus: "Statut",
+    colSent: "Envoyés",
+    colCreated: "Créée",
+    emptyTitle: "Aucune campagne",
+    emptyDesc: "Lancez une campagne depuis un modèle ci-dessus.",
+  },
 };

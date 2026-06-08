@@ -511,4 +511,38 @@ export const ru: DeepPartial<Dictionary> = {
   dashNavigation: {
     description: "Меню шапки и подвала компании {name}.",
   },
+  dashEmail: {
+    title: "Email и уведомления",
+    description:
+      "Шаблоны транзакционных писем, настройки уведомлений и логи доставки.",
+    templates: "Шаблоны писем",
+    colTemplate: "Шаблон",
+    colSubject: "Тема",
+    colState: "Состояние",
+    active: "Активен",
+    inactive: "Неактивен",
+    customised: "Изменён",
+    notificationSettings: "Настройки уведомлений",
+    recentLog: "Журнал отправок",
+    colRecipient: "Получатель",
+    colStatus: "Статус",
+    colSent: "Отправлено",
+    emptyTitle: "Писем пока не отправлено",
+    emptyDesc:
+      "Транзакционные письма появятся здесь после срабатывания событий.",
+  },
+  dashMarketing: {
+    title: "Маркетинговые кампании",
+    description: "Создавайте и отправляйте рассылки сегментам контактов.",
+    startCampaign: "Начать кампанию",
+    newTemplate: "Новая: {name}",
+    blankCampaign: "Пустая кампания",
+    colCampaign: "Кампания",
+    colSegment: "Сегмент",
+    colStatus: "Статус",
+    colSent: "Отправлено",
+    colCreated: "Создана",
+    emptyTitle: "Кампаний пока нет",
+    emptyDesc: "Начните кампанию из шаблона выше.",
+  },
 };

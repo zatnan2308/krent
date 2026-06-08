@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -55,18 +56,20 @@ export default async function MarketingPage() {
     .select("id, name, description")
     .is("organization_id", null)
     .order("name", { ascending: true });
+  const dict = await getServerDictionary();
+  const t = dict.dashMarketing;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Marketing campaigns"
-        description="Build and send newsletters to your contact segments."
+        title={t.title}
+        description={t.description}
       />
       <MarketingNav />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Start a campaign</CardTitle>
+          <CardTitle className="text-base">{t.startCampaign}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           {(templates ?? []).map((template) => (
@@ -80,13 +83,13 @@ export default async function MarketingPage() {
                 type="submit"
                 className={buttonVariants({ variant: "outline" })}
               >
-                New: {template.name}
+                {t.newTemplate.replace("{name}", template.name)}
               </button>
             </form>
           ))}
           <form action={createCampaignAction}>
             <button type="submit" className={buttonVariants({})}>
-              Blank campaign
+              {t.blankCampaign}
             </button>
           </form>
         </CardContent>
@@ -97,11 +100,11 @@ export default async function MarketingPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Campaign</TableHead>
-                <TableHead>Segment</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Sent</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>{t.colCampaign}</TableHead>
+                <TableHead>{t.colSegment}</TableHead>
+                <TableHead>{t.colStatus}</TableHead>
+                <TableHead>{t.colSent}</TableHead>
+                <TableHead>{t.colCreated}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -142,10 +145,7 @@ export default async function MarketingPage() {
           </Table>
         </div>
       ) : (
-        <EmptyState
-          title="No campaigns yet"
-          description="Start a campaign from a template above."
-        />
+        <EmptyState title={t.emptyTitle} description={t.emptyDesc} />
       )}
     </div>
   );

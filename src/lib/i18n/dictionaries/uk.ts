@@ -511,4 +511,38 @@ export const uk: DeepPartial<Dictionary> = {
   dashNavigation: {
     description: "Меню шапки та підвалу компанії {name}.",
   },
+  dashEmail: {
+    title: "Email і сповіщення",
+    description:
+      "Шаблони транзакційних листів, налаштування сповіщень і логи доставки.",
+    templates: "Шаблони листів",
+    colTemplate: "Шаблон",
+    colSubject: "Тема",
+    colState: "Стан",
+    active: "Активний",
+    inactive: "Неактивний",
+    customised: "Змінено",
+    notificationSettings: "Налаштування сповіщень",
+    recentLog: "Журнал відправлень",
+    colRecipient: "Отримувач",
+    colStatus: "Статус",
+    colSent: "Відправлено",
+    emptyTitle: "Листів поки не відправлено",
+    emptyDesc:
+      "Транзакційні листи з'являться тут після спрацювання подій.",
+  },
+  dashMarketing: {
+    title: "Маркетингові кампанії",
+    description: "Створюйте та надсилайте розсилки сегментам контактів.",
+    startCampaign: "Почати кампанію",
+    newTemplate: "Нова: {name}",
+    blankCampaign: "Порожня кампанія",
+    colCampaign: "Кампанія",
+    colSegment: "Сегмент",
+    colStatus: "Статус",
+    colSent: "Відправлено",
+    colCreated: "Створено",
+    emptyTitle: "Кампаній поки немає",
+    emptyDesc: "Почніть кампанію з шаблону вище.",
+  },
 };

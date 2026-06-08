@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -58,26 +59,28 @@ export default async function EmailPage() {
     getNotificationCatalog(context.organization.id),
     listEmailSends(context.organization.id),
   ]);
+  const dict = await getServerDictionary();
+  const t = dict.dashEmail;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Email & notifications"
-        description="Transactional email templates, notification settings and delivery logs."
+        title={t.title}
+        description={t.description}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Email templates</CardTitle>
+          <CardTitle className="text-base">{t.templates}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Template</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>State</TableHead>
+                  <TableHead>{t.colTemplate}</TableHead>
+                  <TableHead>{t.colSubject}</TableHead>
+                  <TableHead>{t.colState}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -101,10 +104,10 @@ export default async function EmailPage() {
                             template.isActive ? "secondary" : "outline"
                           }
                         >
-                          {template.isActive ? "Active" : "Inactive"}
+                          {template.isActive ? t.active : t.inactive}
                         </Badge>
                         {template.isCustomised ? (
-                          <Badge variant="outline">Customised</Badge>
+                          <Badge variant="outline">{t.customised}</Badge>
                         ) : null}
                       </div>
                     </TableCell>
@@ -118,7 +121,7 @@ export default async function EmailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Notification settings</CardTitle>
+          <CardTitle className="text-base">{t.notificationSettings}</CardTitle>
         </CardHeader>
         <CardContent>
           <PreferencesPanel
@@ -130,7 +133,7 @@ export default async function EmailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Recent email log</CardTitle>
+          <CardTitle className="text-base">{t.recentLog}</CardTitle>
         </CardHeader>
         <CardContent>
           {sends.length > 0 ? (
@@ -138,10 +141,10 @@ export default async function EmailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent</TableHead>
+                    <TableHead>{t.colRecipient}</TableHead>
+                    <TableHead>{t.colSubject}</TableHead>
+                    <TableHead>{t.colStatus}</TableHead>
+                    <TableHead>{t.colSent}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -172,10 +175,7 @@ export default async function EmailPage() {
               </Table>
             </div>
           ) : (
-            <EmptyState
-              title="No emails sent yet"
-              description="Transactional emails will appear here once events are triggered."
-            />
+            <EmptyState title={t.emptyTitle} description={t.emptyDesc} />
           )}
         </CardContent>
       </Card>

@@ -513,6 +513,40 @@ export const en = {
   dashNavigation: {
     description: "Header and footer menus of {name}.",
   },
+  dashEmail: {
+    title: "Email & notifications",
+    description:
+      "Transactional email templates, notification settings and delivery logs.",
+    templates: "Email templates",
+    colTemplate: "Template",
+    colSubject: "Subject",
+    colState: "State",
+    active: "Active",
+    inactive: "Inactive",
+    customised: "Customised",
+    notificationSettings: "Notification settings",
+    recentLog: "Recent email log",
+    colRecipient: "Recipient",
+    colStatus: "Status",
+    colSent: "Sent",
+    emptyTitle: "No emails sent yet",
+    emptyDesc:
+      "Transactional emails will appear here once events are triggered.",
+  },
+  dashMarketing: {
+    title: "Marketing campaigns",
+    description: "Build and send newsletters to your contact segments.",
+    startCampaign: "Start a campaign",
+    newTemplate: "New: {name}",
+    blankCampaign: "Blank campaign",
+    colCampaign: "Campaign",
+    colSegment: "Segment",
+    colStatus: "Status",
+    colSent: "Sent",
+    colCreated: "Created",
+    emptyTitle: "No campaigns yet",
+    emptyDesc: "Start a campaign from a template above.",
+  },
 };
 
 export type Dictionary = typeof en;
