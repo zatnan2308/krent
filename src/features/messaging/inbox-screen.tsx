@@ -10,6 +10,7 @@ import {
 } from "@/features/chat/queries";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { cn } from "@/lib/utils";
 
 import { CHANNEL_LABELS } from "./channels";
@@ -54,6 +55,8 @@ interface RenderInboxArgs {
 
 /** Единый channel-aware инбокс: портальные чаты + WhatsApp/Telegram/Messenger. */
 export async function renderInbox(args: RenderInboxArgs) {
+  const dict = await getServerDictionary();
+  const t = dict.messaging;
   const [portalConvs, channelConvs] = await Promise.all([
     listMyConversations(),
     listChannelConversations(args.organizationId, args.userId),
@@ -75,7 +78,7 @@ export async function renderInbox(args: RenderInboxArgs) {
 
   const portalItems: UnifiedItem[] = portalConvs.map((conv) => ({
     href: buildHref({ c: conv.id }),
-    badge: conv.type === "internal" ? "Team" : "Portal",
+    badge: conv.type === "internal" ? t.team : t.portal,
     title: conv.title,
     preview: conv.lastMessage ?? CONVERSATION_TYPE_LABELS[conv.type],
     at: conv.lastMessageAt,
@@ -137,7 +140,11 @@ export async function renderInbox(args: RenderInboxArgs) {
                     : "text-muted-foreground hover:bg-muted",
                 )}
               >
-                {f.label}
+                {f.key === "all"
+                  ? t.filterAll
+                  : f.key === "portal"
+                    ? t.portal
+                    : f.label}
               </Link>
             ))}
           </div>
@@ -154,7 +161,7 @@ export async function renderInbox(args: RenderInboxArgs) {
         <ul className="flex-1 divide-y overflow-y-auto">
           {items.length === 0 ? (
             <li className="p-4 text-sm text-muted-foreground">
-              No conversations yet.
+              {t.noConversations}
             </li>
           ) : (
             items.map((item) => (
@@ -200,8 +207,8 @@ export async function renderInbox(args: RenderInboxArgs) {
         ) : (
           <div className="flex h-full items-center justify-center p-6">
             <EmptyState
-              title="Select a conversation"
-              description="Portal chats and WhatsApp/Telegram/Messenger threads appear here."
+              title={t.selectConversation}
+              description={t.selectConversationDesc}
             />
           </div>
         )}

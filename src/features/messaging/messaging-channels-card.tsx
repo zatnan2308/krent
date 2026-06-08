@@ -17,6 +17,7 @@ import type {
 } from "@/features/messaging/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 const STATUS_BADGE: Record<
   MessagingConnectionStatus,
@@ -39,6 +40,8 @@ export function MessagingChannelsCard({
   connections: ChannelConnectionView[];
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.messaging;
   const [pending, setPending] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
 
@@ -63,7 +66,7 @@ export function MessagingChannelsCard({
     if (result.ok) {
       router.refresh();
     } else {
-      setMessage(result.error ?? "Could not connect.");
+      setMessage(result.error ?? t.couldNotConnect);
     }
   }
 
@@ -88,8 +91,8 @@ export function MessagingChannelsCard({
               </p>
               <p className="text-xs text-muted-foreground">
                 {connection.configured
-                  ? "Credentials configured in the environment."
-                  : "Not configured — set the env vars (see SETUP.md)."}
+                  ? t.credsConfigured
+                  : t.notConfigured}
                 {connection.detail ? ` · ${connection.detail}` : ""}
               </p>
             </div>
@@ -98,7 +101,7 @@ export function MessagingChannelsCard({
                 connection.status ? STATUS_BADGE[connection.status] : "outline"
               }
             >
-              {connection.status ?? "Not connected"}
+              {connection.status ?? t.notConnected}
             </Badge>
           </div>
 
@@ -111,7 +114,7 @@ export function MessagingChannelsCard({
                 }
                 onClick={() => handleConnect(connection.channel)}
               >
-                {connection.status === "connected" ? "Reconnect" : "Connect"}
+                {connection.status === "connected" ? t.reconnect : t.connect}
               </Button>
               {connection.status === "connected" ? (
                 <Button
@@ -121,22 +124,21 @@ export function MessagingChannelsCard({
                   disabled={pending === connection.channel}
                   onClick={() => handleDisconnect(connection.channel)}
                 >
-                  Disconnect
+                  {t.disconnect}
                 </Button>
               ) : null}
               {connection.channel === "telegram" &&
               connection.status === "connected" &&
               connection.detail ? (
                 <span className="text-xs text-muted-foreground">
-                  Deep link: t.me/{connection.detail.replace("@", "")}
+                  {t.deepLinkPrefix} t.me/{connection.detail.replace("@", "")}
                   ?start=p_&lt;propertyId&gt;
                 </span>
               ) : null}
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Configure credentials in the environment; the channel is connected
-              at handoff (see SETUP.md).
+              {t.configureCredsHint}
             </p>
           )}
         </div>

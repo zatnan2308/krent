@@ -4,6 +4,7 @@ import * as React from "react";
 
 import type { PropertyChannelLink } from "./queries";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 /**
  * Копируемые deep-link для отправки лиду: его ответ в Telegram/Messenger
@@ -14,6 +15,8 @@ export function ChannelDeepLinks({
 }: {
   links: PropertyChannelLink[];
 }) {
+  const { dict } = useI18n();
+  const t = dict.messaging;
   const [copied, setCopied] = React.useState<string | null>(null);
 
   if (links.length === 0) {
@@ -46,7 +49,7 @@ export function ChannelDeepLinks({
             variant="outline"
             onClick={() => copy(link.url, link.channel)}
           >
-            {copied === link.channel ? "Copied" : "Copy link"}
+            {copied === link.channel ? t.copied : t.copyLink}
           </Button>
         </li>
       ))}

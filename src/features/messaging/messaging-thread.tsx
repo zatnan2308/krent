@@ -17,17 +17,8 @@ import type { MessagingMessageStatus } from "@/features/messaging/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
-
-/** Короткая метка статуса доставки исходящего (квитанции каналов). */
-const OUTBOUND_STATUS_LABEL: Record<MessagingMessageStatus, string | null> = {
-  received: null,
-  queued: "Sending…",
-  sent: "✓ Sent",
-  delivered: "✓✓ Delivered",
-  read: "✓✓ Read",
-  failed: "⚠ Failed",
-};
 
 export function MessagingThread({
   view,
@@ -37,6 +28,17 @@ export function MessagingThread({
   properties: { id: string; title: string }[];
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.messaging;
+  // Короткая метка статуса доставки исходящего (квитанции каналов).
+  const OUTBOUND_STATUS_LABEL: Record<MessagingMessageStatus, string | null> = {
+    received: null,
+    queued: t.stSending,
+    sent: t.stSent,
+    delivered: t.stDelivered,
+    read: t.stRead,
+    failed: t.stFailed,
+  };
   const [text, setText] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -212,9 +214,9 @@ export function MessagingThread({
             {CHANNEL_LABELS[view.channel]}
             {view.hasSessionWindow
               ? view.windowOpen
-                ? " · Session open"
-                : " · Session closed"
-              : " · Free messaging"}
+                ? t.sessionOpen
+                : t.sessionClosed
+              : t.freeMessaging}
           </p>
         </div>
         <Badge variant="secondary">{CHANNEL_LABELS[view.channel]}</Badge>
@@ -283,19 +285,20 @@ export function MessagingThread({
         {composerDisabled ? (
           <div className="space-y-2">
             <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-              The 24-hour window is closed. An approved template
-              {view.channel === "messenger" ? " / message tag" : ""} is required
-              to message this contact now.
+              {t.windowClosed.replace(
+                "{tag}",
+                view.channel === "messenger" ? t.tagSuffix : "",
+              )}
             </p>
             {view.channel === "whatsapp_cloud" && view.templates.length > 0 ? (
               <div className="flex items-center gap-2">
                 <select
                   value={template}
                   onChange={(event) => setTemplate(event.target.value)}
-                  aria-label="WhatsApp template"
+                  aria-label={t.whatsappTemplate}
                   className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
                 >
-                  <option value="">Send an approved template…</option>
+                  <option value="">{t.sendApprovedTemplate}</option>
                   {view.templates.map((item) => (
                     <option
                       key={`${item.name}|${item.language}`}
@@ -310,7 +313,7 @@ export function MessagingThread({
                   disabled={pending || !template}
                   onClick={handleSendTemplate}
                 >
-                  Send
+                  {t.send}
                 </Button>
               </div>
             ) : null}
@@ -319,7 +322,7 @@ export function MessagingThread({
                 <textarea
                   value={text}
                   rows={2}
-                  placeholder="Message with a tag…"
+                  placeholder={t.messageTagPh}
                   onChange={(event) => setText(event.target.value)}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
@@ -327,17 +330,17 @@ export function MessagingThread({
                   <select
                     value={tag}
                     onChange={(event) => setTag(event.target.value)}
-                    aria-label="Message tag"
+                    aria-label={t.messageTag}
                     className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
                   >
-                    <option value="">Choose a message tag…</option>
-                    <option value="HUMAN_AGENT">
-                      Human agent reply (7 days)
+                    <option value="">{t.chooseMessageTag}</option>
+                    <option value="HUMAN_AGENT">{t.tagHumanAgent}</option>
+                    <option value="ACCOUNT_UPDATE">{t.tagAccountUpdate}</option>
+                    <option value="CONFIRMED_EVENT_UPDATE">
+                      {t.tagEventUpdate}
                     </option>
-                    <option value="ACCOUNT_UPDATE">Account update</option>
-                    <option value="CONFIRMED_EVENT_UPDATE">Event update</option>
                     <option value="POST_PURCHASE_UPDATE">
-                      Post-purchase update
+                      {t.tagPostPurchase}
                     </option>
                   </select>
                   <Button
@@ -345,12 +348,11 @@ export function MessagingThread({
                     disabled={pending || !tag || !text.trim()}
                     onClick={handleSendTag}
                   >
-                    Send
+                    {t.send}
                   </Button>
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  Use the tag that matches your message, per Messenger Platform
-                  policy.
+                  {t.tagPolicyHint}
                 </p>
               </div>
             ) : null}
@@ -360,7 +362,10 @@ export function MessagingThread({
             <textarea
               value={text}
               rows={2}
-              placeholder={`Message on ${CHANNEL_LABELS[view.channel]}…`}
+              placeholder={t.messageOnPh.replace(
+                "{channel}",
+                CHANNEL_LABELS[view.channel],
+              )}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
@@ -371,7 +376,7 @@ export function MessagingThread({
               className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <Button size="sm" disabled={pending || !text.trim()} onClick={handleSend}>
-              {pending ? "Sending…" : "Send"}
+              {pending ? t.sending : t.send}
             </Button>
           </div>
         )}
@@ -380,10 +385,10 @@ export function MessagingThread({
             <select
               value={propertyId}
               onChange={(event) => setPropertyId(event.target.value)}
-              aria-label="Attach property"
+              aria-label={t.attachProperty}
               className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
             >
-              <option value="">Attach a property…</option>
+              <option value="">{t.attachPropertyOption}</option>
               {properties.map((property) => (
                 <option key={property.id} value={property.id}>
                   {property.title}
@@ -396,7 +401,7 @@ export function MessagingThread({
               disabled={pending || !propertyId}
               onClick={handleAttachProperty}
             >
-              Send listing
+              {t.sendListing}
             </Button>
           </div>
         ) : null}
@@ -415,12 +420,12 @@ export function MessagingThread({
               className="flex-1 justify-start truncate"
               onClick={() => fileInputRef.current?.click()}
             >
-              {file ? `📎 ${file.name}` : "Attach a file…"}
+              {file ? `📎 ${file.name}` : t.attachFile}
             </Button>
             {file ? (
               <>
                 <Button size="sm" disabled={pending} onClick={handleSendFile}>
-                  Send file
+                  {t.sendFile}
                 </Button>
                 <Button
                   size="sm"
@@ -433,7 +438,7 @@ export function MessagingThread({
                     }
                   }}
                 >
-                  Clear
+                  {t.clear}
                 </Button>
               </>
             ) : null}

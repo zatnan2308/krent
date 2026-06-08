@@ -9,6 +9,7 @@ import { listPortalAccounts } from "@/features/portal/queries";
 import { listProperties } from "@/features/properties/dashboard-queries";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -65,11 +66,13 @@ export default async function MessagesPage({
     ? (filterParam as Filter)
     : "all";
 
+  const dict = await getServerDictionary();
+
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Messages"
-        description="Portal chats and WhatsApp, Telegram and Messenger — in one inbox."
+        title={dict.messaging.pageTitle}
+        description={dict.messaging.pageDesc}
       />
       {await renderInbox({
         basePath: ROUTES.dashboard.messages,

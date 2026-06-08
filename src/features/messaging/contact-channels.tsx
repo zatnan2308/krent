@@ -3,13 +3,16 @@ import Link from "next/link";
 import type { ContactChannelLink } from "./queries";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 
 /** Каналы контакта: открыть чат (если достижим) или пригласить (deep link). */
-export function ContactChannels({
+export async function ContactChannels({
   channels,
 }: {
   channels: ContactChannelLink[];
 }) {
+  const dict = await getServerDictionary();
+  const t = dict.messaging;
   return (
     <ul className="space-y-2 text-sm">
       {channels.map((channel) => (
@@ -23,7 +26,7 @@ export function ContactChannels({
               href={`${ROUTES.dashboard.messages}?m=${channel.conversationId}`}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
-              Open chat
+              {t.openChat}
             </Link>
           ) : channel.inviteUrl ? (
             <a
@@ -32,10 +35,12 @@ export function ContactChannels({
               rel="noreferrer"
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
-              {channel.channel === "whatsapp_cloud" ? "Message" : "Invite link"}
+              {channel.channel === "whatsapp_cloud" ? t.message : t.inviteLink}
             </a>
           ) : (
-            <span className="text-xs text-muted-foreground">Not reachable</span>
+            <span className="text-xs text-muted-foreground">
+              {t.notReachable}
+            </span>
           )}
         </li>
       ))}
