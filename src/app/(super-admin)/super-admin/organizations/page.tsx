@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 
 export const metadata: Metadata = {
   title: "Organizations · Super Admin",
@@ -28,32 +29,34 @@ export const dynamic = "force-dynamic";
 
 export default async function OrganizationsListPage() {
   const organizations = await listOrganizationOverviews();
+  const dict = await getServerDictionary();
+  const t = dict.superAdmin;
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Organizations"
-        description="All tenants on this Krent deployment."
+        title={dict.adminNav.organizations}
+        description={t.orgsDesc}
       />
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">All organizations</CardTitle>
+          <CardTitle className="text-base">{t.allOrganizations}</CardTitle>
         </CardHeader>
         <CardContent>
           {organizations.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No organizations yet.
+              {t.noOrganizations}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Properties</TableHead>
+                  <TableHead>{t.colName}</TableHead>
+                  <TableHead>{t.colSlug}</TableHead>
+                  <TableHead>{t.colType}</TableHead>
+                  <TableHead>{t.colStatus}</TableHead>
+                  <TableHead>{t.colCreated}</TableHead>
+                  <TableHead>{t.members}</TableHead>
+                  <TableHead>{t.properties}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
