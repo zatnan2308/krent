@@ -344,6 +344,11 @@ export const es: DeepPartial<Dictionary> = {
     createProperty: "Crear propiedad",
   },
   dashCrm: {
+    newContactBtn: "Nuevo contacto",
+    newContactTitle: "Añadir contacto",
+    contactEmailPh: "Correo (opcional)",
+    contactPhonePh: "Teléfono (opcional)",
+    createContact: "Crear contacto",
     description: "Leads, contactos y negocios de {name}.",
     newLeads: "Leads nuevos",
     totalLeads: "Total de leads",

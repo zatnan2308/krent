@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ContactCreateForm } from "@/features/crm/contact-create-form";
 import { ContactsCsvImport } from "@/features/crm/contacts-csv-import";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { listContactsPage } from "@/features/crm/queries";
@@ -77,6 +78,8 @@ export default async function CrmContactsPage({
         description={t.contactsDesc.replace("{name}", context.organization.name)}
       />
       <CrmNav />
+
+      {hasPermission(context, "crm.manage") ? <ContactCreateForm /> : null}
 
       <ContactsCsvImport />
 

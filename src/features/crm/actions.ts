@@ -528,6 +528,82 @@ export async function updateContact(
   return { ok: true };
 }
 
+const createContactSchema = z.object({
+  fullName: z.string().trim().min(1).max(200),
+  email: z
+    .string()
+    .trim()
+    .max(200)
+    .nullable()
+    .transform((value) => (value ? value.toLowerCase() : null)),
+  phone: z.string().trim().max(50).nullable(),
+});
+export type CreateContactInput = z.input<typeof createContactSchema>;
+
+/** Результат создания контакта — с id для перехода на карточку. */
+export type CreateContactResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+/** Создаёт контакт вручную (org-scoped, дедуп по email). */
+export async function createContact(
+  input: CreateContactInput,
+): Promise<CreateContactResult> {
+  const parsed = createContactSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the contact form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to add contacts." };
+  }
+  const organizationId = context.organization.id;
+  const d = parsed.data;
+  const email = d.email && d.email.length > 0 ? d.email : null;
+  const supabase = createClient();
+
+  // Дедуп по email (unique-индекс по lower(email)) — сообщаем явно.
+  if (email) {
+    const { data: existing } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("email", email)
+      .maybeSingle();
+    if (existing) {
+      return { ok: false, error: "A contact with this email already exists." };
+    }
+  }
+
+  const { data: created, error } = await supabase
+    .from("contacts")
+    .insert({
+      organization_id: organizationId,
+      full_name: d.fullName,
+      email,
+      phone: d.phone,
+    })
+    .select("id")
+    .single();
+  if (error || !created) {
+    return { ok: false, error: "Could not create the contact." };
+  }
+
+  await logAudit({
+    organizationId,
+    userId: context.user.id,
+    action: "contact.created",
+    entityType: "contact",
+    entityId: created.id,
+    metadata: { full_name: d.fullName },
+  });
+  revalidatePath(CRM_CONTACTS);
+  return { ok: true, id: created.id };
+}
+
 export interface MergeTargetOption {
   id: string;
   name: string;
