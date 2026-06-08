@@ -570,4 +570,18 @@ export const ru: DeepPartial<Dictionary> = {
     noEventsYet: "Событий пока нет.",
     noDeliveries: "Доставок пока нет.",
   },
+  superAdmin: {
+    title: "Супер-админ",
+    description: "Управление организациями на уровне платформы.",
+    organizations: "Организации",
+    suspended: "Приостановлено",
+    members: "Участники",
+    properties: "Объекты",
+    noOrganizations: "Организаций пока нет.",
+    colName: "Название",
+    colType: "Тип",
+    colStatus: "Статус",
+    colLicense: "Лицензия",
+    expires: "истекает {date}",
+  },
 };

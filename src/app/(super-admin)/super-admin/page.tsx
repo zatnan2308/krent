@@ -20,6 +20,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 
 export const metadata: Metadata = {
   title: "Super Admin",
@@ -37,6 +38,8 @@ function statusVariant(
 
 export default async function SuperAdminPage() {
   const organizations = await listOrganizationOverviews();
+  const dict = await getServerDictionary();
+  const t = dict.superAdmin;
   const totals = {
     orgs: organizations.length,
     members: organizations.reduce((acc, row) => acc + row.memberCount, 0),
@@ -47,16 +50,16 @@ export default async function SuperAdminPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Super Admin"
-        description="Platform-wide management of organizations."
+        title={t.title}
+        description={t.description}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Organizations", value: totals.orgs },
-          { label: "Suspended", value: totals.suspended },
-          { label: "Members", value: totals.members },
-          { label: "Properties", value: totals.properties },
+          { label: t.organizations, value: totals.orgs },
+          { label: t.suspended, value: totals.suspended },
+          { label: t.members, value: totals.members },
+          { label: t.properties, value: totals.properties },
         ].map((stat) => (
           <StatCard key={stat.label} label={stat.label} value={stat.value} />
         ))}
@@ -64,23 +67,23 @@ export default async function SuperAdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Organizations</CardTitle>
+          <CardTitle className="text-base">{t.organizations}</CardTitle>
         </CardHeader>
         <CardContent>
           {organizations.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No organizations yet.
+              {t.noOrganizations}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>License</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Properties</TableHead>
+                  <TableHead>{t.colName}</TableHead>
+                  <TableHead>{t.colType}</TableHead>
+                  <TableHead>{t.colStatus}</TableHead>
+                  <TableHead>{t.colLicense}</TableHead>
+                  <TableHead>{t.members}</TableHead>
+                  <TableHead>{t.properties}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -105,7 +108,7 @@ export default async function SuperAdminPage() {
                         <span className="text-xs">
                           {org.licenseStatus}
                           {org.licenseExpiresAt
-                            ? ` · expires ${new Date(org.licenseExpiresAt).toLocaleDateString()}`
+                            ? ` · ${t.expires.replace("{date}", new Date(org.licenseExpiresAt).toLocaleDateString())}`
                             : ""}
                         </span>
                       ) : (

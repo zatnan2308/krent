@@ -571,6 +571,20 @@ export const en = {
     noEventsYet: "No events yet.",
     noDeliveries: "No deliveries yet.",
   },
+  superAdmin: {
+    title: "Super Admin",
+    description: "Platform-wide management of organizations.",
+    organizations: "Organizations",
+    suspended: "Suspended",
+    members: "Members",
+    properties: "Properties",
+    noOrganizations: "No organizations yet.",
+    colName: "Name",
+    colType: "Type",
+    colStatus: "Status",
+    colLicense: "License",
+    expires: "expires {date}",
+  },
 };
 
 export type Dictionary = typeof en;

@@ -570,4 +570,18 @@ export const uk: DeepPartial<Dictionary> = {
     noEventsYet: "Подій поки немає.",
     noDeliveries: "Доставок поки немає.",
   },
+  superAdmin: {
+    title: "Супер-адмін",
+    description: "Управління організаціями на рівні платформи.",
+    organizations: "Організації",
+    suspended: "Призупинено",
+    members: "Учасники",
+    properties: "Об'єкти",
+    noOrganizations: "Організацій поки немає.",
+    colName: "Назва",
+    colType: "Тип",
+    colStatus: "Статус",
+    colLicense: "Ліцензія",
+    expires: "закінчується {date}",
+  },
 };

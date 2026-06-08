@@ -574,4 +574,18 @@ export const de: DeepPartial<Dictionary> = {
     noEventsYet: "Noch keine Ereignisse.",
     noDeliveries: "Noch keine Zustellungen.",
   },
+  superAdmin: {
+    title: "Super-Admin",
+    description: "Plattformweite Verwaltung von Organisationen.",
+    organizations: "Organisationen",
+    suspended: "Gesperrt",
+    members: "Mitglieder",
+    properties: "Objekte",
+    noOrganizations: "Noch keine Organisationen.",
+    colName: "Name",
+    colType: "Typ",
+    colStatus: "Status",
+    colLicense: "Lizenz",
+    expires: "läuft ab am {date}",
+  },
 };
