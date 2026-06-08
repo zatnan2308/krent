@@ -34,6 +34,10 @@ import {
   type TrustInput,
 } from "./actions";
 import type { HomeContent, HomeSection } from "./queries";
+import { useI18n } from "@/lib/i18n/provider";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+
+type HE = Dictionary["homeEditor"];
 
 type Tab =
   | "hero"
@@ -49,39 +53,40 @@ type Tab =
   | "cta"
   | "press";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "hero", label: "Hero" },
-  { key: "intent", label: "Intent" },
-  { key: "about", label: "Welcome" },
-  { key: "why", label: "Why" },
-  { key: "stats", label: "Stats" },
-  { key: "markets", label: "Communities" },
-  { key: "testimonials", label: "Stories" },
-  { key: "trust", label: "Partners" },
-  { key: "sections", label: "Section titles" },
-  { key: "process", label: "Process" },
-  { key: "cta", label: "CTA" },
-  { key: "press", label: "Press" },
+const TABS: { key: Tab; labelKey: keyof HE }[] = [
+  { key: "hero", labelKey: "tabHero" },
+  { key: "intent", labelKey: "tabIntent" },
+  { key: "about", labelKey: "tabWelcome" },
+  { key: "why", labelKey: "tabWhy" },
+  { key: "stats", labelKey: "tabStats" },
+  { key: "markets", labelKey: "tabCommunities" },
+  { key: "testimonials", labelKey: "tabStories" },
+  { key: "trust", labelKey: "tabPartners" },
+  { key: "sections", labelKey: "tabSectionTitles" },
+  { key: "process", labelKey: "tabProcess" },
+  { key: "cta", labelKey: "tabCta" },
+  { key: "press", labelKey: "tabPress" },
 ];
 
 export function HomeEditor({ content }: { content: HomeContent }) {
   const [tab, setTab] = React.useState<Tab>("hero");
+  const { dict } = useI18n();
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-x-1 border-b">
-        {TABS.map((t) => (
+        {TABS.map((ti) => (
           <button
-            key={t.key}
+            key={ti.key}
             type="button"
-            onClick={() => setTab(t.key)}
-            aria-current={tab === t.key ? "true" : undefined}
+            onClick={() => setTab(ti.key)}
+            aria-current={tab === ti.key ? "true" : undefined}
             className={`relative px-3 py-2.5 text-sm font-medium transition-colors after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:transition-all after:content-[''] ${
-              tab === t.key
+              tab === ti.key
                 ? "text-foreground after:bg-primary"
                 : "text-muted-foreground hover:text-foreground after:bg-transparent"
             }`}
           >
-            {t.label}
+            {dict.homeEditor[ti.labelKey]}
           </button>
         ))}
       </div>
@@ -131,12 +136,14 @@ function Field({
   wide?: boolean;
   hint?: string;
 }) {
+  const { dict } = useI18n();
+  const t = dict.homeEditor as Record<string, string>;
   return (
     <div className={`space-y-1 ${wide ? "sm:col-span-2 lg:col-span-3" : ""}`}>
-      <label className="text-xs font-medium">{label}</label>
+      <label className="text-xs font-medium">{t[label] ?? label}</label>
       {children}
       {hint ? (
-        <p className="text-[11px] text-muted-foreground">{hint}</p>
+        <p className="text-[11px] text-muted-foreground">{t[hint] ?? hint}</p>
       ) : null}
     </div>
   );
@@ -145,16 +152,18 @@ function Field({
 function Submit({
   pending,
   msg,
-  label = "Save",
+  label = "save",
 }: {
   pending: boolean;
   msg: string | null;
   label?: string;
 }) {
+  const { dict } = useI18n();
+  const t = dict.homeEditor as Record<string, string>;
   return (
     <div className="flex items-center gap-2">
       <Button size="sm" type="submit" disabled={pending}>
-        {pending ? "Saving…" : label}
+        {pending ? t.saving : (t[label] ?? label)}
       </Button>
       {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
     </div>
@@ -195,7 +204,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
       }}
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Background image URL" wide hint="Full-bleed photo behind the hero copy.">
+        <Field label="fBgImageUrl" wide hint="hintFullBleed">
           <Input
             value={form.backgroundImageUrl ?? ""}
             onChange={(e) =>
@@ -208,16 +217,16 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
           />
         </Field>
 
-        <Field label="Eyebrow text">
+        <Field label="fEyebrowText">
           <Input
             value={form.eyebrowText}
             onChange={(e) => setForm({ ...form, eyebrowText: e.target.value })}
           />
         </Field>
         <Field
-          label="Eyebrow chips (CSV)"
+          label="fEyebrowChips"
           wide
-          hint="Separator dots are added automatically. E.g. Downtown, Marina, Palm Jumeirah."
+          hint="hintSeparatorDots"
         >
           <Input
             value={form.eyebrowChips.join(", ")}
@@ -234,14 +243,14 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
           />
         </Field>
 
-        <Field label="Headline (first line)">
+        <Field label="fHeadlineFirst">
           <Input
             value={form.headlineTop}
             onChange={(e) => setForm({ ...form, headlineTop: e.target.value })}
             required
           />
         </Field>
-        <Field label="Headline (italic, accent)">
+        <Field label="fHeadlineItalicAccent2">
           <Input
             value={form.headlineBottomItalic}
             onChange={(e) =>
@@ -250,7 +259,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
             required
           />
         </Field>
-        <Field label="Subtitle" wide>
+        <Field label="fSubtitle" wide>
           <textarea
             className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.subtitle}
@@ -258,7 +267,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
           />
         </Field>
 
-        <Field label="Primary CTA label">
+        <Field label="fPrimaryCtaLabel">
           <Input
             value={form.primaryCtaLabel}
             onChange={(e) =>
@@ -266,7 +275,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
             }
           />
         </Field>
-        <Field label="Primary CTA href" hint="Internal e.g. /properties or absolute https://…">
+        <Field label="fPrimaryCtaHref" hint="hintInternalProps">
           <Input
             value={form.primaryCtaHref}
             onChange={(e) =>
@@ -274,7 +283,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
             }
           />
         </Field>
-        <Field label="Secondary CTA label">
+        <Field label="fSecondaryCtaLabel">
           <Input
             value={form.secondaryCtaLabel}
             onChange={(e) =>
@@ -282,7 +291,7 @@ function HeroSection({ initial }: { initial: HomeContent["hero"] }) {
             }
           />
         </Field>
-        <Field label="Secondary CTA href">
+        <Field label="fSecondaryCtaHref">
           <Input
             value={form.secondaryCtaHref}
             onChange={(e) =>
@@ -335,14 +344,14 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
       }}
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Eyebrow text" wide>
+        <Field label="fEyebrowText" wide>
           <Input
             value={form.eyebrowText}
             onChange={(e) => setForm({ ...form, eyebrowText: e.target.value })}
           />
         </Field>
         <Field
-          label="Headline — lead"
+          label="fHeadlineLead"
           hint='Начало заголовка, напр. "A single broker,".'
         >
           <Input
@@ -352,7 +361,7 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
           />
         </Field>
         <Field
-          label="Headline — accent (курсив, золото)"
+          label="fHeadlineAccentRu"
           hint='Акцентное слово в середине, напр. "entirely".'
         >
           <Input
@@ -363,7 +372,7 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
           />
         </Field>
         <Field
-          label="Headline — suffix"
+          label="fHeadlineSuffix"
           hint='Хвост после акцента, напр. "in your corner.".'
         >
           <Input
@@ -373,7 +382,7 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
             }
           />
         </Field>
-        <Field label="Portrait URL" wide hint="Square or 4:5 portrait photo.">
+        <Field label="fPortraitUrl" wide hint="hintSquarePortrait">
           <Input
             value={form.portraitUrl ?? ""}
             onChange={(e) =>
@@ -382,27 +391,27 @@ function AboutSection({ initial }: { initial: HomeContent["about"] }) {
             placeholder="https://…"
           />
         </Field>
-        <Field label="Body — paragraph 1" wide hint="Plain text.">
+        <Field label="fBodyP1" wide hint="hintPlainText">
           <textarea
             className="min-h-[120px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.body}
             onChange={(e) => setForm({ ...form, body: e.target.value })}
           />
         </Field>
-        <Field label="Body — paragraph 2" wide hint="Второй абзац (опционально).">
+        <Field label="fBodyP2" wide hint="hintSecondPara">
           <textarea
             className="min-h-[100px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.body2}
             onChange={(e) => setForm({ ...form, body2: e.target.value })}
           />
         </Field>
-        <Field label="CTA label">
+        <Field label="fCtaLabel">
           <Input
             value={form.ctaLabel}
             onChange={(e) => setForm({ ...form, ctaLabel: e.target.value })}
           />
         </Field>
-        <Field label="CTA href" hint="Internal e.g. /about">
+        <Field label="fCtaHref" hint="hintInternalAbout">
           <Input
             value={form.ctaHref}
             onChange={(e) => setForm({ ...form, ctaHref: e.target.value })}
@@ -482,13 +491,13 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
       }}
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Eyebrow text" wide>
+        <Field label="fEyebrowText" wide>
           <Input
             value={form.eyebrowText}
             onChange={(e) => setForm({ ...form, eyebrowText: e.target.value })}
           />
         </Field>
-        <Field label="Headline (left)">
+        <Field label="fHeadlineLeft">
           <Input
             value={form.headlineLeft}
             onChange={(e) =>
@@ -497,7 +506,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
             required
           />
         </Field>
-        <Field label="Headline (italic accent)">
+        <Field label="fHeadlineItalicAccent">
           <Input
             value={form.headlineItalic}
             onChange={(e) =>
@@ -506,7 +515,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
             required
           />
         </Field>
-        <Field label="Headline (right)">
+        <Field label="fHeadlineRight">
           <Input
             value={form.headlineRight}
             onChange={(e) =>
@@ -515,14 +524,14 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
             required
           />
         </Field>
-        <Field label="Subtitle" wide>
+        <Field label="fSubtitle" wide>
           <textarea
             className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.subtitle}
             onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
           />
         </Field>
-        <Field label="Primary CTA label">
+        <Field label="fPrimaryCtaLabel">
           <Input
             value={form.primaryCtaLabel}
             onChange={(e) =>
@@ -530,7 +539,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
             }
           />
         </Field>
-        <Field label="Primary CTA href">
+        <Field label="fPrimaryCtaHref">
           <Input
             value={form.primaryCtaHref}
             onChange={(e) =>
@@ -538,7 +547,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
             }
           />
         </Field>
-        <Field label="Secondary CTA label">
+        <Field label="fSecondaryCtaLabel">
           <Input
             value={form.secondaryCtaLabel}
             onChange={(e) =>
@@ -546,7 +555,7 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
             }
           />
         </Field>
-        <Field label="Secondary CTA href">
+        <Field label="fSecondaryCtaHref">
           <Input
             value={form.secondaryCtaHref}
             onChange={(e) =>
@@ -565,6 +574,8 @@ function CtaSection({ initial }: { initial: HomeContent["cta"] }) {
 function MarketsSection({ items }: { items: HomeContent["markets"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   const [draft, setDraft] = React.useState<MarketInput | null>(null);
@@ -587,11 +598,9 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Top-level destinations shown in the Markets grid. One can be marked
-          featured — it gets the large block.
-        </p>
+          {hed.descMarkets}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add market
+          {hed.addMarket}
         </Button>
       </div>
 
@@ -617,12 +626,12 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
                   {m.name}{" "}
                   {m.is_featured ? (
                     <Badge variant="success" className="ml-1">
-                      Featured
+                      {hed.featured}
                     </Badge>
                   ) : null}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  #{m.sort_order} · {m.region ?? "—"} · {m.badge ?? "no badge"}
+                  #{m.sort_order} · {m.region ?? "—"} · {m.badge ?? hed.noBadge}
                 </p>
               </div>
             </div>
@@ -644,7 +653,7 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -652,22 +661,22 @@ function MarketsSection({ items }: { items: HomeContent["markets"] }) {
                 className="text-destructive"
                 disabled={pendingId === m.id}
                 onClick={async () => {
-                  if (!confirm(`Delete "${m.name}"?`)) return;
+                  if (!confirm(hed.confirmDelete.replace("{name}", m.name))) return;
                   setPendingId(m.id);
                   const r = await deleteHomeItem("home_markets", m.id);
                   setPendingId(null);
-                  setMsg(r.ok ? "Market deleted." : r.error);
+                  setMsg(r.ok ? hed.marketDeleted : r.error);
                   if (r.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No markets yet.
+            {hed.noMarkets}
           </li>
         ) : null}
       </ul>
@@ -698,6 +707,8 @@ function MarketForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<MarketInput>(initial);
   return (
@@ -720,14 +731,14 @@ function MarketForm({
         {form.id ? "Edit market" : "New market"}
       </p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Name">
+        <Field label="fName">
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
           />
         </Field>
-        <Field label="Region">
+        <Field label="fRegion">
           <Input
             value={form.region ?? ""}
             onChange={(e) =>
@@ -735,7 +746,7 @@ function MarketForm({
             }
           />
         </Field>
-        <Field label="Badge" hint="Shown above the title on the featured tile.">
+        <Field label="fBadge" hint="hintAboveTitle">
           <Input
             value={form.badge ?? ""}
             onChange={(e) =>
@@ -744,7 +755,7 @@ function MarketForm({
             placeholder="Primary market"
           />
         </Field>
-        <Field label="Image URL" wide>
+        <Field label="fImageUrl" wide>
           <Input
             value={form.imageUrl ?? ""}
             onChange={(e) =>
@@ -753,7 +764,7 @@ function MarketForm({
             placeholder="https://…"
           />
         </Field>
-        <Field label="Href" hint="Where the tile links to. Internal path like /properties.">
+        <Field label="fHref" hint="hintTileLink">
           <Input
             value={form.href ?? ""}
             onChange={(e) =>
@@ -761,7 +772,7 @@ function MarketForm({
             }
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -770,7 +781,7 @@ function MarketForm({
             }
           />
         </Field>
-        <Field label="Blurb" wide>
+        <Field label="fBlurb" wide>
           <textarea
             className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.blurb ?? ""}
@@ -779,7 +790,7 @@ function MarketForm({
             }
           />
         </Field>
-        <Field label="Featured" hint="Only one market should be featured at a time.">
+        <Field label="fFeatured" hint="hintOneFeatured">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -794,10 +805,10 @@ function MarketForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save market"}
+          {pending ? hed.saving : hed.saveMarket}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -810,6 +821,8 @@ function MarketForm({
 function ProcessSection({ items }: { items: HomeContent["process"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<ProcessInput | null>(null);
 
@@ -827,10 +840,9 @@ function ProcessSection({ items }: { items: HomeContent["process"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Ordered list of process steps. Number is displayed as italic accent.
-        </p>
+          {hed.descProcess}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add step
+          {hed.addStep}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -862,7 +874,7 @@ function ProcessSection({ items }: { items: HomeContent["process"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -870,22 +882,22 @@ function ProcessSection({ items }: { items: HomeContent["process"] }) {
                 className="text-destructive"
                 disabled={pendingId === s.id}
                 onClick={async () => {
-                  if (!confirm(`Delete step "${s.title}"?`)) return;
+                  if (!confirm(hed.confirmDeleteStep.replace("{name}", s.title))) return;
                   setPendingId(s.id);
                   const r = await deleteHomeItem("home_process_steps", s.id);
                   setPendingId(null);
-                  setMsg(r.ok ? "Step deleted." : r.error);
+                  setMsg(r.ok ? hed.stepDeleted : r.error);
                   if (r.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No process steps yet.
+            {hed.noSteps}
           </li>
         ) : null}
       </ul>
@@ -914,6 +926,8 @@ function ProcessForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<ProcessInput>(initial);
   return (
@@ -936,7 +950,7 @@ function ProcessForm({
         {form.id ? "Edit step" : "New step"}
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
-        <Field label="Step number" hint='e.g. "01", "02".'>
+        <Field label="fStepNumber" hint='e.g. "01", "02".'>
           <Input
             value={form.stepNumber}
             onChange={(e) =>
@@ -945,7 +959,7 @@ function ProcessForm({
             required
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -954,14 +968,14 @@ function ProcessForm({
             }
           />
         </Field>
-        <Field label="Title" wide>
+        <Field label="fTitle" wide>
           <Input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             required
           />
         </Field>
-        <Field label="Body" wide>
+        <Field label="fBody" wide>
           <textarea
             className="min-h-[100px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.body ?? ""}
@@ -973,10 +987,10 @@ function ProcessForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save step"}
+          {pending ? hed.saving : hed.saveStep}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -989,6 +1003,8 @@ function ProcessForm({
 function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<TestimonialInput | null>(null);
 
@@ -1006,10 +1022,9 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Client quotes shown as large italic blockquotes.
-        </p>
+          {hed.descTestimonials}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add testimonial
+          {hed.addTestimonial}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -1040,7 +1055,7 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
                     })
                   }
                 >
-                  Edit
+                  {hed.edit}
                 </Button>
                 <Button
                   size="sm"
@@ -1052,11 +1067,11 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
                     setPendingId(t.id);
                     const r = await deleteHomeItem("home_testimonials", t.id);
                     setPendingId(null);
-                    setMsg(r.ok ? "Testimonial deleted." : r.error);
+                    setMsg(r.ok ? hed.testimonialDeleted : r.error);
                     if (r.ok) router.refresh();
                   }}
                 >
-                  Delete
+                  {hed.deleteBtn}
                 </Button>
               </div>
             </div>
@@ -1064,7 +1079,7 @@ function TestimonialsSection({ items }: { items: HomeContent["testimonials"] }) 
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No testimonials yet.
+            {hed.noTestimonials}
           </li>
         ) : null}
       </ul>
@@ -1093,6 +1108,8 @@ function TestimonialForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<TestimonialInput>(initial);
   return (
@@ -1115,7 +1132,7 @@ function TestimonialForm({
         {form.id ? "Edit testimonial" : "New testimonial"}
       </p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Quote" wide>
+        <Field label="fQuote" wide>
           <textarea
             className="min-h-[120px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.quote}
@@ -1123,7 +1140,7 @@ function TestimonialForm({
             required
           />
         </Field>
-        <Field label="Author name">
+        <Field label="fAuthorName">
           <Input
             value={form.authorName ?? ""}
             onChange={(e) =>
@@ -1132,7 +1149,7 @@ function TestimonialForm({
             placeholder="Sergey D."
           />
         </Field>
-        <Field label="Deal label">
+        <Field label="fDealLabel">
           <Input
             value={form.dealLabel ?? ""}
             onChange={(e) =>
@@ -1141,7 +1158,7 @@ function TestimonialForm({
             placeholder="Penthouse · Dubai Marina"
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -1153,10 +1170,10 @@ function TestimonialForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save testimonial"}
+          {pending ? hed.saving : hed.saveTestimonial}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -1169,6 +1186,8 @@ function TestimonialForm({
 function TrustSection({ items }: { items: HomeContent["trust"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<TrustInput | null>(null);
 
@@ -1185,10 +1204,9 @@ function TrustSection({ items }: { items: HomeContent["trust"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Licenses, certifications and trust signals shown as a row.
-        </p>
+          {hed.descTrust}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add badge
+          {hed.addBadge}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -1216,7 +1234,7 @@ function TrustSection({ items }: { items: HomeContent["trust"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -1224,22 +1242,22 @@ function TrustSection({ items }: { items: HomeContent["trust"] }) {
                 className="text-destructive"
                 disabled={pendingId === t.id}
                 onClick={async () => {
-                  if (!confirm(`Delete "${t.label}"?`)) return;
+                  if (!confirm(hed.confirmDelete.replace("{name}", t.label))) return;
                   setPendingId(t.id);
                   const r = await deleteHomeItem("home_trust_badges", t.id);
                   setPendingId(null);
-                  setMsg(r.ok ? "Badge deleted." : r.error);
+                  setMsg(r.ok ? hed.badgeDeleted : r.error);
                   if (r.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No trust badges yet.
+            {hed.noBadges}
           </li>
         ) : null}
       </ul>
@@ -1268,6 +1286,8 @@ function TrustForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<TrustInput>(initial);
   return (
@@ -1290,7 +1310,7 @@ function TrustForm({
         {form.id ? "Edit badge" : "New badge"}
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
-        <Field label="Label">
+        <Field label="fLabel">
           <Input
             value={form.label}
             onChange={(e) => setForm({ ...form, label: e.target.value })}
@@ -1298,14 +1318,14 @@ function TrustForm({
             placeholder="RERA"
           />
         </Field>
-        <Field label="Subtitle">
+        <Field label="fSubtitle">
           <Input
             value={form.sub ?? ""}
             onChange={(e) => setForm({ ...form, sub: e.target.value || null })}
             placeholder="Dubai · #58432"
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -1317,10 +1337,10 @@ function TrustForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save badge"}
+          {pending ? hed.saving : hed.saveBadge}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -1333,6 +1353,8 @@ function TrustForm({
 function PressSection({ items }: { items: HomeContent["press"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<PressInput | null>(null);
 
@@ -1349,11 +1371,9 @@ function PressSection({ items }: { items: HomeContent["press"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Press / publications shown in the &quot;As seen in&quot; row. Use a
-          logo URL or just a name.
-        </p>
+          {hed.descPress}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add press
+          {hed.addPress}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -1390,7 +1410,7 @@ function PressSection({ items }: { items: HomeContent["press"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -1398,22 +1418,22 @@ function PressSection({ items }: { items: HomeContent["press"] }) {
                 className="text-destructive"
                 disabled={pendingId === p.id}
                 onClick={async () => {
-                  if (!confirm(`Delete "${p.name}"?`)) return;
+                  if (!confirm(hed.confirmDelete.replace("{name}", p.name))) return;
                   setPendingId(p.id);
                   const r = await deleteHomeItem("home_press_logos", p.id);
                   setPendingId(null);
-                  setMsg(r.ok ? "Press deleted." : r.error);
+                  setMsg(r.ok ? hed.pressDeleted : r.error);
                   if (r.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No press logos yet.
+            {hed.noPress}
           </li>
         ) : null}
       </ul>
@@ -1442,6 +1462,8 @@ function PressForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<PressInput>(initial);
   return (
@@ -1464,7 +1486,7 @@ function PressForm({
         {form.id ? "Edit press" : "New press"}
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
-        <Field label="Name">
+        <Field label="fName">
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -1472,7 +1494,7 @@ function PressForm({
             placeholder="Forbes"
           />
         </Field>
-        <Field label="Logo URL" wide>
+        <Field label="fLogoUrl" wide>
           <Input
             value={form.logoUrl ?? ""}
             onChange={(e) =>
@@ -1481,7 +1503,7 @@ function PressForm({
             placeholder="https://… (optional)"
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -1493,10 +1515,10 @@ function PressForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save press"}
+          {pending ? hed.saving : hed.savePress}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -1509,6 +1531,8 @@ function PressForm({
 function IntentSection({ items }: { items: HomeContent["intent"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<IntentInput | null>(null);
 
@@ -1526,10 +1550,9 @@ function IntentSection({ items }: { items: HomeContent["intent"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Cards in the “How can I help you?” section. Three work best.
-        </p>
+          {hed.descIntent}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add option
+          {hed.addOption}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -1562,7 +1585,7 @@ function IntentSection({ items }: { items: HomeContent["intent"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -1570,22 +1593,22 @@ function IntentSection({ items }: { items: HomeContent["intent"] }) {
                 className="text-destructive"
                 disabled={pendingId === o.id}
                 onClick={async () => {
-                  if (!confirm(`Delete "${o.title}"?`)) return;
+                  if (!confirm(hed.confirmDelete.replace("{name}", o.title))) return;
                   setPendingId(o.id);
                   const r = await deleteHomeItem("home_intent_options", o.id);
                   setPendingId(null);
-                  setMsg(r.ok ? "Option deleted." : r.error);
+                  setMsg(r.ok ? hed.optionDeleted : r.error);
                   if (r.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No options yet.
+            {hed.noOptions}
           </li>
         ) : null}
       </ul>
@@ -1614,6 +1637,8 @@ function IntentForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<IntentInput>(initial);
   return (
@@ -1636,7 +1661,7 @@ function IntentForm({
         {form.id ? "Edit option" : "New option"}
       </p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Title">
+        <Field label="fTitle">
           <Input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -1644,7 +1669,7 @@ function IntentForm({
             placeholder="Buy a home"
           />
         </Field>
-        <Field label="Href" hint="Internal path like /buy, /rent, /contact.">
+        <Field label="fHref" hint="hintInternalPath">
           <Input
             value={form.href ?? ""}
             onChange={(e) =>
@@ -1652,7 +1677,7 @@ function IntentForm({
             }
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -1661,7 +1686,7 @@ function IntentForm({
             }
           />
         </Field>
-        <Field label="Description" wide>
+        <Field label="fDescription" wide>
           <textarea
             className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.description ?? ""}
@@ -1673,10 +1698,10 @@ function IntentForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save option"}
+          {pending ? hed.saving : hed.saveOption}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -1689,6 +1714,8 @@ function IntentForm({
 function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<ReasonInput | null>(null);
 
@@ -1700,10 +1727,9 @@ function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Reasons in the dark “Why work with…” section. Four work best.
-        </p>
+          {hed.descReasons}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add reason
+          {hed.addReason}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -1734,7 +1760,7 @@ function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -1742,22 +1768,22 @@ function ReasonsSection({ items }: { items: HomeContent["reasons"] }) {
                 className="text-destructive"
                 disabled={pendingId === r.id}
                 onClick={async () => {
-                  if (!confirm(`Delete "${r.title}"?`)) return;
+                  if (!confirm(hed.confirmDelete.replace("{name}", r.title))) return;
                   setPendingId(r.id);
                   const res = await deleteHomeItem("home_reasons", r.id);
                   setPendingId(null);
-                  setMsg(res.ok ? "Reason deleted." : res.error);
+                  setMsg(res.ok ? hed.reasonDeleted : res.error);
                   if (res.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No reasons yet.
+            {hed.noReasons}
           </li>
         ) : null}
       </ul>
@@ -1786,6 +1812,8 @@ function ReasonForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<ReasonInput>(initial);
   return (
@@ -1808,7 +1836,7 @@ function ReasonForm({
         {form.id ? "Edit reason" : "New reason"}
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
-        <Field label="Title" wide>
+        <Field label="fTitle" wide>
           <Input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -1816,7 +1844,7 @@ function ReasonForm({
             placeholder="Off-market access"
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -1825,7 +1853,7 @@ function ReasonForm({
             }
           />
         </Field>
-        <Field label="Body" wide>
+        <Field label="fBody" wide>
           <textarea
             className="min-h-[80px] w-full rounded-md border bg-background px-3 py-2 text-sm"
             value={form.body ?? ""}
@@ -1837,10 +1865,10 @@ function ReasonForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save reason"}
+          {pending ? hed.saving : hed.saveReason}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -1853,6 +1881,8 @@ function ReasonForm({
 function StatsSection({ items }: { items: HomeContent["stats"] }) {
   const router = useRouter();
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<StatInput | null>(null);
 
@@ -1870,10 +1900,9 @@ function StatsSection({ items }: { items: HomeContent["stats"] }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Big numbers in the Advantage band. Value + accent suffix + label.
-        </p>
+          {hed.descStats}</p>
         <Button size="sm" type="button" onClick={() => setDraft(blank())}>
-          Add stat
+          {hed.addStat}
         </Button>
       </div>
       <ul className="space-y-2">
@@ -1903,7 +1932,7 @@ function StatsSection({ items }: { items: HomeContent["stats"] }) {
                   })
                 }
               >
-                Edit
+                {hed.edit}
               </Button>
               <Button
                 size="sm"
@@ -1911,22 +1940,22 @@ function StatsSection({ items }: { items: HomeContent["stats"] }) {
                 className="text-destructive"
                 disabled={pendingId === s.id}
                 onClick={async () => {
-                  if (!confirm(`Delete "${s.label}"?`)) return;
+                  if (!confirm(hed.confirmDelete.replace("{name}", s.label))) return;
                   setPendingId(s.id);
                   const res = await deleteHomeItem("home_stats", s.id);
                   setPendingId(null);
-                  setMsg(res.ok ? "Stat deleted." : res.error);
+                  setMsg(res.ok ? hed.statDeleted : res.error);
                   if (res.ok) router.refresh();
                 }}
               >
-                Delete
+                {hed.deleteBtn}
               </Button>
             </div>
           </li>
         ))}
         {items.length === 0 ? (
           <li className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No stats yet.
+            {hed.noStats}
           </li>
         ) : null}
       </ul>
@@ -1955,6 +1984,8 @@ function StatForm({
   onSaved: () => void;
 }) {
   const { msg, setMsg } = useToast();
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState<StatInput>(initial);
   return (
@@ -1977,7 +2008,7 @@ function StatForm({
         {form.id ? "Edit stat" : "New stat"}
       </p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Value" hint='Напр. "200", "$2.4".'>
+        <Field label="fValue" hint='Напр. "200", "$2.4".'>
           <Input
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
@@ -1985,7 +2016,7 @@ function StatForm({
             placeholder="200"
           />
         </Field>
-        <Field label="Suffix" hint='Акцентный хвост: "+", "M", " yrs".'>
+        <Field label="fSuffix" hint='Акцентный хвост: "+", "M", " yrs".'>
           <Input
             value={form.suffix ?? ""}
             onChange={(e) =>
@@ -1994,7 +2025,7 @@ function StatForm({
             placeholder="+"
           />
         </Field>
-        <Field label="Label">
+        <Field label="fLabel">
           <Input
             value={form.label}
             onChange={(e) => setForm({ ...form, label: e.target.value })}
@@ -2002,7 +2033,7 @@ function StatForm({
             placeholder="Deals closed"
           />
         </Field>
-        <Field label="Sort order">
+        <Field label="fSortOrder">
           <Input
             type="number"
             value={form.sortOrder}
@@ -2014,10 +2045,10 @@ function StatForm({
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save stat"}
+          {pending ? hed.saving : hed.saveStat}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {hed.cancel}
         </Button>
         {msg ? <span className="text-xs text-muted-foreground">{msg}</span> : null}
       </div>
@@ -2045,12 +2076,12 @@ function SectionsSection({
 }: {
   sections: HomeContent["sections"];
 }) {
+  const { dict } = useI18n();
+  const hed = dict.homeEditor;
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Eyebrow + lead + italic accent word above each section. The Subscribe
-        band also has a subtitle and a background image.
-      </p>
+        {hed.descSections}</p>
       {SECTION_DEFS.map((def) => (
         <SectionHeadingForm
           key={def.key}
@@ -2101,7 +2132,7 @@ function SectionHeadingForm({
     >
       <p className="text-sm font-semibold">{label}</p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Eyebrow">
+        <Field label="fEyebrow">
           <Input
             value={form.eyebrow ?? ""}
             onChange={(e) =>
@@ -2110,14 +2141,14 @@ function SectionHeadingForm({
             placeholder="Where to begin"
           />
         </Field>
-        <Field label="Lead">
+        <Field label="fLead">
           <Input
             value={form.lead ?? ""}
             onChange={(e) => setForm({ ...form, lead: e.target.value || null })}
             placeholder="How can I"
           />
         </Field>
-        <Field label="Accent (italic gold)">
+        <Field label="fAccentGold">
           <Input
             value={form.accent ?? ""}
             onChange={(e) =>
@@ -2128,7 +2159,7 @@ function SectionHeadingForm({
         </Field>
         {hasMedia ? (
           <>
-            <Field label="Subtitle" wide>
+            <Field label="fSubtitle" wide>
               <textarea
                 className="min-h-[60px] w-full rounded-md border bg-background px-3 py-2 text-sm"
                 value={form.subtitle ?? ""}
@@ -2137,7 +2168,7 @@ function SectionHeadingForm({
                 }
               />
             </Field>
-            <Field label="Background image URL" wide>
+            <Field label="fBgImageUrl" wide>
               <Input
                 value={form.imageUrl ?? ""}
                 onChange={(e) =>
