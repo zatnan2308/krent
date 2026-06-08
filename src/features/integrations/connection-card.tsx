@@ -13,13 +13,13 @@ import {
   PROVIDER_DESCRIPTIONS,
   PROVIDER_LABELS,
   STATUS_BADGE,
-  STATUS_LABELS,
 } from "@/features/integrations/constants";
 import type { ConnectionItem } from "@/features/integrations/queries";
 import type { IntegrationProvider } from "@/features/integrations/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface FormState {
   siteUrl: string;
@@ -51,6 +51,16 @@ export function ConnectionCard({
   connection: ConnectionItem | null;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashIntegrations;
+  const statusLabel = (s: string): string =>
+    s === "pending"
+      ? t.stPending
+      : s === "connected"
+        ? t.stConnected
+        : s === "disconnected"
+          ? t.stDisconnected
+          : t.stError;
   const [form, setForm] = React.useState<FormState>({
     ...EMPTY_FORM,
     displayName: connection?.displayName ?? PROVIDER_LABELS[provider],
@@ -94,7 +104,7 @@ export function ConnectionCard({
     }
     setPending(false);
     if (result.ok) {
-      setMessage("Connected.");
+      setMessage(t.connectedMsg);
       router.refresh();
     } else {
       setMessage(result.error);
@@ -129,31 +139,27 @@ export function ConnectionCard({
         </div>
         {connection ? (
           <Badge variant={STATUS_BADGE[connection.status]}>
-            {STATUS_LABELS[connection.status]}
+            {statusLabel(connection.status)}
           </Badge>
         ) : (
-          <Badge variant="outline">Not connected</Badge>
+          <Badge variant="outline">{t.notConnected}</Badge>
         )}
       </div>
 
       <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs">
-        <p className="font-medium">OAuth connect</p>
-        <p className="mt-1 text-muted-foreground">
-          Requires API credentials in env vars. See{" "}
-          <code>docs/setup/{provider === "meta_ads" ? "meta-integrations-setup.md" : "google-integrations-setup.md"}</code>.
-          Once configured, this button starts the secure OAuth flow.
-        </p>
+        <p className="font-medium">{t.oauthConnect}</p>
+        <p className="mt-1 text-muted-foreground">{t.oauthRequires}</p>
         <a
           href={`/api/integrations/oauth/${provider}/start`}
           className="mt-2 inline-flex h-8 items-center rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
         >
-          Connect with OAuth
+          {t.connectWithOauth}
         </a>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="space-y-1">
-          <label className="text-xs font-medium">Display name</label>
+          <label className="text-xs font-medium">{t.displayName}</label>
           <Input
             value={form.displayName}
             onChange={(event) => update("displayName", event.target.value)}
@@ -163,7 +169,7 @@ export function ConnectionCard({
         {provider === "gsc" ? (
           <>
             <div className="space-y-1">
-              <label className="text-xs font-medium">Site URL</label>
+              <label className="text-xs font-medium">{t.siteUrl}</label>
               <Input
                 value={form.siteUrl}
                 placeholder="https://example.com/"
@@ -172,7 +178,7 @@ export function ConnectionCard({
             </div>
             <div className="space-y-1 sm:col-span-2">
               <label className="text-xs font-medium">
-                Google account email
+                {t.googleAccountEmail}
               </label>
               <Input
                 value={form.accountId}
@@ -189,7 +195,7 @@ export function ConnectionCard({
           <>
             <div className="space-y-1">
               <label className="text-xs font-medium">
-                Customer ID
+                {t.customerId}
               </label>
               <Input
                 value={form.customerId}
@@ -201,18 +207,18 @@ export function ConnectionCard({
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium">
-                Manager (MCC) ID
+                {t.managerId}
               </label>
               <Input
                 value={form.managerCustomerId}
-                placeholder="optional"
+                placeholder={t.optional}
                 onChange={(event) =>
                   update("managerCustomerId", event.target.value)
                 }
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium">Currency</label>
+              <label className="text-xs font-medium">{t.currency}</label>
               <Input
                 value={form.currency}
                 placeholder="USD"
@@ -228,7 +234,7 @@ export function ConnectionCard({
           <>
             <div className="space-y-1">
               <label className="text-xs font-medium">
-                Ad account ID
+                {t.adAccountId}
               </label>
               <Input
                 value={form.adAccountId}
@@ -240,18 +246,18 @@ export function ConnectionCard({
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium">
-                Business manager ID
+                {t.businessId}
               </label>
               <Input
                 value={form.businessId}
-                placeholder="optional"
+                placeholder={t.optional}
                 onChange={(event) =>
                   update("businessId", event.target.value)
                 }
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium">Currency</label>
+              <label className="text-xs font-medium">{t.currency}</label>
               <Input
                 value={form.currency}
                 placeholder="USD"
@@ -266,7 +272,7 @@ export function ConnectionCard({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" size="sm" disabled={pending} onClick={handleConnect}>
-          {connection ? "Update connection" : "Connect"}
+          {connection ? t.updateConnection : t.connect}
         </Button>
         {connection && connection.status !== "disconnected" ? (
           <Button
@@ -277,7 +283,7 @@ export function ConnectionCard({
             disabled={pending}
             onClick={handleDisconnect}
           >
-            Disconnect
+            {t.disconnect}
           </Button>
         ) : null}
         {message ? (
@@ -285,12 +291,7 @@ export function ConnectionCard({
         ) : null}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Saving stores the account reference and marks the connection
-        <span className="font-medium"> Pending</span>. It becomes
-        <span className="font-medium"> Connected</span> only after the OAuth
-        flow completes and access tokens are stored.
-      </p>
+      <p className="text-xs text-muted-foreground">{t.savingNote}</p>
     </div>
   );
 }

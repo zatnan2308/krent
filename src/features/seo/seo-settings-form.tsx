@@ -9,6 +9,7 @@ import {
 } from "@/features/seo/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 const TEXTAREA_CLASS =
   "flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -42,16 +43,17 @@ export function SeoSettingsForm({
   siteHost?: string;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashSeo;
   const [form, setForm] = React.useState<SeoSettingsInput>({ ...initial });
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
 
   const host = siteHost || "your-domain.com";
   const previewTitle =
-    `${form.defaultTitle}${form.titleSuffix}`.trim() || "Your page title";
+    `${form.defaultTitle}${form.titleSuffix}`.trim() || t.previewTitlePlaceholder;
   const previewDescription =
-    form.defaultDescription.trim() ||
-    "Your page description appears here — keep it under ~160 characters for search results.";
+    form.defaultDescription.trim() || t.previewDescPlaceholder;
 
   return (
     <form
@@ -61,24 +63,18 @@ export function SeoSettingsForm({
         setPending(true);
         const result = await updateSeoSettings(form);
         setPending(false);
-        setMessage(result.ok ? "SEO settings saved." : (result.error ?? null));
+        setMessage(result.ok ? t.savedMsg : (result.error ?? null));
         if (result.ok) router.refresh();
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Default title"
-          hint="Used when a page has no SEO title."
-        >
+        <Field label={t.fDefaultTitle} hint={t.fDefaultTitleHint}>
           <Input
             value={form.defaultTitle}
             onChange={(e) => setForm({ ...form, defaultTitle: e.target.value })}
           />
         </Field>
-        <Field
-          label="Title suffix"
-          hint="Appended to titles, e.g. “ · Krent”."
-        >
+        <Field label={t.fTitleSuffix} hint={t.fTitleSuffixHint}>
           <Input
             value={form.titleSuffix}
             onChange={(e) => setForm({ ...form, titleSuffix: e.target.value })}
@@ -86,10 +82,7 @@ export function SeoSettingsForm({
         </Field>
       </div>
 
-      <Field
-        label="Default description"
-        hint="Fallback meta description for pages without one."
-      >
+      <Field label={t.fDefaultDescription} hint={t.fDefaultDescriptionHint}>
         <textarea
           className={TEXTAREA_CLASS}
           value={form.defaultDescription}
@@ -100,10 +93,7 @@ export function SeoSettingsForm({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Default OG image URL"
-          hint="Social preview image when a page has none."
-        >
+        <Field label={t.fOgImage} hint={t.fOgImageHint}>
           <Input
             value={form.defaultOgImageUrl}
             onChange={(e) =>
@@ -112,8 +102,8 @@ export function SeoSettingsForm({
           />
         </Field>
         <Field
-          label="Google site verification"
-          hint="Content of the google-site-verification meta tag."
+          label={t.fGoogleVerification}
+          hint={t.fGoogleVerificationHint}
         >
           <Input
             value={form.googleSiteVerification}
@@ -124,10 +114,7 @@ export function SeoSettingsForm({
         </Field>
       </div>
 
-      <Field
-        label="robots.txt"
-        hint="Custom robots.txt body. Leave blank for the default."
-      >
+      <Field label={t.fRobotsTxt} hint={t.fRobotsTxtHint}>
         <textarea
           className={`${TEXTAREA_CLASS} font-mono`}
           rows={4}
@@ -138,7 +125,7 @@ export function SeoSettingsForm({
 
       <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
         <p className="text-xs font-medium text-muted-foreground">
-          Live preview (defaults used when a page sets nothing of its own)
+          {t.livePreview}
         </p>
 
         {/* Google-сниппет */}
@@ -153,7 +140,7 @@ export function SeoSettingsForm({
             {previewDescription}
           </p>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Title {previewTitle.length}/60 · Description{" "}
+            {t.titleLabel} {previewTitle.length}/60 · {t.descLabel}{" "}
             {form.defaultDescription.trim().length}/160
           </p>
         </div>
@@ -169,7 +156,7 @@ export function SeoSettingsForm({
             />
           ) : (
             <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-muted text-xs text-muted-foreground">
-              No OG image set
+              {t.noOgImage}
             </div>
           )}
           <div className="space-y-0.5 border-t p-3">
@@ -186,7 +173,7 @@ export function SeoSettingsForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save SEO settings"}
+          {pending ? t.saving : t.saveBtn}
         </Button>
         {message ? (
           <span className="text-xs text-muted-foreground">{message}</span>

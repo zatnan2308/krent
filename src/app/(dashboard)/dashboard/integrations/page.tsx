@@ -54,6 +54,24 @@ export default async function IntegrationsPage() {
   );
   const dict = await getServerDictionary();
   const t = dict.dashIntegrations;
+  const offLabel = (key: string): string =>
+    (
+      ({
+        lead_qualified: t.offLeadQualified,
+        appointment_booked: t.offAppointment,
+        booking_confirmed: t.offBookingConfirmed,
+        deal_closed: t.offDealClosed,
+      }) as Record<string, string>
+    )[key] ?? key;
+  const offDesc = (key: string): string =>
+    (
+      ({
+        lead_qualified: t.offLeadQualifiedDesc,
+        appointment_booked: t.offAppointmentDesc,
+        booking_confirmed: t.offBookingConfirmedDesc,
+        deal_closed: t.offDealClosedDesc,
+      }) as Record<string, string>
+    )[key] ?? "";
 
   return (
     <div className="space-y-6">
@@ -117,9 +135,9 @@ export default async function IntegrationsPage() {
                 key={conversion.key}
                 className="rounded-md border p-3"
               >
-                <p className="font-medium">{conversion.label}</p>
+                <p className="font-medium">{offLabel(conversion.key)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {conversion.description}
+                  {offDesc(conversion.key)}
                 </p>
               </li>
             ))}
