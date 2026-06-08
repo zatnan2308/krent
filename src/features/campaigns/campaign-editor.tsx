@@ -254,11 +254,19 @@ export function CampaignEditor({
       setMessage(t.chooseDateTime);
       return;
     }
+    // datetime-local даёт «настенное» время браузера. Трактуем его как
+    // локальное и переводим в UTC ISO — иначе cron (сравнивает с UTC)
+    // отправит со сдвигом на часовой пояс админа.
+    const when = new Date(scheduledAt);
+    if (Number.isNaN(when.getTime())) {
+      setMessage(t.chooseDateTime);
+      return;
+    }
     setPending(true);
     setMessage(null);
     const result = await scheduleCampaign({
       campaignId: campaign.id,
-      scheduledAt,
+      scheduledAt: when.toISOString(),
     });
     setPending(false);
     if (result.ok) {
