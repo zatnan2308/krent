@@ -40,6 +40,7 @@ import {
 } from "@/lib/currency/config";
 import { formatCurrency, formatPrice } from "@/lib/currency/format";
 import { isLocale, LOCALES, type Locale } from "@/lib/i18n";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import {
   buildCanonicalUrl,
   buildLocalizedPath,
@@ -166,6 +167,8 @@ export default async function PropertyDetailPage({
   if (!view) notFound();
 
   const property = view.property;
+  const dict = await getServerDictionary();
+  const t = dict.propertyDetail;
   const similar = await getSimilarProperties(
     site.organization.id,
     property.id,
@@ -206,7 +209,7 @@ export default async function PropertyDetailPage({
           view.price.pricePeriod,
         )
       : null;
-  const priceLabel = priceText ?? "Price on request";
+  const priceLabel = priceText ?? t.priceOnRequest;
   // Вторая цена (аренда) для mixed-объектов.
   const rentPriceCurrency: CurrencyCode =
     view.rentPrice && isCurrencyCode(view.rentPrice.currency)
@@ -232,30 +235,30 @@ export default async function PropertyDetailPage({
   type Spec = { label: string; value: string; unit?: string | null };
   const specs: Spec[] = [];
   if (property.bedrooms !== null) {
-    specs.push({ label: "Bedrooms", value: String(property.bedrooms) });
+    specs.push({ label: t.sBedrooms, value: String(property.bedrooms) });
   }
   if (property.bathrooms !== null) {
-    specs.push({ label: "Bathrooms", value: String(property.bathrooms) });
+    specs.push({ label: t.sBathrooms, value: String(property.bathrooms) });
   }
   if (property.size !== null) {
     specs.push({
-      label: "Interior",
+      label: t.sInterior,
       value: String(property.size),
       unit: property.size_unit,
     });
   }
   if (property.guest_capacity !== null) {
-    specs.push({ label: "Guests", value: String(property.guest_capacity) });
+    specs.push({ label: t.sGuests, value: String(property.guest_capacity) });
   } else if (property.floor !== null) {
     specs.push({
-      label: "Floor",
+      label: t.sFloor,
       value:
         property.total_floors !== null
           ? `${property.floor} / ${property.total_floors}`
           : String(property.floor),
     });
   } else if (property.year_built !== null) {
-    specs.push({ label: "Built", value: String(property.year_built) });
+    specs.push({ label: t.sBuilt, value: String(property.year_built) });
   }
 
   // Meta-таблица (двух-колоночная).
@@ -263,28 +266,28 @@ export default async function PropertyDetailPage({
   meta.push(["Type", PROPERTY_TYPE_LABELS[property.property_type]]);
   meta.push(["Deal", PROPERTY_PURPOSE_LABELS[property.purpose]]);
   if (property.status !== "active") {
-    meta.push(["Status", PROPERTY_STATUS_LABELS[property.status]]);
+    meta.push([t.lStatus, PROPERTY_STATUS_LABELS[property.status]]);
   }
   if (property.year_built !== null && specs.every((s) => s.label !== "Built")) {
-    meta.push(["Year built", String(property.year_built)]);
+    meta.push([t.sYearBuilt, String(property.year_built)]);
   }
   if (property.floor !== null && specs.every((s) => s.label !== "Floor")) {
     meta.push([
-      "Floor",
+      t.sFloor,
       property.total_floors !== null
         ? `${property.floor} / ${property.total_floors}`
         : String(property.floor),
     ]);
   }
   if (property.parking !== null) {
-    meta.push(["Parking", String(property.parking)]);
+    meta.push([t.sParking, String(property.parking)]);
   }
   if (property.garage) {
-    meta.push(["Garage", "Yes"]);
+    meta.push([t.sGarage, t.yes]);
   }
   if (property.lot_size !== null) {
     meta.push([
-      "Lot size",
+      t.sLotSize,
       formatSize(property.lot_size, property.size_unit),
     ]);
   }
@@ -292,18 +295,18 @@ export default async function PropertyDetailPage({
   if (!isBookable) {
     if (view.fees.securityDeposit !== null) {
       meta.push([
-        "Security deposit",
+        t.sSecurityDeposit,
         formatCurrency(view.fees.securityDeposit, priceCurrency, locale),
       ]);
     }
     if (view.fees.cleaningFee !== null) {
       meta.push([
-        "Cleaning fee",
+        t.sCleaningFee,
         formatCurrency(view.fees.cleaningFee, priceCurrency, locale),
       ]);
     }
     if (view.fees.taxes !== null) {
-      meta.push(["Taxes", formatCurrency(view.fees.taxes, priceCurrency, locale)]);
+      meta.push([t.sTaxes, formatCurrency(view.fees.taxes, priceCurrency, locale)]);
     }
   }
 
@@ -311,23 +314,23 @@ export default async function PropertyDetailPage({
   const stayRules: [string, string][] = [];
   if (isBookable) {
     if (property.guest_capacity !== null) {
-      stayRules.push(["Guests", `Up to ${property.guest_capacity}`]);
+      stayRules.push([t.sGuests, t.upTo.replace("{n}", String(property.guest_capacity))]);
     }
     if (view.fees.cleaningFee !== null) {
       stayRules.push([
-        "Cleaning fee",
+        t.sCleaningFee,
         formatCurrency(view.fees.cleaningFee, priceCurrency, locale),
       ]);
     }
     if (view.fees.securityDeposit !== null) {
       stayRules.push([
-        "Security deposit",
+        t.sSecurityDeposit,
         formatCurrency(view.fees.securityDeposit, priceCurrency, locale),
       ]);
     }
     if (view.fees.taxes !== null) {
       stayRules.push([
-        "Taxes & fees",
+        t.sTaxesFees,
         formatCurrency(view.fees.taxes, priceCurrency, locale),
       ]);
     }
@@ -377,11 +380,11 @@ export default async function PropertyDetailPage({
     formatCurrency(Math.round(n), priceCurrency, locale);
   const pctText = (n: number): string => `${n}%`;
   const acquisition: [string, string, string][] = [
-    ["Purchase price", fmtC(acqBase), ""],
-    ["Transfer fee", fmtC((acqBase * transferPct) / 100), pctText(transferPct)],
-    ["Agency fee", fmtC((acqBase * agencyPct) / 100), pctText(agencyPct)],
+    [t.aPurchasePrice, fmtC(acqBase), ""],
+    [t.aTransferFee, fmtC((acqBase * transferPct) / 100), pctText(transferPct)],
+    [t.aAgencyFee, fmtC((acqBase * agencyPct) / 100), pctText(agencyPct)],
     [
-      "Registration",
+      t.aRegistration,
       fmtC((acqBase * registrationPct) / 100),
       pctText(registrationPct),
     ],
@@ -394,41 +397,41 @@ export default async function PropertyDetailPage({
   // только реальные поля из БД, ничего не выдумываем.
   const buyDetails: [string, string][] = [];
   if (property.ownership) {
-    buyDetails.push(["Ownership", property.ownership]);
+    buyDetails.push([t.sOwnership, property.ownership]);
   }
   if (property.completion) {
-    buyDetails.push(["Status", property.completion]);
+    buyDetails.push([t.lStatus, property.completion]);
   } else if (property.status !== "active") {
-    buyDetails.push(["Status", PROPERTY_STATUS_LABELS[property.status]]);
+    buyDetails.push([t.lStatus, PROPERTY_STATUS_LABELS[property.status]]);
   }
   if (property.rental_yield !== null) {
-    buyDetails.push(["Est. net yield", `${property.rental_yield}%`]);
+    buyDetails.push([t.iNetYield, `${property.rental_yield}%`]);
   }
 
   // Ячейки блока «Investment» — собираем только из доступных данных.
   const investCells: { value: string; label: string; note?: string }[] = [];
   investCells.push({
-    value: priceText ?? "—",
-    label: "Listed price",
+    value: priceText ?? t.priceOnRequest,
+    label: t.iListedPrice,
     note:
       view.price?.pricePeriod === "week"
-        ? "Weekly"
+        ? t.iWeekly
         : view.price?.pricePeriod === "night"
-          ? "Per night"
-          : "Asking",
+          ? t.iPerNight
+          : t.iAsking,
   });
   if (pricePerUnit !== null) {
     investCells.push({
       value: `${formatCurrency(pricePerUnit, priceCurrency, locale)} / ${property.size_unit}`,
-      label: "Price per area",
-      note: `Based on ${property.size} ${property.size_unit} interior`,
+      label: t.iPricePerArea,
+      note: t.iBasedOn.replace("{size}", String(property.size)).replace("{unit}", property.size_unit),
     });
   }
   if (property.rental_yield !== null) {
     investCells.push({
       value: `${property.rental_yield}%`,
-      label: "Est. net yield",
-      note: "Gross, indicative",
+      label: t.iNetYield,
+      note: t.iGrossIndicative,
     });
   }
 
@@ -639,7 +642,7 @@ export default async function PropertyDetailPage({
                 borderBottom: "1px solid var(--border-subtle)",
               }}
             >
-              <span className="eyebrow">Listed by</span>
+              <span className="eyebrow">{t.listedBy}</span>
               <div
                 className="serif"
                 style={{
@@ -687,14 +690,14 @@ export default async function PropertyDetailPage({
                 className="btn btn-solid"
                 style={{ justifyContent: "center", padding: "18px 22px" }}
               >
-                Request a viewing <span className="arrow">→</span>
+                {t.requestViewing} <span className="arrow">→</span>
               </Link>
               <Link
                 href={buildLocalizedPath(locale, "/contact")}
                 className="btn btn-ghost"
                 style={{ justifyContent: "center", padding: "16px 22px" }}
               >
-                Ask a question
+                {t.askQuestion}
               </Link>
             </div>
 
@@ -785,7 +788,7 @@ export default async function PropertyDetailPage({
             {/* Description */}
             {descriptionParagraphs.length > 0 ? (
               <div style={{ padding: "64px 0", maxWidth: "64ch" }}>
-                <span className="eyebrow gold">About this property</span>
+                <span className="eyebrow gold">{t.aboutProperty}</span>
                 <div style={{ marginTop: 28 }}>
                   {descriptionParagraphs.map((para, i) => (
                     <p
@@ -865,7 +868,7 @@ export default async function PropertyDetailPage({
                   borderTop: "1px solid var(--border-subtle)",
                 }}
               >
-                <span className="eyebrow gold">Financing</span>
+                <span className="eyebrow gold">{t.financing}</span>
                 <h2
                   className="serif"
                   style={{
@@ -876,7 +879,7 @@ export default async function PropertyDetailPage({
                     fontWeight: 400,
                   }}
                 >
-                  Mortgage calculator
+                  {t.mortgageCalculator}
                 </h2>
                 <MortgageCalculator
                   price={acqBase}
@@ -894,7 +897,7 @@ export default async function PropertyDetailPage({
                     fontWeight: 400,
                   }}
                 >
-                  Total cost of acquisition
+                  {t.totalAcqCost}
                 </h2>
                 <div
                   style={{
@@ -953,7 +956,7 @@ export default async function PropertyDetailPage({
                       className="serif"
                       style={{ fontSize: "1.25rem", letterSpacing: "-0.01em" }}
                     >
-                      Total acquisition cost
+                      {t.totalAcqCost2}
                     </span>
                     <span
                       className="serif tnum"
@@ -987,7 +990,7 @@ export default async function PropertyDetailPage({
             {view.amenities.length > 0 ? (
               <div style={{ padding: "64px 0" }}>
                 <span className="eyebrow gold">
-                  {isBookable ? "What this place offers" : "Features"}
+                  {isBookable ? t.whatOffers : t.features}
                 </span>
                 <ul
                   style={{
@@ -1029,7 +1032,7 @@ export default async function PropertyDetailPage({
                   borderTop: "1px solid var(--border-subtle)",
                 }}
               >
-                <span className="eyebrow gold">Video tours</span>
+                <span className="eyebrow gold">{t.videoTours}</span>
                 <div
                   style={{
                     marginTop: 28,
@@ -1097,7 +1100,7 @@ export default async function PropertyDetailPage({
                   borderTop: "1px solid var(--border-subtle)",
                 }}
               >
-                <span className="eyebrow gold">Good to know</span>
+                <span className="eyebrow gold">{t.goodToKnow}</span>
                 <div
                   className="ed-features-grid"
                   style={{
@@ -1188,7 +1191,7 @@ export default async function PropertyDetailPage({
               <div>
                 <span className="eyebrow gold">
                   <span className="dot" />
-                  The numbers
+                  {t.theNumbers}
                 </span>
                 <h2
                   className="serif"
@@ -1291,7 +1294,7 @@ export default async function PropertyDetailPage({
               <div>
                 <span className="eyebrow gold">
                   <span className="dot" />
-                  You may also consider
+                  {t.youMayConsider}
                 </span>
                 <h2
                   className="serif"
@@ -1316,7 +1319,7 @@ export default async function PropertyDetailPage({
                   textTransform: "uppercase",
                 }}
               >
-                All properties <span className="arrow">→</span>
+                {t.allProperties} <span className="arrow">→</span>
               </Link>
             </div>
 
@@ -1370,7 +1373,7 @@ export default async function PropertyDetailPage({
             userSelect: "none",
           }}
         >
-          Interested?
+          {t.interested}
         </span>
 
         <div
@@ -1393,7 +1396,7 @@ export default async function PropertyDetailPage({
             <div>
               <span className="eyebrow gold">
                 <span className="dot" />
-                Book a viewing
+                {t.bookViewing}
               </span>
               <h2
                 className="serif"
@@ -1404,7 +1407,7 @@ export default async function PropertyDetailPage({
                   lineHeight: 0.98,
                 }}
               >
-                Interested?
+                {t.interested}
                 <br />
                 <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
                   Let&apos;s talk.
@@ -1439,7 +1442,7 @@ export default async function PropertyDetailPage({
                     marginBottom: 10,
                   }}
                 >
-                  Or reach directly
+                  {t.orReachDirectly}
                 </div>
                 <Link
                   href={buildLocalizedPath(locale, "/contact")}
@@ -1452,7 +1455,7 @@ export default async function PropertyDetailPage({
                     textDecoration: "none",
                   }}
                 >
-                  Direct line & WhatsApp →
+                  {t.directLine}
                 </Link>
                 <PropertyChannelLinks links={channelLinks} />
               </div>
