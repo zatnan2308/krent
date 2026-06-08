@@ -1,7 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
+import {
+  deleteContentTranslations,
+  resolveOrgLocale,
+  saveContentTranslation,
+} from "@/lib/i18n/content-translations";
 import { createClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -101,6 +106,40 @@ export async function createAmenity(
   return { ok: true };
 }
 
+/**
+ * Сохраняет перевод названия удобства/категории на доп.язык. Базовое имя
+ * (язык по умолчанию) меняется через create; здесь — только перевод оверлеем.
+ * Работает и для системных строк (перевод привязан к текущей организации).
+ */
+export async function saveAmenityTranslation(
+  kind: "amenity" | "amenity_category",
+  id: string,
+  name: string,
+  locale: string,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "properties.manage_all")) {
+    return { ok: false, error: "You cannot manage amenities." };
+  }
+  const org = context.organization;
+  const target = resolveOrgLocale(org, locale);
+  if (target === org.default_language) {
+    return { ok: false, error: "Switch to another language to translate." };
+  }
+  const ok = await saveContentTranslation(org.id, kind, id, target, {
+    name: name.trim() || null,
+  });
+  if (!ok) {
+    return { ok: false, error: "Could not save the translation." };
+  }
+  revalidatePath(AMENITIES_PATH);
+  revalidateTag("public-site");
+  return { ok: true };
+}
+
 /** Удаляет кастомное удобство организации (системные не затрагиваются). */
 export async function deleteAmenity(amenityId: string): Promise<ActionResult> {
   const context = await requireOrganizationContext();
@@ -120,6 +159,11 @@ export async function deleteAmenity(amenityId: string): Promise<ActionResult> {
   if (error) {
     return { ok: false, error: "Could not delete the amenity." };
   }
+  await deleteContentTranslations(
+    context.organization.id,
+    "amenity",
+    amenityId,
+  );
 
   revalidatePath(AMENITIES_PATH);
   return { ok: true };
@@ -146,6 +190,11 @@ export async function deleteAmenityCategory(
   if (error) {
     return { ok: false, error: "Could not delete the category." };
   }
+  await deleteContentTranslations(
+    context.organization.id,
+    "amenity_category",
+    categoryId,
+  );
 
   revalidatePath(AMENITIES_PATH);
   return { ok: true };

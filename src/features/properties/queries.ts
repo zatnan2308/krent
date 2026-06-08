@@ -3,6 +3,10 @@ import { unstable_cache } from "next/cache";
 
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { isLocale, type Locale } from "@/lib/i18n";
+import {
+  getContentTranslations,
+  tr,
+} from "@/lib/i18n/content-translations";
 import type { LocalizedSlugs } from "@/lib/seo";
 
 import type {
@@ -429,6 +433,9 @@ export async function getPublicProperties(
 /** Имена удобств по каждому объекту (для клиентского фильтра каталога). */
 export async function getPropertyAmenityNames(
   propertyIds: string[],
+  organizationId: string,
+  locale: string,
+  defaultLocale: string,
 ): Promise<Map<string, string[]>> {
   const map = new Map<string, string[]>();
   if (propertyIds.length === 0) return map;
@@ -441,11 +448,13 @@ export async function getPropertyAmenityNames(
     new Set((links ?? []).map((l) => l.amenity_id)),
   );
   if (amenityIds.length === 0) return map;
-  const { data: amenities } = await supabase
-    .from("amenities")
-    .select("id, name")
-    .in("id", amenityIds);
-  const nameById = new Map((amenities ?? []).map((a) => [a.id, a.name]));
+  const [{ data: amenities }, amTr] = await Promise.all([
+    supabase.from("amenities").select("id, name").in("id", amenityIds),
+    getContentTranslations(organizationId, "amenity", locale, defaultLocale),
+  ]);
+  const nameById = new Map(
+    (amenities ?? []).map((a) => [a.id, tr(a.name, amTr.get(a.id)?.name) ?? a.name]),
+  );
   for (const link of links ?? []) {
     const name = nameById.get(link.amenity_id);
     if (!name) continue;
@@ -584,12 +593,23 @@ export const getPublicProperty = cache(async function getPublicProperty(
   const amenityIds = (amenityLinks.data ?? []).map((row) => row.amenity_id);
   let amenities: { id: string; name: string }[] = [];
   if (amenityIds.length > 0) {
-    const { data: amenityRows } = await supabase
-      .from("amenities")
-      .select("id, name")
-      .in("id", amenityIds)
-      .order("sort_order", { ascending: true });
-    amenities = amenityRows ?? [];
+    const [{ data: amenityRows }, amTr] = await Promise.all([
+      supabase
+        .from("amenities")
+        .select("id, name")
+        .in("id", amenityIds)
+        .order("sort_order", { ascending: true }),
+      getContentTranslations(
+        property.organization_id,
+        "amenity",
+        locale,
+        defaultLocale,
+      ),
+    ]);
+    amenities = (amenityRows ?? []).map((a) => ({
+      id: a.id,
+      name: tr(a.name, amTr.get(a.id)?.name) ?? a.name,
+    }));
   }
 
   const agentId = property.assigned_agent_id;
@@ -635,10 +655,12 @@ export const getPublicProperty = cache(async function getPublicProperty(
 /** Каталог удобств организации: системные + кастомные. */
 export async function getPublicAmenities(
   organizationId: string,
+  locale: string,
+  defaultLocale: string,
 ): Promise<{ categories: AmenityCategory[]; amenities: Amenity[] }> {
   const supabase = createClient();
   const orgFilter = `organization_id.is.null,organization_id.eq.${organizationId}`;
-  const [categories, amenities] = await Promise.all([
+  const [categories, amenities, catTr, amTr] = await Promise.all([
     supabase
       .from("amenity_categories")
       .select("*")
@@ -649,10 +671,23 @@ export async function getPublicAmenities(
       .select("*")
       .or(orgFilter)
       .order("sort_order", { ascending: true }),
+    getContentTranslations(
+      organizationId,
+      "amenity_category",
+      locale,
+      defaultLocale,
+    ),
+    getContentTranslations(organizationId, "amenity", locale, defaultLocale),
   ]);
   return {
-    categories: categories.data ?? [],
-    amenities: amenities.data ?? [],
+    categories: (categories.data ?? []).map((c) => ({
+      ...c,
+      name: tr(c.name, catTr.get(c.id)?.name) ?? c.name,
+    })),
+    amenities: (amenities.data ?? []).map((a) => ({
+      ...a,
+      name: tr(a.name, amTr.get(a.id)?.name) ?? a.name,
+    })),
   };
 }
 

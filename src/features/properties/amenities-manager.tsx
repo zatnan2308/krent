@@ -9,6 +9,7 @@ import {
   createAmenityCategory,
   deleteAmenity,
   deleteAmenityCategory,
+  saveAmenityTranslation,
 } from "@/features/properties/amenities-actions";
 import type { AmenityCatalog } from "@/features/properties/dashboard-queries";
 import type { ActionResult } from "@/features/properties/schema";
@@ -28,10 +29,68 @@ const FIELD_CLASS =
 interface AmenitiesManagerProps {
   catalog: AmenityCatalog;
   canManage: boolean;
+  /** Локаль редактирования (default → базовое имя через create; иначе перевод). */
+  locale: string;
+  /** true — язык по умолчанию (CRUD структуры); иначе режим перевода имён. */
+  isDefault: boolean;
+  /** Сырые переводы имён категорий по id (для режима перевода). */
+  categoryTranslations: Record<string, string>;
+  /** Сырые переводы имён удобств по id (для режима перевода). */
+  amenityTranslations: Record<string, string>;
+}
+
+/** Поле перевода имени удобства/категории на выбранный язык. */
+function NameTranslator({
+  kind,
+  id,
+  base,
+  initial,
+  locale,
+}: {
+  kind: "amenity" | "amenity_category";
+  id: string;
+  base: string;
+  initial: string;
+  locale: string;
+}) {
+  const router = useRouter();
+  const [value, setValue] = React.useState(initial);
+  const [busy, setBusy] = React.useState(false);
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        value={value}
+        placeholder={base}
+        onChange={(event) => setValue(event.target.value)}
+        className="h-8 w-48"
+      />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          await saveAmenityTranslation(kind, id, value, locale);
+          setBusy(false);
+          router.refresh();
+        }}
+      >
+        Save
+      </Button>
+    </div>
+  );
 }
 
 /** Управление каталогом удобств: системные только для чтения, кастомные — CRUD. */
-export function AmenitiesManager({ catalog, canManage }: AmenitiesManagerProps) {
+export function AmenitiesManager({
+  catalog,
+  canManage,
+  locale,
+  isDefault,
+  categoryTranslations,
+  amenityTranslations,
+}: AmenitiesManagerProps) {
   const router = useRouter();
   const [categoryName, setCategoryName] = React.useState("");
   const [amenityName, setAmenityName] = React.useState("");
@@ -80,6 +139,40 @@ export function AmenitiesManager({ catalog, canManage }: AmenitiesManagerProps) 
       !catalog.categories.some((c) => c.id === amenity.category_id),
   );
 
+  /** Строка удобства: имя + перевод (в режиме перевода) или удаление. */
+  const amenityRow = (amenity: { id: string; name: string; organization_id: string | null }) => {
+    const amenityIsSystem = amenity.organization_id === null;
+    return (
+      <li
+        key={amenity.id}
+        className="flex items-center justify-between gap-3 py-2"
+      >
+        <span className="text-sm">{amenity.name}</span>
+        {!isDefault ? (
+          <NameTranslator
+            kind="amenity"
+            id={amenity.id}
+            base={amenity.name}
+            initial={amenityTranslations[amenity.id] ?? ""}
+            locale={locale}
+          />
+        ) : canManage && !amenityIsSystem ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+            disabled={pending}
+            aria-label="Delete amenity"
+            onClick={() => void run(() => deleteAmenity(amenity.id))}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null}
+      </li>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {error ? (
@@ -104,7 +197,15 @@ export function AmenitiesManager({ catalog, canManage }: AmenitiesManagerProps) 
                   </span>
                 ) : null}
               </CardTitle>
-              {canManage && !isSystem ? (
+              {!isDefault ? (
+                <NameTranslator
+                  kind="amenity_category"
+                  id={category.id}
+                  base={category.name}
+                  initial={categoryTranslations[category.id] ?? ""}
+                  locale={locale}
+                />
+              ) : canManage && !isSystem ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -122,34 +223,7 @@ export function AmenitiesManager({ catalog, canManage }: AmenitiesManagerProps) 
             </CardHeader>
             <CardContent>
               {items.length > 0 ? (
-                <ul className="divide-y">
-                  {items.map((amenity) => {
-                    const amenityIsSystem = amenity.organization_id === null;
-                    return (
-                      <li
-                        key={amenity.id}
-                        className="flex items-center justify-between gap-3 py-2"
-                      >
-                        <span className="text-sm">{amenity.name}</span>
-                        {canManage && !amenityIsSystem ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive"
-                            disabled={pending}
-                            aria-label="Delete amenity"
-                            onClick={() =>
-                              void run(() => deleteAmenity(amenity.id))
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
+                <ul className="divide-y">{items.map(amenityRow)}</ul>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   No amenities in this category.
@@ -166,29 +240,7 @@ export function AmenitiesManager({ catalog, canManage }: AmenitiesManagerProps) 
             <CardTitle className="text-base">Uncategorized</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="divide-y">
-              {uncategorized.map((amenity) => (
-                <li
-                  key={amenity.id}
-                  className="flex items-center justify-between gap-3 py-2"
-                >
-                  <span className="text-sm">{amenity.name}</span>
-                  {canManage && amenity.organization_id !== null ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive"
-                      disabled={pending}
-                      aria-label="Delete amenity"
-                      onClick={() => void run(() => deleteAmenity(amenity.id))}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            <ul className="divide-y">{uncategorized.map(amenityRow)}</ul>
           </CardContent>
         </Card>
       ) : null}
@@ -200,7 +252,7 @@ export function AmenitiesManager({ catalog, canManage }: AmenitiesManagerProps) 
         />
       ) : null}
 
-      {canManage ? (
+      {canManage && isDefault ? (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>

@@ -170,7 +170,11 @@ export async function renderCatalog({
   };
 
   const [amenityCatalog, result] = await Promise.all([
-    getPublicAmenities(site.organization.id),
+    getPublicAmenities(
+      site.organization.id,
+      locale,
+      site.organization.default_language,
+    ),
     getPublicProperties(
       site.organization.id,
       locale,
@@ -181,6 +185,9 @@ export async function renderCatalog({
 
   const amenityMap = await getPropertyAmenityNames(
     result.items.map((card) => card.id),
+    site.organization.id,
+    locale,
+    site.organization.default_language,
   );
 
   const items: CatalogItem[] = result.items.map((card) => {
