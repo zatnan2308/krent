@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -28,6 +29,8 @@ const FIELD_CLASS =
 /** Минимальная форма создания объекта; после создания ведёт в редактор. */
 export function PropertyCreateForm() {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashProperties;
   const [title, setTitle] = React.useState("");
   const [propertyType, setPropertyType] =
     React.useState<PropertyType>("apartment");
@@ -37,7 +40,7 @@ export function PropertyCreateForm() {
 
   async function handleCreate() {
     if (!title.trim()) {
-      setError("Title is required.");
+      setError(t.titleRequired);
       return;
     }
     setPending(true);
@@ -59,24 +62,24 @@ export function PropertyCreateForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Property basics</CardTitle>
+        <CardTitle className="text-base">{t.propertyBasics}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="property-title" className="text-sm font-medium">
-            Title
+            {t.colTitle}
           </label>
           <Input
             id="property-title"
             value={title}
-            placeholder="Sunny two-bedroom apartment"
+            placeholder={t.titlePlaceholder}
             onChange={(event) => setTitle(event.target.value)}
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label htmlFor="property-type" className="text-sm font-medium">
-              Type
+              {t.colType}
             </label>
             <select
               id="property-type"
@@ -95,7 +98,7 @@ export function PropertyCreateForm() {
           </div>
           <div className="space-y-2">
             <label htmlFor="property-purpose" className="text-sm font-medium">
-              Purpose
+              {t.colPurpose}
             </label>
             <select
               id="property-purpose"
@@ -119,7 +122,7 @@ export function PropertyCreateForm() {
           </p>
         ) : null}
         <Button type="button" onClick={handleCreate} disabled={pending}>
-          {pending ? "Creating..." : "Create property"}
+          {pending ? t.creating : t.createProperty}
         </Button>
       </CardContent>
     </Card>

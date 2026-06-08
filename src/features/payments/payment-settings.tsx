@@ -12,6 +12,7 @@ import type { ProviderSetting } from "@/features/payments/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -25,6 +26,8 @@ function ProviderCard({
   canManage: boolean;
 }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashBookings;
   const { provider, row, account, operational } = setting;
 
   const [enabled, setEnabled] = React.useState(row?.is_enabled ?? false);
@@ -64,7 +67,7 @@ function ProviderCard({
     });
     setPending(false);
     if (result.ok) {
-      setMessage("Saved.");
+      setMessage(t.savedMsg);
       router.refresh();
     } else {
       setMessage(result.error);
@@ -92,23 +95,23 @@ function ProviderCard({
             disabled={!canManage}
             onChange={(event) => setEnabled(event.target.checked)}
           />
-          Enabled
+          {t.enabledLabel}
         </label>
       </div>
 
       {!operational ? (
         <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           {provider === "stripe"
-            ? "Set STRIPE_SECRET_KEY (and STRIPE_WEBHOOK_SECRET) in the environment to accept card payments."
+            ? t.stripeEnvNote
             : provider === "paypal"
-              ? "Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in the environment to accept PayPal payments."
-              : "This payment provider is not fully configured yet."}
+              ? t.paypalEnvNote
+              : t.notConfigured}
         </p>
       ) : null}
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="space-y-1">
-          <span className="text-xs font-medium">Display name</span>
+          <span className="text-xs font-medium">{t.displayName}</span>
           <Input
             value={displayName}
             disabled={!canManage}
@@ -117,18 +120,18 @@ function ProviderCard({
         </div>
         {showMode ? (
           <div className="space-y-1">
-            <span className="text-xs font-medium">Mode</span>
+            <span className="text-xs font-medium">{t.mode}</span>
             <select
               className={FIELD_CLASS}
               value={mode}
               disabled={!canManage}
-              aria-label="Provider mode"
+              aria-label={t.providerModeAria}
               onChange={(event) =>
                 setMode(event.target.value === "live" ? "live" : "test")
               }
             >
-              <option value="test">Test</option>
-              <option value="live">Live</option>
+              <option value="test">{t.modeTest}</option>
+              <option value="live">{t.modeLive}</option>
             </select>
           </div>
         ) : null}
@@ -136,24 +139,21 @@ function ProviderCard({
 
       {provider === "stripe" ? (
         <div className="space-y-1">
-          <span className="text-xs font-medium">Publishable key</span>
+          <span className="text-xs font-medium">{t.publishableKey}</span>
           <Input
             value={publishableKey}
             disabled={!canManage}
             placeholder="pk_live_..."
             onChange={(event) => setPublishableKey(event.target.value)}
           />
-          <p className="text-xs text-muted-foreground">
-            The secret key and webhook secret are read from environment
-            variables — never stored here.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.secretKeyNote}</p>
         </div>
       ) : null}
 
       {provider === "crypto" ? (
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="space-y-1">
-            <span className="text-xs font-medium">Network</span>
+            <span className="text-xs font-medium">{t.network}</span>
             <Input
               value={cryptoNetwork}
               disabled={!canManage}
@@ -162,7 +162,7 @@ function ProviderCard({
             />
           </div>
           <div className="space-y-1">
-            <span className="text-xs font-medium">Wallet address</span>
+            <span className="text-xs font-medium">{t.walletAddress}</span>
             <Input
               value={cryptoWallet}
               disabled={!canManage}
@@ -175,13 +175,13 @@ function ProviderCard({
       {provider === "crypto" || provider === "manual" ? (
         <div className="space-y-1">
           <span className="text-xs font-medium">
-            Instructions for guests
+            {t.instructionsForGuests}
           </span>
           <Textarea
             rows={3}
             value={instructions}
             disabled={!canManage}
-            placeholder="Shown to the guest when they choose this method."
+            placeholder={t.instructionsPlaceholder}
             onChange={(event) => setInstructions(event.target.value)}
           />
         </div>
@@ -195,7 +195,7 @@ function ProviderCard({
             disabled={pending}
             onClick={handleSave}
           >
-            Save
+            {t.saveBtn}
           </Button>
           {message ? (
             <span className="text-xs text-muted-foreground">{message}</span>

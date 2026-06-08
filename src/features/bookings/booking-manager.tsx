@@ -17,6 +17,7 @@ import { PAYMENT_PROVIDER_LABELS } from "@/features/payments/constants";
 import type { PaymentProviderType } from "@/features/payments/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -47,6 +48,8 @@ export function BookingManager({
   canManagePayments,
 }: BookingManagerProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashBookings;
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -66,7 +69,7 @@ export function BookingManager({
     if (result.ok) {
       router.refresh();
     } else {
-      setError(result.error ?? "Action failed.");
+      setError(result.error ?? t.actionFailed);
     }
   }
 
@@ -95,7 +98,7 @@ export function BookingManager({
                 run(() => confirmBookingAction(bookingId))
               }
             >
-              Confirm booking
+              {t.confirmBooking}
             </Button>
           ) : null}
           {showComplete ? (
@@ -108,7 +111,7 @@ export function BookingManager({
                 run(() => completeBookingAction(bookingId))
               }
             >
-              Mark completed
+              {t.markCompleted}
             </Button>
           ) : null}
           {showCancel ? (
@@ -120,7 +123,7 @@ export function BookingManager({
               disabled={pending}
               onClick={() => run(() => cancelBookingAction(bookingId))}
             >
-              Cancel booking
+              {t.cancelBooking}
             </Button>
           ) : null}
         </div>
@@ -128,20 +131,20 @@ export function BookingManager({
 
       {showRecordPayment ? (
         <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm font-medium">Record a payment</p>
+          <p className="text-sm font-medium">{t.recordPaymentTitle}</p>
           <div className="grid gap-2 sm:grid-cols-3">
             <Input
               type="number"
               min={0}
               step="any"
               value={payAmount}
-              aria-label="Payment amount"
+              aria-label={t.paymentAmountAria}
               onChange={(event) => setPayAmount(event.target.value)}
             />
             <select
               className={FIELD_CLASS}
               value={payProvider}
-              aria-label="Payment method"
+              aria-label={t.paymentMethodAria}
               onChange={(event) =>
                 setPayProvider(event.target.value as PaymentProviderType)
               }
@@ -154,8 +157,8 @@ export function BookingManager({
             </select>
             <Input
               value={payReference}
-              placeholder="Reference (optional)"
-              aria-label="Payment reference"
+              placeholder={t.referenceOptional}
+              aria-label={t.paymentReferenceAria}
               onChange={(event) => setPayReference(event.target.value)}
             />
           </div>
@@ -174,27 +177,27 @@ export function BookingManager({
               )
             }
           >
-            Record payment
+            {t.recordPayment}
           </Button>
         </div>
       ) : null}
 
       {showRefund ? (
         <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm font-medium">Issue a refund</p>
+          <p className="text-sm font-medium">{t.issueRefundTitle}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             <Input
               type="number"
               min={0}
               step="any"
               value={refundAmount}
-              aria-label="Refund amount"
+              aria-label={t.refundAmountAria}
               onChange={(event) => setRefundAmount(event.target.value)}
             />
             <Input
               value={refundReason}
-              placeholder="Reason (optional)"
-              aria-label="Refund reason"
+              placeholder={t.reasonOptional}
+              aria-label={t.refundReasonAria}
               onChange={(event) => setRefundReason(event.target.value)}
             />
           </div>
@@ -213,7 +216,7 @@ export function BookingManager({
               )
             }
           >
-            Issue refund
+            {t.issueRefund}
           </Button>
         </div>
       ) : null}
@@ -224,7 +227,7 @@ export function BookingManager({
       !showRecordPayment &&
       !showRefund ? (
         <p className="text-sm text-muted-foreground">
-          No actions available for this booking.
+          {t.noActions}
         </p>
       ) : null}
 
