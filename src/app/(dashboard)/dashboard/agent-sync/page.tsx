@@ -132,10 +132,7 @@ export default async function AgentSyncPage() {
         <CardContent className="space-y-2 text-sm">
           {firstAgentConnection ? (
             <>
-              <p className="text-xs text-muted-foreground">
-                Replace the agent ID with the one from the list above. Send the
-                API key via <code>Authorization: Bearer …</code>.
-              </p>
+              <p className="text-xs text-muted-foreground">{t.feedUrlsHint}</p>
               <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md border bg-muted/30 p-3 text-xs">
                 {[
                   `GET ${baseUrl}/api/public/v1/agents/${firstAgentConnection.agent_id}/properties`,
@@ -178,10 +175,7 @@ export default async function AgentSyncPage() {
         <CardContent className="space-y-4 text-sm">
           <div>
             <p className="font-medium">{t.authentication}</p>
-            <p className="text-xs text-muted-foreground">
-              Send the API key in either <code>Authorization: Bearer …</code> or
-              <code> x-api-key</code> header. Rate limit is enforced per minute.
-            </p>
+            <p className="text-xs text-muted-foreground">{t.authHint}</p>
           </div>
           <div>
             <p className="font-medium">{t.scopes}</p>
@@ -224,7 +218,8 @@ export default async function AgentSyncPage() {
               <ul className="text-xs text-muted-foreground">
                 {usage.series.slice(-7).map((row) => (
                   <li key={row.date}>
-                    {row.date}: {row.total} req · {row.errors} errors
+                    {row.date}: {row.total} {t.reqShort} · {row.errors}{" "}
+                    {t.errorsShort}
                   </li>
                 ))}
               </ul>
@@ -274,9 +269,9 @@ export default async function AgentSyncPage() {
                   className="flex flex-wrap items-center justify-between gap-2"
                 >
                   <span>
-                    Attempt {row.attempt} ·{" "}
+                    {t.attemptLabel} {row.attempt} ·{" "}
                     <span className="text-muted-foreground">{row.status}</span>{" "}
-                    · HTTP {row.response_code ?? "—"}
+                    · {t.httpLabel} {row.response_code ?? "—"}
                   </span>
                   <span className="text-muted-foreground">
                     {new Date(row.attempted_at).toLocaleString()}

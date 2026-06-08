@@ -2,6 +2,9 @@ import type { DeepPartial, Dictionary } from "./en";
 
 export const ru: DeepPartial<Dictionary> = {
   common: {
+    editingLanguage: "Язык редактирования",
+    defaultLangNote: "Язык по умолчанию — это базовый контент, который показывается при отсутствии перевода.",
+    translatingNote: "Перевод на {locale}. Пустые поля заменяются языком {default}.",
     signIn: "Войти",
     openDashboard: "Открыть панель",
     backToHome: "На главную",
@@ -897,6 +900,12 @@ export const ru: DeepPartial<Dictionary> = {
     hintPropertyType: "напр. apartment, villa, house",
   },
   dashAgentSync: {
+    feedUrlsHint: "Замените ID агента на ID из списка выше. Передавайте API-ключ через Authorization: Bearer ….",
+    authHint: "Передавайте API-ключ в заголовке Authorization: Bearer … или x-api-key. Лимит запросов — в минуту.",
+    reqShort: "запр.",
+    errorsShort: "ошибок",
+    attemptLabel: "Попытка",
+    httpLabel: "HTTP",
     description:
       "Подключайте сайты агентов к CRM агентства. Делитесь объектами через API, JSON/XML-фиды или встраиваемый виджет. Вебхуки доставляют обновления в реальном времени.",
     syncSettings: "Настройки синхронизации объектов",

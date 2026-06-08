@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,6 +23,8 @@ export function ContentLanguageTabs({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { dict } = useI18n();
+  const t = dict.common;
 
   if (languages.length <= 1) {
     return null;
@@ -42,7 +45,7 @@ export function ContentLanguageTabs({
     <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-muted-foreground">
-          Editing language
+          {t.editingLanguage}
         </span>
         <div className="flex flex-wrap gap-1">
           {languages.map((code) => (
@@ -65,8 +68,10 @@ export function ContentLanguageTabs({
       </div>
       <p className="text-xs text-muted-foreground">
         {current === defaultLocale
-          ? "Default language — this is the base content shown when a translation is missing."
-          : `Translating into ${current.toUpperCase()}. Empty fields fall back to ${defaultLocale.toUpperCase()}.`}
+          ? t.defaultLangNote
+          : t.translatingNote
+              .replace("{locale}", current.toUpperCase())
+              .replace("{default}", defaultLocale.toUpperCase())}
       </p>
     </div>
   );

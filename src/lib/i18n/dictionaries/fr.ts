@@ -2,6 +2,9 @@ import type { DeepPartial, Dictionary } from "./en";
 
 export const fr: DeepPartial<Dictionary> = {
   common: {
+    editingLanguage: "Langue d'édition",
+    defaultLangNote: "Langue par défaut — contenu de base affiché lorsqu'une traduction est absente.",
+    translatingNote: "Traduction en {locale}. Les champs vides reviennent à {default}.",
     signIn: "Se connecter",
     openDashboard: "Ouvrir le tableau de bord",
     backToHome: "Retour à l'accueil",
@@ -900,6 +903,12 @@ export const fr: DeepPartial<Dictionary> = {
     hintPropertyType: "ex. apartment, villa, house",
   },
   dashAgentSync: {
+    feedUrlsHint: "Remplacez l'ID de l'agent par celui de la liste ci-dessus. Envoyez la clé API via Authorization: Bearer ….",
+    authHint: "Envoyez la clé API dans l'en-tête Authorization: Bearer … ou x-api-key. La limite de débit s'applique par minute.",
+    reqShort: "req",
+    errorsShort: "erreurs",
+    attemptLabel: "Tentative",
+    httpLabel: "HTTP",
     description:
       "Connectez les sites des agents au CRM de l'agence. Partagez les biens via API, flux JSON/XML ou un widget intégrable. Les webhooks livrent les mises à jour en temps réel.",
     syncSettings: "Paramètres de synchronisation des biens",

@@ -6,6 +6,11 @@ export const en = {
     backToHome: "Back to home",
     language: "Language",
     currency: "Currency",
+    editingLanguage: "Editing language",
+    defaultLangNote:
+      "Default language — this is the base content shown when a translation is missing.",
+    translatingNote:
+      "Translating into {locale}. Empty fields fall back to {default}.",
   },
   nav: {
     properties: "Properties",
@@ -948,6 +953,14 @@ export const en = {
     noTraffic: "No traffic yet.",
     noEventsYet: "No events yet.",
     noDeliveries: "No deliveries yet.",
+    feedUrlsHint:
+      "Replace the agent ID with the one from the list above. Send the API key via Authorization: Bearer ….",
+    authHint:
+      "Send the API key in either Authorization: Bearer … or x-api-key header. Rate limit is enforced per minute.",
+    reqShort: "req",
+    errorsShort: "errors",
+    attemptLabel: "Attempt",
+    httpLabel: "HTTP",
   },
   superAdmin: {
     title: "Super Admin",

@@ -2,6 +2,9 @@ import type { DeepPartial, Dictionary } from "./en";
 
 export const uk: DeepPartial<Dictionary> = {
   common: {
+    editingLanguage: "Мова редагування",
+    defaultLangNote: "Мова за замовчуванням — це базовий контент, який показується за відсутності перекладу.",
+    translatingNote: "Переклад на {locale}. Порожні поля замінюються мовою {default}.",
     signIn: "Увійти",
     openDashboard: "Відкрити панель",
     backToHome: "На головну",
@@ -897,6 +900,12 @@ export const uk: DeepPartial<Dictionary> = {
     hintPropertyType: "напр. apartment, villa, house",
   },
   dashAgentSync: {
+    feedUrlsHint: "Замініть ID агента на ID зі списку вище. Передавайте API-ключ через Authorization: Bearer ….",
+    authHint: "Передавайте API-ключ у заголовку Authorization: Bearer … або x-api-key. Ліміт запитів — за хвилину.",
+    reqShort: "запитів",
+    errorsShort: "помилок",
+    attemptLabel: "Спроба",
+    httpLabel: "HTTP",
     description:
       "Підключайте сайти агентів до CRM агентства. Діліться об'єктами через API, JSON/XML-фіди або вбудований віджет. Вебхуки доставляють оновлення в реальному часі.",
     syncSettings: "Налаштування синхронізації об'єктів",

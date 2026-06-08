@@ -3,6 +3,9 @@ import type { DeepPartial, Dictionary } from "./en";
 /** Немецкий словарь UI. Может быть частичным — недостающее берётся из en. */
 export const de: DeepPartial<Dictionary> = {
   common: {
+    editingLanguage: "Bearbeitungssprache",
+    defaultLangNote: "Standardsprache — der Basisinhalt, der angezeigt wird, wenn eine Übersetzung fehlt.",
+    translatingNote: "Übersetzung in {locale}. Leere Felder fallen auf {default} zurück.",
     signIn: "Anmelden",
     openDashboard: "Dashboard öffnen",
     backToHome: "Zurück zur Startseite",
@@ -900,6 +903,12 @@ export const de: DeepPartial<Dictionary> = {
     hintPropertyType: "z. B. apartment, villa, house",
   },
   dashAgentSync: {
+    feedUrlsHint: "Ersetzen Sie die Agent-ID durch die aus der Liste oben. Senden Sie den API-Schlüssel via Authorization: Bearer ….",
+    authHint: "Senden Sie den API-Schlüssel entweder im Authorization: Bearer … oder x-api-key Header. Das Rate-Limit gilt pro Minute.",
+    reqShort: "Anfr.",
+    errorsShort: "Fehler",
+    attemptLabel: "Versuch",
+    httpLabel: "HTTP",
     description:
       "Verbinden Sie Makler-Websites mit dem Agentur-CRM. Teilen Sie Objekte per API, JSON/XML-Feeds oder einem einbettbaren Widget. Webhooks liefern Echtzeit-Updates.",
     syncSettings: "Objekt-Synchronisierungseinstellungen",
