@@ -439,6 +439,27 @@ export const en = {
     adr: "ADR",
     directBookingShare: "Direct booking share",
   },
+  dashAnalytics: {
+    description:
+      "Traffic, conversions and tracking integrations for the last {n} days.",
+    sessions: "Sessions",
+    pageViews: "Page views",
+    leads: "Leads",
+    bookings: "Bookings",
+    leadConversion: "Lead conversion",
+    bookingConversion: "Booking conversion",
+    topProperties: "Top properties",
+    views: "{n} view(s)",
+    noPropertyViews: "No property views yet.",
+    topSources: "Top traffic sources",
+    noUtm: "No UTM sessions yet.",
+    leadSources: "Lead sources",
+    leadsCount: "{n} lead(s)",
+    noLeads: "No leads yet.",
+    recentEvents: "Recent events",
+    noEvents: "No events captured yet.",
+    trackingIntegrations: "Tracking integrations",
+  },
 };
 
 export type Dictionary = typeof en;
