@@ -412,7 +412,6 @@ export interface SystemHealth {
   webhooks: { pending: number; failed24h: number };
   notifications: { pending: number; failed24h: number };
   apiUsage7d: { requests: number; errors: number };
-  storage: { bucket: string; bytes: number }[];
 }
 
 export async function getSystemHealth(): Promise<SystemHealth> {
@@ -525,7 +524,6 @@ export async function getSystemHealth(): Promise<SystemHealth> {
       failed24h: notifsFailed.count ?? 0,
     },
     apiUsage7d: { requests, errors },
-    storage: [],
   };
 }
 
