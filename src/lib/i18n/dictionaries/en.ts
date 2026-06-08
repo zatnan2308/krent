@@ -547,6 +547,30 @@ export const en = {
     emptyTitle: "No campaigns yet",
     emptyDesc: "Start a campaign from a template above.",
   },
+  dashAgentSync: {
+    description:
+      "Connect agent websites to the agency CRM. Share properties via API, JSON/XML feeds or a drop-in widget. Webhooks deliver real-time updates.",
+    syncSettings: "Property sync settings",
+    connections: "Agent website connections",
+    apiKeys: "API keys",
+    webhookEndpoints: "Webhook endpoints",
+    feedUrls: "Feed URLs",
+    widgetEmbed: "Widget embed",
+    apiDocs: "API documentation",
+    apiUsage: "API usage (14 days)",
+    recentEvents: "Recent webhook events",
+    recentDeliveries: "Recent delivery attempts",
+    noFeedHint: "Add an agent connection above to see feed URLs.",
+    noWidgetHint: "Add an agent connection above to generate a widget snippet.",
+    authentication: "Authentication",
+    scopes: "Scopes",
+    webhookEvents: "Webhook events",
+    totalRequests: "Total requests:",
+    errors: "Errors (4xx/5xx):",
+    noTraffic: "No traffic yet.",
+    noEventsYet: "No events yet.",
+    noDeliveries: "No deliveries yet.",
+  },
 };
 
 export type Dictionary = typeof en;

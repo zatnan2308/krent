@@ -548,4 +548,30 @@ export const fr: DeepPartial<Dictionary> = {
     emptyTitle: "Aucune campagne",
     emptyDesc: "Lancez une campagne depuis un modèle ci-dessus.",
   },
+  dashAgentSync: {
+    description:
+      "Connectez les sites des agents au CRM de l'agence. Partagez les biens via API, flux JSON/XML ou un widget intégrable. Les webhooks livrent les mises à jour en temps réel.",
+    syncSettings: "Paramètres de synchronisation des biens",
+    connections: "Connexions de sites d'agents",
+    apiKeys: "Clés API",
+    webhookEndpoints: "Points de terminaison webhook",
+    feedUrls: "URL des flux",
+    widgetEmbed: "Intégration du widget",
+    apiDocs: "Documentation API",
+    apiUsage: "Utilisation de l'API (14 jours)",
+    recentEvents: "Événements webhook récents",
+    recentDeliveries: "Tentatives de livraison récentes",
+    noFeedHint:
+      "Ajoutez une connexion d'agent ci-dessus pour voir les URL des flux.",
+    noWidgetHint:
+      "Ajoutez une connexion d'agent ci-dessus pour générer un extrait de widget.",
+    authentication: "Authentification",
+    scopes: "Portées",
+    webhookEvents: "Événements webhook",
+    totalRequests: "Total des requêtes :",
+    errors: "Erreurs (4xx/5xx) :",
+    noTraffic: "Aucun trafic pour l'instant.",
+    noEventsYet: "Aucun événement pour l'instant.",
+    noDeliveries: "Aucune livraison pour l'instant.",
+  },
 };

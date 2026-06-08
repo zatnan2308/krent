@@ -548,4 +548,30 @@ export const de: DeepPartial<Dictionary> = {
     emptyTitle: "Noch keine Kampagnen",
     emptyDesc: "Starten Sie eine Kampagne aus einer Vorlage oben.",
   },
+  dashAgentSync: {
+    description:
+      "Verbinden Sie Makler-Websites mit dem Agentur-CRM. Teilen Sie Objekte per API, JSON/XML-Feeds oder einem einbettbaren Widget. Webhooks liefern Echtzeit-Updates.",
+    syncSettings: "Objekt-Synchronisierungseinstellungen",
+    connections: "Makler-Website-Verbindungen",
+    apiKeys: "API-Schlüssel",
+    webhookEndpoints: "Webhook-Endpunkte",
+    feedUrls: "Feed-URLs",
+    widgetEmbed: "Widget-Einbettung",
+    apiDocs: "API-Dokumentation",
+    apiUsage: "API-Nutzung (14 Tage)",
+    recentEvents: "Letzte Webhook-Ereignisse",
+    recentDeliveries: "Letzte Zustellversuche",
+    noFeedHint:
+      "Fügen Sie oben eine Makler-Verbindung hinzu, um Feed-URLs zu sehen.",
+    noWidgetHint:
+      "Fügen Sie oben eine Makler-Verbindung hinzu, um ein Widget-Snippet zu generieren.",
+    authentication: "Authentifizierung",
+    scopes: "Bereiche",
+    webhookEvents: "Webhook-Ereignisse",
+    totalRequests: "Anfragen gesamt:",
+    errors: "Fehler (4xx/5xx):",
+    noTraffic: "Noch kein Traffic.",
+    noEventsYet: "Noch keine Ereignisse.",
+    noDeliveries: "Noch keine Zustellungen.",
+  },
 };

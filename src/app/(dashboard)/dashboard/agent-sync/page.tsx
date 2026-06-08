@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -78,17 +79,19 @@ export default async function AgentSyncPage() {
 
   const baseUrl = inferBaseUrl();
   const firstAgentConnection = connections[0] ?? null;
+  const dict = await getServerDictionary();
+  const t = dict.dashAgentSync;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Agent Sync"
-        description="Connect agent websites to the agency CRM. Share properties via API, JSON/XML feeds or a drop-in widget. Webhooks deliver real-time updates."
+        title={dict.adminNav.agentSync}
+        description={t.description}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Property sync settings</CardTitle>
+          <CardTitle className="text-base">{t.syncSettings}</CardTitle>
         </CardHeader>
         <CardContent>
           <SyncSettingsForm initial={syncSettings} />
@@ -97,7 +100,7 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Agent website connections</CardTitle>
+          <CardTitle className="text-base">{t.connections}</CardTitle>
         </CardHeader>
         <CardContent>
           <AgentConnectionsSection connections={connections} />
@@ -106,7 +109,7 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">API keys</CardTitle>
+          <CardTitle className="text-base">{t.apiKeys}</CardTitle>
         </CardHeader>
         <CardContent>
           <ApiKeysSection keys={apiKeys} />
@@ -115,7 +118,7 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Webhook endpoints</CardTitle>
+          <CardTitle className="text-base">{t.webhookEndpoints}</CardTitle>
         </CardHeader>
         <CardContent>
           <WebhookEndpointsSection endpoints={endpoints} />
@@ -124,7 +127,7 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Feed URLs</CardTitle>
+          <CardTitle className="text-base">{t.feedUrls}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           {firstAgentConnection ? (
@@ -144,7 +147,7 @@ export default async function AgentSyncPage() {
             </>
           ) : (
             <p className="text-muted-foreground">
-              Add an agent connection above to see feed URLs.
+              {t.noFeedHint}
             </p>
           )}
         </CardContent>
@@ -152,7 +155,7 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Widget embed</CardTitle>
+          <CardTitle className="text-base">{t.widgetEmbed}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           {firstAgentConnection ? (
@@ -162,7 +165,7 @@ export default async function AgentSyncPage() {
             />
           ) : (
             <p className="text-muted-foreground">
-              Add an agent connection above to generate a widget snippet.
+              {t.noWidgetHint}
             </p>
           )}
         </CardContent>
@@ -170,18 +173,18 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">API documentation</CardTitle>
+          <CardTitle className="text-base">{t.apiDocs}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div>
-            <p className="font-medium">Authentication</p>
+            <p className="font-medium">{t.authentication}</p>
             <p className="text-xs text-muted-foreground">
               Send the API key in either <code>Authorization: Bearer …</code> or
               <code> x-api-key</code> header. Rate limit is enforced per minute.
             </p>
           </div>
           <div>
-            <p className="font-medium">Scopes</p>
+            <p className="font-medium">{t.scopes}</p>
             <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
               {API_SCOPE_KEYS.map((scope) => (
                 <li key={scope}>
@@ -191,7 +194,7 @@ export default async function AgentSyncPage() {
             </ul>
           </div>
           <div>
-            <p className="font-medium">Webhook events</p>
+            <p className="font-medium">{t.webhookEvents}</p>
             <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
               {WEBHOOK_EVENT_TYPES.map((type) => (
                 <li key={type}>
@@ -206,17 +209,17 @@ export default async function AgentSyncPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">API usage (14 days)</CardTitle>
+            <CardTitle className="text-base">{t.apiUsage}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
-              Total requests: <strong>{usage.totals.requests}</strong>
+              {t.totalRequests} <strong>{usage.totals.requests}</strong>
             </p>
             <p>
-              Errors (4xx/5xx): <strong>{usage.totals.errors}</strong>
+              {t.errors} <strong>{usage.totals.errors}</strong>
             </p>
             {usage.series.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No traffic yet.</p>
+              <p className="text-xs text-muted-foreground">{t.noTraffic}</p>
             ) : (
               <ul className="text-xs text-muted-foreground">
                 {usage.series.slice(-7).map((row) => (
@@ -230,11 +233,11 @@ export default async function AgentSyncPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Recent webhook events</CardTitle>
+            <CardTitle className="text-base">{t.recentEvents}</CardTitle>
           </CardHeader>
           <CardContent>
             {events.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No events yet.</p>
+              <p className="text-xs text-muted-foreground">{t.noEventsYet}</p>
             ) : (
               <ul className="space-y-1 text-xs">
                 {events.map((event) => (
@@ -258,11 +261,11 @@ export default async function AgentSyncPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Recent delivery attempts</CardTitle>
+          <CardTitle className="text-base">{t.recentDeliveries}</CardTitle>
         </CardHeader>
         <CardContent>
           {deliveries.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No deliveries yet.</p>
+            <p className="text-xs text-muted-foreground">{t.noDeliveries}</p>
           ) : (
             <ul className="space-y-1 text-xs">
               {deliveries.map((row) => (
