@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { ROUTES } from "@/lib/constants/routes";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -49,11 +50,15 @@ function AuditList({
 }
 
 /** Список повторяющихся значений. */
-function DuplicateList({ items }: { items: DuplicateEntry[] }) {
+function DuplicateList({
+  items,
+  emptyText,
+}: {
+  items: DuplicateEntry[];
+  emptyText: string;
+}) {
   if (items.length === 0) {
-    return (
-      <p className="text-sm text-emerald-700">No duplicates found.</p>
-    );
+    return <p className="text-sm text-emerald-700">{emptyText}</p>;
   }
   return (
     <ul className="space-y-1 text-sm">
@@ -106,13 +111,15 @@ export default async function SeoPage() {
     domains?.find((d) => d.status === "verified") ??
     domains?.[0];
   const siteHost = primaryDomain?.domain;
+  const dict = await getServerDictionary();
+  const t = dict.dashSeo;
 
   const summary = [
-    { label: "Published pages", value: audit.publishedPages },
-    { label: "Active properties", value: audit.activeProperties },
-    { label: "Pages missing title", value: audit.pagesMissingTitle.length },
+    { label: t.publishedPages, value: audit.publishedPages },
+    { label: t.activeProperties, value: audit.activeProperties },
+    { label: t.pagesMissingTitle, value: audit.pagesMissingTitle.length },
     {
-      label: "Properties missing alt",
+      label: t.propertiesMissingAlt,
       value: audit.propertiesMissingAlt.length,
     },
   ];
@@ -120,8 +127,8 @@ export default async function SeoPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="SEO"
-        description="Audit of titles, descriptions, image alt text and indexing across your pages and properties."
+        title={dict.adminNav.seo}
+        description={t.description}
       />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -132,7 +139,7 @@ export default async function SeoPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Site SEO defaults</CardTitle>
+          <CardTitle className="text-base">{t.siteDefaults}</CardTitle>
         </CardHeader>
         <CardContent>
           <SeoSettingsForm initial={seoInitial} siteHost={siteHost} />
@@ -142,12 +149,12 @@ export default async function SeoPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pages missing title</CardTitle>
+            <CardTitle className="text-base">{t.pagesMissingTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <AuditList
               items={audit.pagesMissingTitle}
-              emptyText="Every published page has an SEO title."
+              emptyText={t.everyPageTitle}
             />
           </CardContent>
         </Card>
@@ -155,13 +162,13 @@ export default async function SeoPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Pages missing description
+              {t.pagesMissingDescription}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <AuditList
               items={audit.pagesMissingDescription}
-              emptyText="Every published page has an SEO description."
+              emptyText={t.everyPageDesc}
             />
           </CardContent>
         </Card>
@@ -169,64 +176,67 @@ export default async function SeoPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Properties missing alt text
+              {t.propertiesMissingAltText}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <AuditList
               items={audit.propertiesMissingAlt}
-              emptyText="Every property image has alt text."
+              emptyText={t.everyImageAlt}
             />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Noindex pages</CardTitle>
+            <CardTitle className="text-base">{t.noindexPages}</CardTitle>
           </CardHeader>
           <CardContent>
             <AuditList
               items={audit.noindexPages}
-              emptyText="No draft (non-indexable) pages."
+              emptyText={t.noDraftPages}
             />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Duplicate titles</CardTitle>
+            <CardTitle className="text-base">{t.duplicateTitles}</CardTitle>
           </CardHeader>
           <CardContent>
-            <DuplicateList items={audit.duplicateTitles} />
+            <DuplicateList
+              items={audit.duplicateTitles}
+              emptyText={t.noDuplicates}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Duplicate descriptions
+              {t.duplicateDescriptions}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DuplicateList items={audit.duplicateDescriptions} />
+            <DuplicateList
+              items={audit.duplicateDescriptions}
+              emptyText={t.noDuplicates}
+            />
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sitemap</CardTitle>
+          <CardTitle className="text-base">{t.sitemap}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
           <p>
-            Sitemap: <code>/sitemap.xml</code> · Image sitemap:{" "}
-            <code>/api/image-sitemap</code> · Robots:{" "}
+            {t.sitemapLine} <code>/sitemap.xml</code> · {t.imageSitemapLine}{" "}
+            <code>/api/image-sitemap</code> · {t.robotsLine}{" "}
             <code>/robots.txt</code>
           </p>
-          <p>
-            Sitemaps regenerate on each request. Submission status tracking
-            is a placeholder for a future Search Console integration.
-          </p>
+          <p>{t.sitemapNote}</p>
         </CardContent>
       </Card>
     </div>

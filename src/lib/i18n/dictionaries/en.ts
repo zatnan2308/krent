@@ -460,6 +460,31 @@ export const en = {
     noEvents: "No events captured yet.",
     trackingIntegrations: "Tracking integrations",
   },
+  dashSeo: {
+    description:
+      "Audit of titles, descriptions, image alt text and indexing across your pages and properties.",
+    noDuplicates: "No duplicates found.",
+    publishedPages: "Published pages",
+    activeProperties: "Active properties",
+    pagesMissingTitle: "Pages missing title",
+    propertiesMissingAlt: "Properties missing alt",
+    siteDefaults: "Site SEO defaults",
+    pagesMissingDescription: "Pages missing description",
+    propertiesMissingAltText: "Properties missing alt text",
+    noindexPages: "Noindex pages",
+    duplicateTitles: "Duplicate titles",
+    duplicateDescriptions: "Duplicate descriptions",
+    sitemap: "Sitemap",
+    everyPageTitle: "Every published page has an SEO title.",
+    everyPageDesc: "Every published page has an SEO description.",
+    everyImageAlt: "Every property image has alt text.",
+    noDraftPages: "No draft (non-indexable) pages.",
+    sitemapLine: "Sitemap:",
+    imageSitemapLine: "Image sitemap:",
+    robotsLine: "Robots:",
+    sitemapNote:
+      "Sitemaps regenerate on each request. Submission status tracking is a placeholder for a future Search Console integration.",
+  },
 };
 
 export type Dictionary = typeof en;
