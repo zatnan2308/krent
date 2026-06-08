@@ -54,6 +54,7 @@ import {
   type CurrencyCode,
 } from "@/lib/currency/config";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -219,6 +220,8 @@ export function PropertyForm({
   nearbyPlaces,
 }: PropertyFormProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.propertyForm;
   const [form, setForm] = React.useState<FormState>(() => ({
     title: initial.property.title,
     slug: initial.property.slug,
@@ -459,33 +462,33 @@ export function PropertyForm({
   );
   const assignedLabel =
     initial.property.assigned_agent_id === null
-      ? "Unassigned"
+      ? t.unassigned
       : initial.property.assigned_agent_id === currentUserId
-        ? "Assigned to you"
-        : "Assigned to another agent";
+        ? t.assignedToYou
+        : t.assignedToAnother;
 
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="flex h-auto flex-wrap justify-start gap-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="amenities">Amenities</TabsTrigger>
-          <TabsTrigger value="media">Media</TabsTrigger>
-          <TabsTrigger value="location">Location</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="overview">{t.tabOverview}</TabsTrigger>
+          <TabsTrigger value="details">{t.tabDetails}</TabsTrigger>
+          <TabsTrigger value="pricing">{t.tabPricing}</TabsTrigger>
+          <TabsTrigger value="amenities">{t.tabAmenities}</TabsTrigger>
+          <TabsTrigger value="media">{t.tabMedia}</TabsTrigger>
+          <TabsTrigger value="location">{t.tabLocation}</TabsTrigger>
+          <TabsTrigger value="seo">{t.tabSeo}</TabsTrigger>
+          <TabsTrigger value="settings">{t.tabSettings}</TabsTrigger>
         </TabsList>
 
         {/* ---- Overview ---- */}
         <TabsContent value="overview">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Overview</CardTitle>
+              <CardTitle className="text-base">{t.tabOverview}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Field label="Title" htmlFor="title">
+              <Field label={t.fTitle} htmlFor="title">
                 <Input
                   id="title"
                   value={form.title}
@@ -494,9 +497,9 @@ export function PropertyForm({
               </Field>
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field
-                  label="Slug"
+                  label={t.fSlug}
                   htmlFor="slug"
-                  hint="Used in the public URL."
+                  hint={t.hintSlug}
                 >
                   <Input
                     id="slug"
@@ -504,7 +507,7 @@ export function PropertyForm({
                     onChange={(event) => update("slug", event.target.value)}
                   />
                 </Field>
-                <Field label="Type" htmlFor="type">
+                <Field label={t.fType} htmlFor="type">
                   <NativeSelect
                     id="type"
                     value={form.propertyType}
@@ -512,7 +515,7 @@ export function PropertyForm({
                     onChange={(value) => update("propertyType", value)}
                   />
                 </Field>
-                <Field label="Purpose" htmlFor="purpose">
+                <Field label={t.fPurpose} htmlFor="purpose">
                   <NativeSelect
                     id="purpose"
                     value={form.purpose}
@@ -521,7 +524,7 @@ export function PropertyForm({
                   />
                 </Field>
               </div>
-              <Field label="Description" htmlFor="description">
+              <Field label={t.fDescription} htmlFor="description">
                 <Textarea
                   id="description"
                   rows={6}
@@ -539,11 +542,11 @@ export function PropertyForm({
         <TabsContent value="details">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Details</CardTitle>
+              <CardTitle className="text-base">{t.tabDetails}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label="Bedrooms" htmlFor="bedrooms">
+                <Field label={t.fBedrooms} htmlFor="bedrooms">
                   <Input
                     id="bedrooms"
                     type="number"
@@ -554,7 +557,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Bathrooms" htmlFor="bathrooms">
+                <Field label={t.fBathrooms} htmlFor="bathrooms">
                   <Input
                     id="bathrooms"
                     type="number"
@@ -566,7 +569,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Beds" htmlFor="beds">
+                <Field label={t.fBeds} htmlFor="beds">
                   <Input
                     id="beds"
                     type="number"
@@ -575,7 +578,7 @@ export function PropertyForm({
                     onChange={(event) => update("beds", event.target.value)}
                   />
                 </Field>
-                <Field label="Guest capacity" htmlFor="guestCapacity">
+                <Field label={t.fGuestCapacity} htmlFor="guestCapacity">
                   <Input
                     id="guestCapacity"
                     type="number"
@@ -586,7 +589,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Size" htmlFor="size">
+                <Field label={t.fSize} htmlFor="size">
                   <Input
                     id="size"
                     type="number"
@@ -596,7 +599,7 @@ export function PropertyForm({
                     onChange={(event) => update("size", event.target.value)}
                   />
                 </Field>
-                <Field label="Size unit" htmlFor="sizeUnit">
+                <Field label={t.fSizeUnit} htmlFor="sizeUnit">
                   <NativeSelect
                     id="sizeUnit"
                     value={form.sizeUnit}
@@ -604,7 +607,7 @@ export function PropertyForm({
                     onChange={(value) => update("sizeUnit", value)}
                   />
                 </Field>
-                <Field label="Lot size" htmlFor="lotSize">
+                <Field label={t.fLotSize} htmlFor="lotSize">
                   <Input
                     id="lotSize"
                     type="number"
@@ -616,7 +619,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Floor" htmlFor="floor">
+                <Field label={t.fFloor} htmlFor="floor">
                   <Input
                     id="floor"
                     type="number"
@@ -624,7 +627,7 @@ export function PropertyForm({
                     onChange={(event) => update("floor", event.target.value)}
                   />
                 </Field>
-                <Field label="Total floors" htmlFor="totalFloors">
+                <Field label={t.fTotalFloors} htmlFor="totalFloors">
                   <Input
                     id="totalFloors"
                     type="number"
@@ -635,7 +638,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Year built" htmlFor="yearBuilt">
+                <Field label={t.fYearBuilt} htmlFor="yearBuilt">
                   <Input
                     id="yearBuilt"
                     type="number"
@@ -645,7 +648,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Parking spots" htmlFor="parking">
+                <Field label={t.fParkingSpots} htmlFor="parking">
                   <Input
                     id="parking"
                     type="number"
@@ -666,7 +669,7 @@ export function PropertyForm({
                   }
                 />
                 <label htmlFor="garage" className="text-sm font-medium">
-                  Has a garage
+                  {t.hasGarage}
                 </label>
               </div>
             </CardContent>
@@ -675,7 +678,7 @@ export function PropertyForm({
           {/* ---- Catalogue attributes (фильтры публичного каталога) ---- */}
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle className="text-base">Catalogue attributes</CardTitle>
+              <CardTitle className="text-base">{t.cardCatalogueAttrs}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-muted-foreground">
@@ -684,9 +687,9 @@ export function PropertyForm({
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Field
-                  label="View"
+                  label={t.fView}
                   htmlFor="listingView"
-                  hint="e.g. Sea view, Marina view"
+                  hint={t.hintView}
                 >
                   <Input
                     id="listingView"
@@ -696,7 +699,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Furnishing" htmlFor="furnishing">
+                <Field label={t.fFurnishing} htmlFor="furnishing">
                   <select
                     id="furnishing"
                     className={FIELD_CLASS}
@@ -711,7 +714,7 @@ export function PropertyForm({
                     <option value="Unfurnished">Unfurnished</option>
                   </select>
                 </Field>
-                <Field label="Ownership" htmlFor="ownership">
+                <Field label={t.fOwnership} htmlFor="ownership">
                   <select
                     id="ownership"
                     className={FIELD_CLASS}
@@ -726,7 +729,7 @@ export function PropertyForm({
                   </select>
                 </Field>
                 <Field
-                  label="Completion"
+                  label={t.fCompletion}
                   htmlFor="completion"
                   hint={'"Ready" or "Off-plan · Q3 2027"'}
                 >
@@ -738,7 +741,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Rental yield (%)" htmlFor="rentalYield">
+                <Field label={t.fRentalYield} htmlFor="rentalYield">
                   <Input
                     id="rentalYield"
                     type="number"
@@ -751,9 +754,9 @@ export function PropertyForm({
                   />
                 </Field>
                 <Field
-                  label="Badge"
+                  label={t.fBadge}
                   htmlFor="badge"
-                  hint="e.g. Off-market, New"
+                  hint={t.hintBadge}
                 >
                   <Input
                     id="badge"
@@ -762,9 +765,9 @@ export function PropertyForm({
                   />
                 </Field>
                 <Field
-                  label="Lifestyle tags"
+                  label={t.fLifestyleTags}
                   htmlFor="lifestyleTags"
-                  hint="Comma-separated: Beachfront, Investment"
+                  hint={t.hintLifestyle}
                 >
                   <Input
                     id="lifestyleTags"
@@ -783,7 +786,7 @@ export function PropertyForm({
         <TabsContent value="pricing">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Pricing</CardTitle>
+              <CardTitle className="text-base">{t.tabPricing}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
@@ -798,12 +801,12 @@ export function PropertyForm({
                   htmlFor="priceEnabled"
                   className="text-sm font-medium"
                 >
-                  This property has a price
+                  {t.hasPrice}
                 </label>
               </div>
               {form.priceEnabled ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Amount" htmlFor="amount">
+                  <Field label={t.fAmount} htmlFor="amount">
                     <Input
                       id="amount"
                       type="number"
@@ -815,7 +818,7 @@ export function PropertyForm({
                       }
                     />
                   </Field>
-                  <Field label="Currency" htmlFor="currency">
+                  <Field label={t.fCurrency} htmlFor="currency">
                     <select
                       id="currency"
                       className={FIELD_CLASS}
@@ -835,13 +838,13 @@ export function PropertyForm({
                     </select>
                   </Field>
                   {form.purpose === "mixed" ? (
-                    <Field label="Price period">
+                    <Field label={t.fPricePeriod}>
                       <p className="flex h-10 items-center text-sm text-muted-foreground">
                         Sale price (set rent below)
                       </p>
                     </Field>
                   ) : (
-                    <Field label="Price period" htmlFor="pricePeriod">
+                    <Field label={t.fPricePeriod} htmlFor="pricePeriod">
                       <NativeSelect
                         id="pricePeriod"
                         value={form.pricePeriod}
@@ -850,7 +853,7 @@ export function PropertyForm({
                       />
                     </Field>
                   )}
-                  <Field label="Price display" htmlFor="displayType">
+                  <Field label={t.fPriceDisplay} htmlFor="displayType">
                     <NativeSelect
                       id="displayType"
                       value={form.displayType}
@@ -859,9 +862,9 @@ export function PropertyForm({
                     />
                   </Field>
                   <Field
-                    label="Old amount"
+                    label={t.fOldAmount}
                     htmlFor="oldAmount"
-                    hint="Shown as a crossed-out price."
+                    hint={t.hintOldPrice}
                   >
                     <Input
                       id="oldAmount"
@@ -874,7 +877,7 @@ export function PropertyForm({
                       }
                     />
                   </Field>
-                  <Field label="Security deposit" htmlFor="securityDeposit">
+                  <Field label={t.fSecurityDeposit} htmlFor="securityDeposit">
                     <Input
                       id="securityDeposit"
                       type="number"
@@ -886,7 +889,7 @@ export function PropertyForm({
                       }
                     />
                   </Field>
-                  <Field label="Cleaning fee" htmlFor="cleaningFee">
+                  <Field label={t.fCleaningFee} htmlFor="cleaningFee">
                     <Input
                       id="cleaningFee"
                       type="number"
@@ -898,7 +901,7 @@ export function PropertyForm({
                       }
                     />
                   </Field>
-                  <Field label="Taxes" htmlFor="taxes">
+                  <Field label={t.fTaxes} htmlFor="taxes">
                     <Input
                       id="taxes"
                       type="number"
@@ -913,7 +916,7 @@ export function PropertyForm({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Enable the checkbox above to set a price for this property.
+                  {t.enablePriceHint}
                 </p>
               )}
 
@@ -931,12 +934,12 @@ export function PropertyForm({
                       htmlFor="rentEnabled"
                       className="text-sm font-medium"
                     >
-                      Add a separate rent price
+                      {t.addRentPrice}
                     </label>
                   </div>
                   {form.rentEnabled ? (
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <Field label="Rent amount" htmlFor="rentAmount">
+                      <Field label={t.fRentAmount} htmlFor="rentAmount">
                         <Input
                           id="rentAmount"
                           type="number"
@@ -948,7 +951,7 @@ export function PropertyForm({
                           }
                         />
                       </Field>
-                      <Field label="Currency" htmlFor="rentCurrency">
+                      <Field label={t.fCurrency} htmlFor="rentCurrency">
                         <select
                           id="rentCurrency"
                           className={FIELD_CLASS}
@@ -967,7 +970,7 @@ export function PropertyForm({
                           ))}
                         </select>
                       </Field>
-                      <Field label="Rent period" htmlFor="rentPricePeriod">
+                      <Field label={t.fRentPeriod} htmlFor="rentPricePeriod">
                         <NativeSelect
                           id="rentPricePeriod"
                           value={form.rentPricePeriod}
@@ -979,7 +982,7 @@ export function PropertyForm({
                           }
                         />
                       </Field>
-                      <Field label="Price display" htmlFor="rentDisplayType">
+                      <Field label={t.fPriceDisplay} htmlFor="rentDisplayType">
                         <NativeSelect
                           id="rentDisplayType"
                           value={form.rentDisplayType}
@@ -990,9 +993,9 @@ export function PropertyForm({
                         />
                       </Field>
                       <Field
-                        label="Old amount"
+                        label={t.fOldAmount}
                         htmlFor="rentOldAmount"
-                        hint="Shown as a crossed-out price."
+                        hint={t.hintOldPrice}
                       >
                         <Input
                           id="rentOldAmount"
@@ -1006,7 +1009,7 @@ export function PropertyForm({
                         />
                       </Field>
                       <Field
-                        label="Security deposit"
+                        label={t.fSecurityDeposit}
                         htmlFor="rentSecurityDeposit"
                       >
                         <Input
@@ -1020,7 +1023,7 @@ export function PropertyForm({
                           }
                         />
                       </Field>
-                      <Field label="Cleaning fee" htmlFor="rentCleaningFee">
+                      <Field label={t.fCleaningFee} htmlFor="rentCleaningFee">
                         <Input
                           id="rentCleaningFee"
                           type="number"
@@ -1032,7 +1035,7 @@ export function PropertyForm({
                           }
                         />
                       </Field>
-                      <Field label="Taxes" htmlFor="rentTaxes">
+                      <Field label={t.fTaxes} htmlFor="rentTaxes">
                         <Input
                           id="rentTaxes"
                           type="number"
@@ -1061,7 +1064,7 @@ export function PropertyForm({
         <TabsContent value="amenities">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Amenities</CardTitle>
+              <CardTitle className="text-base">{t.tabAmenities}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {amenityCatalog.amenities.length === 0 ? (
@@ -1104,7 +1107,7 @@ export function PropertyForm({
               })}
               {uncategorized.length > 0 ? (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Other</p>
+                  <p className="text-sm font-medium">{t.otherGroup}</p>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {uncategorized.map((amenity) => (
                       <div
@@ -1135,7 +1138,7 @@ export function PropertyForm({
         <TabsContent value="media" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Photos</CardTitle>
+              <CardTitle className="text-base">{t.cardPhotos}</CardTitle>
             </CardHeader>
             <CardContent>
               <PropertyMediaManager
@@ -1157,11 +1160,11 @@ export function PropertyForm({
         <TabsContent value="location" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Location</CardTitle>
+              <CardTitle className="text-base">{t.tabLocation}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Country" htmlFor="country">
+                <Field label={t.fCountry} htmlFor="country">
                   <Input
                     id="country"
                     value={form.country}
@@ -1170,14 +1173,14 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="City" htmlFor="city">
+                <Field label={t.fCity} htmlFor="city">
                   <Input
                     id="city"
                     value={form.city}
                     onChange={(event) => update("city", event.target.value)}
                   />
                 </Field>
-                <Field label="Area / district" htmlFor="area">
+                <Field label={t.fArea} htmlFor="area">
                   <Input
                     id="area"
                     value={form.area}
@@ -1185,9 +1188,9 @@ export function PropertyForm({
                   />
                 </Field>
                 <Field
-                  label="Public address"
+                  label={t.fPublicAddress}
                   htmlFor="publicAddress"
-                  hint="Shown to visitors when the exact address is hidden."
+                  hint={t.hintPublicAddress}
                 >
                   <Input
                     id="publicAddress"
@@ -1199,9 +1202,9 @@ export function PropertyForm({
                 </Field>
               </div>
               <Field
-                label="Exact address"
+                label={t.fExactAddress}
                 htmlFor="address"
-                hint="Internal full address of the property."
+                hint={t.hintExactAddress}
               >
                 <Input
                   id="address"
@@ -1210,7 +1213,7 @@ export function PropertyForm({
                 />
               </Field>
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Latitude" htmlFor="latitude">
+                <Field label={t.fLatitude} htmlFor="latitude">
                   <Input
                     id="latitude"
                     type="number"
@@ -1221,7 +1224,7 @@ export function PropertyForm({
                     }
                   />
                 </Field>
-                <Field label="Longitude" htmlFor="longitude">
+                <Field label={t.fLongitude} htmlFor="longitude">
                   <Input
                     id="longitude"
                     type="number"
@@ -1233,7 +1236,7 @@ export function PropertyForm({
                   />
                 </Field>
                 <Field
-                  label="Address visibility"
+                  label={t.fAddressVisibility}
                   htmlFor="exactAddressVisibility"
                 >
                   <NativeSelect
@@ -1258,10 +1261,10 @@ export function PropertyForm({
         <TabsContent value="seo">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">SEO</CardTitle>
+              <CardTitle className="text-base">{t.tabSeo}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Field label="SEO title" htmlFor="seoTitle">
+              <Field label={t.fSeoTitle} htmlFor="seoTitle">
                 <Input
                   id="seoTitle"
                   value={form.seoTitle}
@@ -1270,7 +1273,7 @@ export function PropertyForm({
                   }
                 />
               </Field>
-              <Field label="SEO description" htmlFor="seoDescription">
+              <Field label={t.fSeoDescription} htmlFor="seoDescription">
                 <Textarea
                   id="seoDescription"
                   rows={3}
@@ -1288,11 +1291,11 @@ export function PropertyForm({
         <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Status & visibility</CardTitle>
+              <CardTitle className="text-base">{t.cardStatusVisibility}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Status" htmlFor="status">
+                <Field label={t.fStatus} htmlFor="status">
                   <NativeSelect
                     id="status"
                     value={form.status}
@@ -1300,7 +1303,7 @@ export function PropertyForm({
                     onChange={(value) => update("status", value)}
                   />
                 </Field>
-                <Field label="Visibility" htmlFor="visibility">
+                <Field label={t.fVisibility} htmlFor="visibility">
                   <NativeSelect
                     id="visibility"
                     value={form.visibility}
@@ -1310,28 +1313,33 @@ export function PropertyForm({
                 </Field>
               </div>
               <p className="text-sm text-muted-foreground">
-                {assignedLabel}. Created{" "}
-                {new Date(initial.property.created_at).toLocaleDateString(
-                  "en-US",
-                )}
-                , updated{" "}
-                {new Date(initial.property.updated_at).toLocaleDateString(
-                  "en-US",
-                )}
-                .
+                {assignedLabel}
+                {t.metaCreatedUpdated
+                  .replace(
+                    "{created}",
+                    new Date(
+                      initial.property.created_at,
+                    ).toLocaleDateString("en-US"),
+                  )
+                  .replace(
+                    "{updated}",
+                    new Date(
+                      initial.property.updated_at,
+                    ).toLocaleDateString("en-US"),
+                  )}
               </p>
             </CardContent>
           </Card>
           {canManageAll ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Assignment</CardTitle>
+                <CardTitle className="text-base">{t.cardAssignment}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Field
-                  label="Lead agent"
+                  label={t.fLeadAgent}
                   htmlFor="assigned-agent"
-                  hint="The agent responsible for this listing."
+                  hint={t.hintLeadAgent}
                 >
                   <select
                     id="assigned-agent"
@@ -1342,21 +1350,21 @@ export function PropertyForm({
                       setSaved(false);
                     }}
                   >
-                    <option value="">Unassigned</option>
+                    <option value="">{t.unassigned}</option>
                     {agents.map((agent) => (
                       <option key={agent.id} value={agent.id}>
                         {agent.name}
-                        {agent.id === currentUserId ? " (you)" : ""}
+                        {agent.id === currentUserId ? t.you : ""}
                       </option>
                     ))}
                   </select>
                 </Field>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Co-agents</p>
+                  <p className="text-sm font-medium">{t.coAgents}</p>
                   {agents.filter((agent) => agent.id !== assignedAgentId)
                     .length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No other agents to add.
+                      {t.noOtherAgents}
                     </p>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
@@ -1373,7 +1381,7 @@ export function PropertyForm({
                             />
                             <span>
                               {agent.name}
-                              {agent.id === currentUserId ? " (you)" : ""}
+                              {agent.id === currentUserId ? t.you : ""}
                             </span>
                           </label>
                         ))}
@@ -1386,12 +1394,11 @@ export function PropertyForm({
           {canDelete ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Danger zone</CardTitle>
+                <CardTitle className="text-base">{t.cardDangerZone}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Deleting a property removes all of its translations, media,
-                  prices and other related data.
+                  {t.dangerWarning}
                 </p>
                 <Button
                   type="button"
@@ -1399,7 +1406,7 @@ export function PropertyForm({
                   disabled={deletePending}
                   onClick={handleDelete}
                 >
-                  {deletePending ? "Deleting..." : "Delete property"}
+                  {deletePending ? t.deleting : t.deleteProperty}
                 </Button>
               </CardContent>
             </Card>
@@ -1409,7 +1416,7 @@ export function PropertyForm({
 
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-3 border-t bg-background/85 px-4 py-3 backdrop-blur-md lg:-mx-6 lg:px-6">
         <Button type="button" onClick={handleSave} disabled={pending}>
-          {pending ? "Saving..." : "Save changes"}
+          {pending ? t.saving : t.saveChanges}
         </Button>
         <Button
           type="button"
@@ -1418,16 +1425,14 @@ export function PropertyForm({
           onClick={() => {
             if (
               dirty &&
-              !window.confirm(
-                "You have unsaved changes. Leave without saving?",
-              )
+              !window.confirm(t.unsavedConfirm)
             ) {
               return;
             }
             router.push(ROUTES.dashboard.properties);
           }}
         >
-          Back to list
+          {t.backToList}
         </Button>
         {error ? (
           <span className="text-sm text-destructive" role="alert">
@@ -1436,7 +1441,7 @@ export function PropertyForm({
         ) : null}
         {saved ? (
           <span className="text-sm font-medium text-emerald-600">
-            All changes saved.
+            {t.allSaved}
           </span>
         ) : null}
       </div>
