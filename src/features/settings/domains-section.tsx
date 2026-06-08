@@ -11,6 +11,7 @@ import {
 } from "@/features/settings/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 export interface DomainRow {
   id: string;
@@ -27,6 +28,8 @@ interface DomainsSectionProps {
 /** Управление доменами организации: добавление, верификация, primary, удаление. */
 export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.settingsForm;
   const [value, setValue] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [msg, setMsg] = React.useState<string | null>(null);
@@ -38,18 +41,14 @@ export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
     setMsg(null);
     const result = await fn();
     setPending(false);
-    if (!result.ok) setMsg(result.error ?? "Something went wrong.");
+    if (!result.ok) setMsg(result.error ?? t.somethingWrong);
     router.refresh();
     return result.ok;
   }
 
   return (
     <div className="space-y-4 rounded-md border p-4">
-      <p className="text-xs text-muted-foreground">
-        Domains pointing at this site. Add a domain, point its DNS at your
-        deployment, then mark it verified. The primary domain is used for public
-        links such as portal invitations.
-      </p>
+      <p className="text-xs text-muted-foreground">{t.domainsHint}</p>
 
       {domains.length > 0 ? (
         <ul className="space-y-1 text-sm">
@@ -74,7 +73,7 @@ export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
                       disabled={pending}
                       onClick={() => run(() => verifyDomain(domain.id))}
                     >
-                      Mark verified
+                      {t.markVerified}
                     </Button>
                   ) : null}
                   {domain.type !== "primary" ? (
@@ -85,7 +84,7 @@ export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
                       disabled={pending}
                       onClick={() => run(() => setPrimaryDomain(domain.id))}
                     >
-                      Make primary
+                      {t.makePrimary}
                     </Button>
                   ) : null}
                   <Button
@@ -96,7 +95,7 @@ export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
                     disabled={pending}
                     onClick={() => run(() => removeDomain(domain.id))}
                   >
-                    Remove
+                    {t.remove}
                   </Button>
                 </span>
               ) : null}
@@ -104,7 +103,7 @@ export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">No domains yet.</p>
+        <p className="text-sm text-muted-foreground">{t.noDomains}</p>
       )}
 
       {canManage ? (
@@ -124,7 +123,7 @@ export function DomainsSection({ domains, canManage }: DomainsSectionProps) {
             className="w-64"
           />
           <Button type="submit" size="sm" disabled={pending}>
-            Add domain
+            {t.addDomain}
           </Button>
           {msg ? (
             <span className="text-xs text-muted-foreground">{msg}</span>

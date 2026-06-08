@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SettingsTabs } from "@/features/settings/settings-tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
@@ -96,11 +97,16 @@ export default async function SettingsPage() {
     phone: typeof meta.phone === "string" ? meta.phone : "",
   };
 
+  const dict = await getServerDictionary();
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Settings"
-        description={`Profile, branding, localization, modules and team for ${context.organization.name}.`}
+        title={dict.adminNav.settings}
+        description={dict.settingsForm.pageDesc.replace(
+          "{name}",
+          context.organization.name,
+        )}
       />
 
       <SettingsTabs
