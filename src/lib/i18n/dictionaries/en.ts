@@ -1195,6 +1195,24 @@ export const en = {
     moveDown: "Move down",
     editMilestone: "Edit milestone",
     removeMilestone: "Remove milestone",
+    pageTitle: "About page",
+    pageDesc:
+      "Edit the public /about page — hero, story and the timeline of milestones.",
+    viewPage: "View page",
+    legalTitle: "Legal pages",
+    legalHint:
+      "Privacy, Terms and Cookies. Use ## Heading for sections and - item for list bullets. Leave blank to use the built-in defaults.",
+    introsTitle: "Other page headings",
+    introsHint:
+      "Intro text (eyebrow, heading, subheading) for the Sell and Agents pages. Leave blank to use defaults.",
+    eyebrow: "Eyebrow",
+    heading: "Heading",
+    subheading: "Subheading",
+    docPrivacy: "Privacy policy",
+    docTerms: "Terms of service",
+    docCookies: "Cookies",
+    pageSell: "Sell page",
+    pageAgents: "Agents page",
   },
   campaignEditor: {
     statusLabel: "Status",
@@ -1253,6 +1271,10 @@ export const en = {
     campaignScheduled: "Campaign scheduled.",
   },
   homeEditor: {
+    pageTitle: "Home page",
+    pageDesc:
+      "Edit the content shown on the public home page of {name}. Changes appear on the live site immediately after save.",
+    viewPage: "View page",
     // Tabs
     tabHero: "Hero",
     tabIntent: "Intent",

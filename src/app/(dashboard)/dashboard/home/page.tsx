@@ -12,6 +12,7 @@ import { ContentLanguageTabs } from "@/features/i18n/content-language-tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveOrgLocale } from "@/lib/i18n/content-translations";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -57,11 +58,14 @@ export default async function DashboardHomePage({
         "editor",
       );
 
+  const dict = await getServerDictionary();
+  const tc = dict.homeEditor;
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Home page"
-        description={`Edit the content shown on the public home page of ${org.name}. Changes appear on the live site immediately after save.`}
+        title={tc.pageTitle}
+        description={tc.pageDesc.replace("{name}", org.name)}
         actions={
           <a
             href={`/${selected}`}
@@ -70,7 +74,7 @@ export default async function DashboardHomePage({
             className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md border bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent"
           >
             <ExternalLink className="h-4 w-4" />
-            View page
+            {tc.viewPage}
           </a>
         }
       />

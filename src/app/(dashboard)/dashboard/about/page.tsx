@@ -17,6 +17,7 @@ import {
   resolveOrgLocale,
   type TranslatedFields,
 } from "@/lib/i18n/content-translations";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -125,11 +126,14 @@ export default async function AboutEditorPage({
     return { title: f.title ?? null, body: f.body ?? null };
   };
 
+  const dict = await getServerDictionary();
+  const tc = dict.aboutEditor;
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="About page"
-        description="Edit the public /about page — hero, story and the timeline of milestones."
+        title={tc.pageTitle}
+        description={tc.pageDesc}
         actions={
           <a
             href={`/${selected}/about`}
@@ -138,7 +142,7 @@ export default async function AboutEditorPage({
             className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md border bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent"
           >
             <ExternalLink className="h-4 w-4" />
-            View page
+            {tc.viewPage}
           </a>
         }
       />

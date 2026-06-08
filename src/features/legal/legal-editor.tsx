@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 type DocKey = "privacy" | "terms" | "cookies";
 
@@ -26,6 +28,14 @@ interface DocEntry {
   value: DocValue;
 }
 
+function docLabel(t: Dictionary["aboutEditor"], docKey: DocKey): string {
+  return docKey === "privacy"
+    ? t.docPrivacy
+    : docKey === "terms"
+      ? t.docTerms
+      : t.docCookies;
+}
+
 export function LegalEditor({
   docs,
   locale,
@@ -33,15 +43,13 @@ export function LegalEditor({
   docs: DocEntry[];
   locale: string;
 }) {
+  const { dict } = useI18n();
+  const t = dict.aboutEditor;
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-semibold">Legal pages</h2>
-        <p className="text-xs text-muted-foreground">
-          Privacy, Terms and Cookies. Use <code>## Heading</code> for sections
-          and <code>- item</code> for list bullets. Leave blank to use the
-          built-in defaults.
-        </p>
+        <h2 className="text-base font-semibold">{t.legalTitle}</h2>
+        <p className="text-xs text-muted-foreground">{t.legalHint}</p>
       </div>
       {docs.map((doc) => (
         <LegalForm key={doc.docKey} entry={doc} locale={locale} />
@@ -52,6 +60,9 @@ export function LegalEditor({
 
 function LegalForm({ entry, locale }: { entry: DocEntry; locale: string }) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.aboutEditor;
+  const label = docLabel(t, entry.docKey);
   const [title, setTitle] = React.useState(entry.value.title ?? "");
   const [body, setBody] = React.useState(entry.value.body ?? "");
   const [pending, setPending] = React.useState(false);
@@ -60,7 +71,7 @@ function LegalForm({ entry, locale }: { entry: DocEntry; locale: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">{entry.label}</CardTitle>
+        <CardTitle className="text-sm">{label}</CardTitle>
       </CardHeader>
       <CardContent>
         <form
@@ -77,20 +88,20 @@ function LegalForm({ entry, locale }: { entry: DocEntry; locale: string }) {
               locale,
             );
             setPending(false);
-            setMsg(result.ok ? "Saved." : result.error);
+            setMsg(result.ok ? t.saved : result.error);
             if (result.ok) router.refresh();
           }}
         >
           <div className="space-y-1">
-            <label className="text-xs font-medium">Title</label>
+            <label className="text-xs font-medium">{t.title}</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={entry.label}
+              placeholder={label}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium">Body</label>
+            <label className="text-xs font-medium">{t.body}</label>
             <textarea
               className="min-h-[200px] w-full rounded-md border bg-background px-3 py-2 font-mono text-xs"
               value={body}
@@ -100,7 +111,7 @@ function LegalForm({ entry, locale }: { entry: DocEntry; locale: string }) {
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" type="submit" disabled={pending}>
-              Save
+              {t.save}
             </Button>
             {msg ? (
               <span className="text-xs text-muted-foreground">{msg}</span>
