@@ -497,4 +497,18 @@ export const ru: DeepPartial<Dictionary> = {
     adapterNote:
       "Адаптеры провайдеров предоставляют метод uploadOfflineConversion() как чистую точку расширения.",
   },
+  dashPages: {
+    description: "Публичные страницы сайта компании {name}.",
+    newPage: "Новая страница",
+    colTitle: "Заголовок",
+    colSlug: "Слаг",
+    colType: "Тип",
+    colStatus: "Статус",
+    viewPublic: "Открыть публичную страницу",
+    emptyTitle: "Страниц пока нет",
+    emptyDesc: "Создайте первую публичную страницу сайта.",
+  },
+  dashNavigation: {
+    description: "Меню шапки и подвала компании {name}.",
+  },
 };

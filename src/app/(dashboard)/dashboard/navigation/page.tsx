@@ -6,6 +6,7 @@ import { NavigationManager } from "@/features/cms/navigation-manager";
 import { getNavigationItems } from "@/features/cms/navigation-queries";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -35,12 +36,14 @@ export default async function NavigationPage() {
   const pages = pageList
     .filter((page) => page.status === "published")
     .map((page) => ({ id: page.id, label: page.title }));
+  const dict = await getServerDictionary();
+  const t = dict.dashNavigation;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Navigation"
-        description={`Header and footer menus of ${context.organization.name}.`}
+        title={dict.adminNav.navigation}
+        description={t.description.replace("{name}", context.organization.name)}
       />
       <NavigationManager
         header={header}

@@ -497,4 +497,18 @@ export const uk: DeepPartial<Dictionary> = {
     adapterNote:
       "Адаптери провайдерів надають метод uploadOfflineConversion() як чисту точку розширення.",
   },
+  dashPages: {
+    description: "Публічні сторінки сайту компанії {name}.",
+    newPage: "Нова сторінка",
+    colTitle: "Заголовок",
+    colSlug: "Слаг",
+    colType: "Тип",
+    colStatus: "Статус",
+    viewPublic: "Відкрити публічну сторінку",
+    emptyTitle: "Сторінок поки немає",
+    emptyDesc: "Створіть першу публічну сторінку сайту.",
+  },
+  dashNavigation: {
+    description: "Меню шапки та підвалу компанії {name}.",
+  },
 };

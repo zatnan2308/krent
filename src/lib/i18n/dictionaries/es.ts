@@ -498,4 +498,18 @@ export const es: DeepPartial<Dictionary> = {
     adapterNote:
       "Los adaptadores de proveedor exponen un método uploadOfflineConversion() como punto de extensión limpio.",
   },
+  dashPages: {
+    description: "Páginas públicas del sitio de {name}.",
+    newPage: "Nueva página",
+    colTitle: "Título",
+    colSlug: "Slug",
+    colType: "Tipo",
+    colStatus: "Estado",
+    viewPublic: "Ver página pública",
+    emptyTitle: "Aún no hay páginas",
+    emptyDesc: "Cree su primera página pública.",
+  },
+  dashNavigation: {
+    description: "Menús de cabecera y pie de página de {name}.",
+  },
 };

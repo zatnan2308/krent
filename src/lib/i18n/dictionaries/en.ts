@@ -499,6 +499,20 @@ export const en = {
     adapterNote:
       "Provider adapters expose an uploadOfflineConversion() method as a clean extension point.",
   },
+  dashPages: {
+    description: "Public website pages of {name}.",
+    newPage: "New page",
+    colTitle: "Title",
+    colSlug: "Slug",
+    colType: "Type",
+    colStatus: "Status",
+    viewPublic: "View public page",
+    emptyTitle: "No pages yet",
+    emptyDesc: "Create your first public website page.",
+  },
+  dashNavigation: {
+    description: "Header and footer menus of {name}.",
+  },
 };
 
 export type Dictionary = typeof en;
