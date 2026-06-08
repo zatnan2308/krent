@@ -11,6 +11,7 @@ const ITEMS = [
   { href: ROUTES.dashboard.marketing, key: "campaigns" },
   { href: `${ROUTES.dashboard.marketing}/segments`, key: "segments" },
   { href: `${ROUTES.dashboard.marketing}/contacts`, key: "contacts" },
+  { href: ROUTES.dashboard.marketingAutomations, key: "automations" },
 ] as const;
 
 /** Навигация раздела маркетинга. */
@@ -21,6 +22,7 @@ export function MarketingNav() {
     campaigns: dict.dashMarketing.navCampaigns,
     segments: dict.dashMarketing.navSegments,
     contacts: dict.dashMarketing.navContacts,
+    automations: dict.dashMarketing.navAutomations,
   };
 
   function isActive(key: string): boolean {
@@ -29,6 +31,9 @@ export function MarketingNav() {
     }
     if (key === "contacts") {
       return pathname.startsWith(`${ROUTES.dashboard.marketing}/contacts`);
+    }
+    if (key === "automations") {
+      return pathname.startsWith(ROUTES.dashboard.marketingAutomations);
     }
     return (
       pathname === ROUTES.dashboard.marketing ||

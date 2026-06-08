@@ -959,6 +959,7 @@ export const en = {
       "Transactional emails will appear here once events are triggered.",
   },
   dashMarketing: {
+    navAutomations: "Automations",
     title: "Marketing campaigns",
     description: "Build and send newsletters to your contact segments.",
     startCampaign: "Start a campaign",

@@ -926,6 +926,7 @@ export const fr: DeepPartial<Dictionary> = {
       "Les e-mails transactionnels apparaîtront ici une fois les événements déclenchés.",
   },
   dashMarketing: {
+    navAutomations: "Automatisations",
     title: "Campagnes marketing",
     description: "Créez et envoyez des newsletters à vos segments de contacts.",
     startCampaign: "Lancer une campagne",

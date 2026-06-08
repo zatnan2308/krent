@@ -923,6 +923,7 @@ export const uk: DeepPartial<Dictionary> = {
       "Транзакційні листи з'являться тут після спрацювання подій.",
   },
   dashMarketing: {
+    navAutomations: "Автоматизації",
     title: "Маркетингові кампанії",
     description: "Створюйте та надсилайте розсилки сегментам контактів.",
     startCampaign: "Почати кампанію",

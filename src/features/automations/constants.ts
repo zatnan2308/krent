@@ -20,3 +20,15 @@ export const AUTOMATION_VARIABLES = [
   "full_name",
   "company_name",
 ] as const;
+
+/** Человекочитаемые подписи триггеров (UI). */
+export const AUTOMATION_TRIGGER_LABELS: Record<AutomationTrigger, string> = {
+  "lead.created": "New lead",
+  "booking.created": "New booking",
+};
+
+/** Человекочитаемые подписи типов шагов (UI). */
+export const AUTOMATION_STEP_LABELS: Record<AutomationStepType, string> = {
+  delay: "Wait",
+  send_email: "Send email",
+};

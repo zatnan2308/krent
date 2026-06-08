@@ -43,6 +43,7 @@ export const ROUTES = {
     messages: "/dashboard/messages",
     email: "/dashboard/email",
     marketing: "/dashboard/marketing",
+    marketingAutomations: "/dashboard/marketing/automations",
     seo: "/dashboard/seo",
     analytics: "/dashboard/analytics",
     reports: "/dashboard/reports",

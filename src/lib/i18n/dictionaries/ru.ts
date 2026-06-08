@@ -923,6 +923,7 @@ export const ru: DeepPartial<Dictionary> = {
       "Транзакционные письма появятся здесь после срабатывания событий.",
   },
   dashMarketing: {
+    navAutomations: "Автоматизации",
     title: "Маркетинговые кампании",
     description: "Создавайте и отправляйте рассылки сегментам контактов.",
     startCampaign: "Начать кампанию",
