@@ -7,6 +7,7 @@ import { getBookingQuote, requestBooking } from "@/features/bookings/actions";
 import type { BookingQuote } from "@/features/bookings/pricing";
 import { startBookingPayment } from "@/features/payments/actions";
 import type { PaymentProviderType } from "@/features/payments/types";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface PaymentOptionView {
   provider: PaymentProviderType;
@@ -61,6 +62,8 @@ export function BookingWidgetEditorial({
   today,
   paymentOptions = [],
 }: Props) {
+  const { dict } = useI18n();
+  const t = dict.propertyDetail;
   const [start, setStart] = React.useState<Date | null>(null);
   const [end, setEnd] = React.useState<Date | null>(null);
   const [guests, setGuests] = React.useState(2);
@@ -139,7 +142,7 @@ export function BookingWidgetEditorial({
 
   async function handleReserve() {
     if (!start || !end || nights < minNights) {
-      setError(`Minimum stay is ${minNights} night${minNights > 1 ? "s" : ""}.`);
+      setError(t.bwMinStay.replace("{n}", String(minNights)));
       return;
     }
     setPending(true);
@@ -163,7 +166,7 @@ export function BookingWidgetEditorial({
       return;
     }
     if (!result.available || result.issues.length > 0) {
-      setError(result.issues[0] ?? "These dates are not available.");
+      setError(result.issues[0] ?? t.bwNotAvailable);
       return;
     }
     setQuote(result.quote);
@@ -174,7 +177,7 @@ export function BookingWidgetEditorial({
   async function handleSend() {
     if (!start || !end) return;
     if (!name.trim() || !email.trim()) {
-      setError("Enter your name and email.");
+      setError(t.bwEnterNameEmail);
       return;
     }
     setPending(true);
@@ -251,12 +254,12 @@ export function BookingWidgetEditorial({
           }}
         >
           <div className="serif" style={{ fontSize: "1.5rem", letterSpacing: "-0.02em", color: "var(--accent)" }}>
-            ✓ Request sent
+            ✓ {t.bwRequestSent}
           </div>
           <p style={{ marginTop: 12, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-            Reference <span className="tnum" style={{ color: "var(--text-primary)" }}>{done.reference}</span>.
-            You&apos;ll get a confirmation by email shortly
-            {canPay ? "" : " — no charge yet"}.
+            {t.bwReference} <span className="tnum" style={{ color: "var(--text-primary)" }}>{done.reference}</span>.
+            {t.bwConfirmEmail}
+            {canPay ? "" : t.bwNoChargeYet}.
           </p>
 
           {instructions ? (
@@ -290,7 +293,7 @@ export function BookingWidgetEditorial({
               }}
             >
               <p style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>
-                Pay now to confirm instantly
+                {t.bwPayNow}
               </p>
               {paymentOptions.map((option) => (
                 <button
@@ -312,7 +315,7 @@ export function BookingWidgetEditorial({
                     cursor: "pointer",
                   }}
                 >
-                  {pending ? "…" : `Pay with ${option.displayName}`}
+                  {pending ? "…" : t.bwPayWith.replace("{provider}", option.displayName)}
                 </button>
               ))}
             </div>
@@ -342,7 +345,7 @@ export function BookingWidgetEditorial({
             color: "#0B6B4F",
           }}
         >
-          Payment received — your booking is being confirmed.
+          {t.bwPaymentReceived}
         </div>
       ) : null}
       {paidBanner === "cancelled" ? (
@@ -357,7 +360,7 @@ export function BookingWidgetEditorial({
             color: "#B7392E",
           }}
         >
-          Payment was cancelled. You can try again.
+          {t.bwPaymentCancelled}
         </div>
       ) : null}
       <div
@@ -373,7 +376,7 @@ export function BookingWidgetEditorial({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18 }}>
           <div className="serif" style={{ fontSize: "1.75rem", letterSpacing: "-0.02em" }}>
             {money(nightly)}
-            <span style={{ fontSize: "0.5em", color: "var(--text-tertiary)", fontStyle: "italic" }}> / night</span>
+            <span style={{ fontSize: "0.5em", color: "var(--text-tertiary)", fontStyle: "italic" }}>{t.bwPerNight}</span>
           </div>
           {rating ? (
             <div className="tnum" style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>
@@ -391,15 +394,15 @@ export function BookingWidgetEditorial({
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer" }}
           >
             <div style={{ padding: "10px 12px", borderRight: "1px solid var(--border-medium)" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>Check-in</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>{t.bwCheckIn}</div>
               <div style={{ fontSize: 13, color: start ? "var(--text-primary)" : "var(--text-tertiary)", marginTop: 3 }}>
-                {start ? fmtShort(start) : "Add date"}
+                {start ? fmtShort(start) : t.bwAddDate}
               </div>
             </div>
             <div style={{ padding: "10px 12px" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>Checkout</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>{t.bwCheckout}</div>
               <div style={{ fontSize: 13, color: end ? "var(--text-primary)" : "var(--text-tertiary)", marginTop: 3 }}>
-                {end ? fmtShort(end) : "Add date"}
+                {end ? fmtShort(end) : t.bwAddDate}
               </div>
             </div>
           </button>
@@ -413,7 +416,7 @@ export function BookingWidgetEditorial({
                 serverToday={today}
               />
               <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
-                Minimum stay {minNights} night{minNights > 1 ? "s" : ""}
+                {t.bwMinStayHint.replace("{n}", String(minNights))}
               </div>
             </div>
           ) : null}
@@ -422,8 +425,8 @@ export function BookingWidgetEditorial({
         {/* Guests */}
         <div style={{ border: "1px solid var(--border-medium)", padding: "10px 14px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: 8 }}>
           <div>
-            <div style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>Guests</div>
-            <div className="tnum" style={{ fontSize: 13, marginTop: 3 }}>{guests} guest{guests > 1 ? "s" : ""}</div>
+            <div style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>{t.bwGuests}</div>
+            <div className="tnum" style={{ fontSize: 13, marginTop: 3 }}>{t.bwGuestsCount.replace("{n}", String(guests))}</div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <StepBtn label="−" onClick={() => setGuests(Math.max(1, guests - 1))} />
@@ -444,13 +447,13 @@ export function BookingWidgetEditorial({
               cursor: nights >= minNights ? "pointer" : "default",
             }}
           >
-            {pending ? "Checking…" : nights ? `Reserve · ${nights} night${nights > 1 ? "s" : ""}` : "Reserve"}
+            {pending ? t.bwChecking : nights ? t.bwReserveNights.replace("{n}", String(nights)) : t.bwReserve}
           </button>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <Field value={name} placeholder="Full name" onChange={setName} />
-            <Field value={email} placeholder="Email" type="email" onChange={setEmail} />
-            <Field value={phone} placeholder="Phone (optional)" type="tel" onChange={setPhone} />
+            <Field value={name} placeholder={t.bwFullName} onChange={setName} />
+            <Field value={email} placeholder={t.bwEmail} type="email" onChange={setEmail} />
+            <Field value={phone} placeholder={t.bwPhoneOptional} type="tel" onChange={setPhone} />
             <button
               type="button"
               onClick={handleSend}
@@ -458,13 +461,13 @@ export function BookingWidgetEditorial({
               className="btn-solid"
               style={{ width: "100%", justifyContent: "center", padding: "16px", borderRadius: 10, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", display: "flex", border: "none" }}
             >
-              {pending ? "Sending…" : "Send booking request"}
+              {pending ? t.bwSending : t.bwSendRequest}
             </button>
           </div>
         )}
 
         <div style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", marginTop: 10 }}>
-          You won&apos;t be charged yet
+          {t.bwNoCharge}
         </div>
 
         {error ? (
@@ -474,15 +477,15 @@ export function BookingWidgetEditorial({
         {/* Breakdown */}
         {nights > 0 ? (
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10, fontSize: 13.5 }}>
-            <BRow label={`${money(nightly)} × ${nights} night${nights > 1 ? "s" : ""}`} val={money(quote ? quote.subtotal : sub)} />
+            <BRow label={t.bwNightsLine.replace("{price}", money(nightly)).replace("{n}", String(nights))} val={money(quote ? quote.subtotal : sub)} />
             {(quote ? quote.cleaningFee : cleaning) > 0 ? (
-              <BRow label="Cleaning fee" val={money(quote ? quote.cleaningFee : cleaning)} />
+              <BRow label={t.bwCleaningFee} val={money(quote ? quote.cleaningFee : cleaning)} />
             ) : null}
             {quote && quote.taxes > 0 ? (
-              <BRow label="Taxes" val={money(quote.taxes)} />
+              <BRow label={t.bwTaxes} val={money(quote.taxes)} />
             ) : null}
             <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 12, marginTop: 2 }}>
-              <BRow label="Total" val={money(showTotal)} bold />
+              <BRow label={t.bwTotal} val={money(showTotal)} bold />
             </div>
           </div>
         ) : null}
@@ -557,6 +560,8 @@ function Calendar({
   bookedDates: string[];
   serverToday?: string;
 }) {
+  const { dict } = useI18n();
+  const t = dict.propertyDetail;
   const bookedSet = React.useMemo(() => new Set(bookedDates), [bookedDates]);
   // «Сегодня» берём из сервера (UTC-дата как календарный день), чтобы граница
   // прошлого совпадала с серверной доступностью; иначе — локальная дата.
@@ -597,7 +602,7 @@ function Calendar({
           type="button"
           onClick={() => canPrev && setView(new Date(y, m - 1, 1))}
           disabled={!canPrev}
-          aria-label="Previous month"
+          aria-label={t.bwPrevMonth}
           style={{ width: 30, height: 30, border: "1px solid var(--border-medium)", color: canPrev ? "var(--text-primary)" : "var(--text-quaternary)", fontSize: 13, background: "transparent", cursor: canPrev ? "pointer" : "default" }}
         >
           ←
@@ -606,7 +611,7 @@ function Calendar({
         <button
           type="button"
           onClick={() => setView(new Date(y, m + 1, 1))}
-          aria-label="Next month"
+          aria-label={t.bwNextMonth}
           style={{ width: 30, height: 30, border: "1px solid var(--border-medium)", color: "var(--text-primary)", fontSize: 13, background: "transparent", cursor: "pointer" }}
         >
           →
@@ -637,7 +642,7 @@ function Calendar({
               disabled={disabled}
               onClick={() => onPick(d)}
               className="tnum"
-              title={booked ? "Unavailable" : undefined}
+              title={booked ? t.bwUnavailable : undefined}
               style={{
                 aspectRatio: "1 / 1",
                 fontSize: 12.5,
