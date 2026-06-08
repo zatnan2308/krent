@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 import { resolveUserNames } from "@/server/user-directory";
@@ -81,17 +82,19 @@ export default async function ReportsPage() {
   );
 
   const agentNames = await resolveUserNames(agents.map((row) => row.agentId));
+  const dict = await getServerDictionary();
+  const t = dict.dashReports;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reports"
-        description="Funnel, sources, property and agent performance, email campaigns, and rental KPIs."
+        title={dict.adminNav.reports}
+        description={t.description}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Funnel (last 30 days)</CardTitle>
+          <CardTitle className="text-base">{t.funnel}</CardTitle>
         </CardHeader>
         <CardContent>
           <FunnelChart data={funnel} />
@@ -100,21 +103,21 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Messaging channels</CardTitle>
+          <CardTitle className="text-base">{t.messagingChannels}</CardTitle>
         </CardHeader>
         <CardContent>
           {messagingTotal === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No channel conversations yet.
+              {t.noChannelConvos}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Channel</TableHead>
-                  <TableHead>Conversations</TableHead>
-                  <TableHead>Received</TableHead>
-                  <TableHead>Sent</TableHead>
+                  <TableHead>{t.channel}</TableHead>
+                  <TableHead>{t.conversations}</TableHead>
+                  <TableHead>{t.received}</TableHead>
+                  <TableHead>{t.sent}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -134,15 +137,15 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sources</CardTitle>
+          <CardTitle className="text-base">{t.sources}</CardTitle>
         </CardHeader>
         <CardContent>
           {sources.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No data yet.</p>
+            <p className="text-sm text-muted-foreground">{t.noData}</p>
           ) : (
             <>
               <BarChart
-                ariaLabel="Leads by source"
+                ariaLabel={t.leadsBySource}
                 data={sources.map((row) => ({
                   label: row.source,
                   value: row.leads,
@@ -151,9 +154,9 @@ export default async function ReportsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Leads</TableHead>
-                  <TableHead>Bookings</TableHead>
+                  <TableHead>{t.source}</TableHead>
+                  <TableHead>{t.leads}</TableHead>
+                  <TableHead>{t.bookings}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -173,21 +176,21 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Properties</CardTitle>
+          <CardTitle className="text-base">{t.properties}</CardTitle>
         </CardHeader>
         <CardContent>
           {properties.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No data yet.</p>
+            <p className="text-sm text-muted-foreground">{t.noData}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead>Leads</TableHead>
-                  <TableHead>Booking requests</TableHead>
-                  <TableHead>Conv. rate</TableHead>
-                  <TableHead>Revenue</TableHead>
+                  <TableHead>{t.property}</TableHead>
+                  <TableHead>{t.views}</TableHead>
+                  <TableHead>{t.leads}</TableHead>
+                  <TableHead>{t.bookingRequests}</TableHead>
+                  <TableHead>{t.convRate}</TableHead>
+                  <TableHead>{t.revenue}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,22 +212,22 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Agents</CardTitle>
+          <CardTitle className="text-base">{t.agents}</CardTitle>
         </CardHeader>
         <CardContent>
           {agents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No data yet.</p>
+            <p className="text-sm text-muted-foreground">{t.noData}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Agent</TableHead>
-                  <TableHead>Assigned leads</TableHead>
-                  <TableHead>Contacted</TableHead>
-                  <TableHead>Appointments</TableHead>
-                  <TableHead>Deals won</TableHead>
-                  <TableHead>Bookings</TableHead>
-                  <TableHead>Revenue</TableHead>
+                  <TableHead>{t.agent}</TableHead>
+                  <TableHead>{t.assignedLeads}</TableHead>
+                  <TableHead>{t.contacted}</TableHead>
+                  <TableHead>{t.appointments}</TableHead>
+                  <TableHead>{t.dealsWon}</TableHead>
+                  <TableHead>{t.bookings}</TableHead>
+                  <TableHead>{t.revenue}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -249,21 +252,21 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Email campaigns</CardTitle>
+          <CardTitle className="text-base">{t.emailCampaigns}</CardTitle>
         </CardHeader>
         <CardContent>
           {campaigns.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No campaigns sent.</p>
+            <p className="text-sm text-muted-foreground">{t.noCampaigns}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Campaign</TableHead>
-                  <TableHead>Sent</TableHead>
-                  <TableHead>Delivered</TableHead>
-                  <TableHead>Opened</TableHead>
-                  <TableHead>Clicked</TableHead>
-                  <TableHead>Unsubscribed</TableHead>
+                  <TableHead>{t.campaign}</TableHead>
+                  <TableHead>{t.sent}</TableHead>
+                  <TableHead>{t.delivered}</TableHead>
+                  <TableHead>{t.opened}</TableHead>
+                  <TableHead>{t.clicked}</TableHead>
+                  <TableHead>{t.unsubscribed}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -285,39 +288,39 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Rental KPIs (last 30 days)</CardTitle>
+          <CardTitle className="text-base">{t.rentalKpis}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">Booked nights</p>
+            <p className="text-xs text-muted-foreground">{t.bookedNights}</p>
             <p className="text-lg font-semibold">{rental.bookedNights}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Blocked nights</p>
+            <p className="text-xs text-muted-foreground">{t.blockedNights}</p>
             <p className="text-lg font-semibold">{rental.blockedNights}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Total inventory nights</p>
+            <p className="text-xs text-muted-foreground">{t.totalInventory}</p>
             <p className="text-lg font-semibold">{rental.totalNights}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Occupancy</p>
+            <p className="text-xs text-muted-foreground">{t.occupancy}</p>
             <p className="text-lg font-semibold">{pct(rental.occupancy)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Revenue</p>
+            <p className="text-xs text-muted-foreground">{t.revenue}</p>
             <p className="text-lg font-semibold">
               {money(rental.revenue, currency)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">ADR</p>
+            <p className="text-xs text-muted-foreground">{t.adr}</p>
             <p className="text-lg font-semibold">
               {money(rental.adr, currency)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Direct booking share</p>
+            <p className="text-xs text-muted-foreground">{t.directBookingShare}</p>
             <p className="text-lg font-semibold">{pct(rental.directBookingShare)}</p>
           </div>
         </CardContent>
