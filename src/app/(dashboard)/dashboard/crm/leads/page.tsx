@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -101,6 +102,8 @@ export default async function CrmLeadsPage({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const page = Math.min(requestedPage, totalPages);
   const totalLeads = breakdown.reduce((sum, row) => sum + row.count, 0);
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
 
   // Сохраняем активные фильтры при переходе между страницами.
   const buildPageHref = (target: number): string => {
@@ -118,8 +121,8 @@ export default async function CrmLeadsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Leads"
-        description="Inquiries captured from your website and properties."
+        title={t.navLeads}
+        description={t.leadsDesc}
       />
       <CrmNav />
 
@@ -129,7 +132,7 @@ export default async function CrmLeadsPage({
       >
         <div className="space-y-1.5">
           <label htmlFor="status" className="text-sm font-medium">
-            Status
+            {t.status}
           </label>
           <select
             id="status"
@@ -137,7 +140,7 @@ export default async function CrmLeadsPage({
             defaultValue={status ?? ""}
             className={`${FIELD_CLASS} w-48`}
           >
-            <option value="">All statuses</option>
+            <option value="">{t.allStatuses}</option>
             {LEAD_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -147,7 +150,7 @@ export default async function CrmLeadsPage({
         </div>
         <div className="space-y-1.5">
           <label htmlFor="type" className="text-sm font-medium">
-            Type
+            {t.type}
           </label>
           <select
             id="type"
@@ -155,7 +158,7 @@ export default async function CrmLeadsPage({
             defaultValue={type ?? ""}
             className={`${FIELD_CLASS} w-48`}
           >
-            <option value="">All types</option>
+            <option value="">{t.allTypes}</option>
             {Object.entries(LEAD_TYPE_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -165,7 +168,7 @@ export default async function CrmLeadsPage({
         </div>
         <div className="space-y-1.5">
           <label htmlFor="source" className="text-sm font-medium">
-            Source
+            {t.source}
           </label>
           <select
             id="source"
@@ -173,7 +176,7 @@ export default async function CrmLeadsPage({
             defaultValue={source ?? ""}
             className={`${FIELD_CLASS} w-48`}
           >
-            <option value="">All sources</option>
+            <option value="">{t.allSources}</option>
             {sources.map((item) => (
               <option key={item.key} value={item.key}>
                 {item.name}
@@ -182,14 +185,14 @@ export default async function CrmLeadsPage({
           </select>
         </div>
         <button type="submit" className={buttonVariants({ variant: "outline" })}>
-          Filter
+          {t.filter}
         </button>
       </form>
 
       {breakdown.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Leads by source</CardTitle>
+            <CardTitle className="text-base">{t.leadsBySource}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -223,19 +226,21 @@ export default async function CrmLeadsPage({
       {leads.length > 0 ? (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {total} lead{total === 1 ? "" : "s"}
-            {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+            {total} {t.leadsCount}
+            {totalPages > 1
+              ? ` · ${t.pageOf.replace("{page}", String(page)).replace("{total}", String(totalPages))}`
+              : ""}
           </p>
           <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Contact</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Property</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>{t.colContact}</TableHead>
+                <TableHead>{t.type}</TableHead>
+                <TableHead>{t.colProperty}</TableHead>
+                <TableHead>{t.colAgent}</TableHead>
+                <TableHead>{t.status}</TableHead>
+                <TableHead>{t.colCreated}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -261,7 +266,7 @@ export default async function CrmLeadsPage({
                     {lead.propertyTitle ?? "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {lead.agentName ?? "Unassigned"}
+                    {lead.agentName ?? t.unassigned}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
@@ -284,8 +289,8 @@ export default async function CrmLeadsPage({
         </div>
       ) : (
         <EmptyState
-          title="No leads found"
-          description="Leads from your website forms will appear here."
+          title={t.noLeadsTitle}
+          description={t.noLeadsDesc}
         />
       )}
     </div>

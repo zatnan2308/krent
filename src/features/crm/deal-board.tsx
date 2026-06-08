@@ -14,6 +14,7 @@ import {
   isCurrencyCode,
 } from "@/lib/currency/config";
 import { formatCurrency } from "@/lib/currency/format";
+import { useI18n } from "@/lib/i18n/provider";
 
 const FIELD_CLASS =
   "flex h-9 w-full rounded-md border border-input bg-background px-2 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -38,6 +39,8 @@ interface DealBoardProps {
 /** Базовая воронка сделок: колонки по стадиям, перенос через select. */
 export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -58,8 +61,8 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
   if (deals.length === 0) {
     return (
       <EmptyState
-        title="No deals yet"
-        description="Convert a lead into a deal to start the pipeline."
+        title={t.noDealsTitle}
+        description={t.noDealsDesc}
       />
     );
   }
@@ -116,7 +119,7 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
                       className={FIELD_CLASS}
                       value={deal.stageId ?? ""}
                       disabled={pending}
-                      aria-label="Move deal to stage"
+                      aria-label={t.moveDealAria}
                       onChange={(event) =>
                         handleMove(deal.id, event.target.value)
                       }
@@ -132,7 +135,7 @@ export function DealBoard({ stages, deals, canManage }: DealBoardProps) {
               );
             })}
             {stageDeals.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No deals</p>
+              <p className="text-xs text-muted-foreground">{t.noDealsCol}</p>
             ) : null}
           </div>
         );

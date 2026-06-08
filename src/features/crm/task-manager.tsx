@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 const FIELD_CLASS =
@@ -55,6 +56,8 @@ export function TaskManager({
   agents = [],
 }: TaskManagerProps) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [dueDate, setDueDate] = React.useState("");
@@ -123,26 +126,26 @@ export function TaskManager({
         <div className="space-y-2 rounded-md border p-3">
           <Input
             value={title}
-            placeholder="Task title"
+            placeholder={t.taskTitlePh}
             onChange={(event) => setTitle(event.target.value)}
           />
           <Textarea
             value={description}
             rows={2}
-            placeholder="Details (optional)"
+            placeholder={t.taskDetailsPh}
             onChange={(event) => setDescription(event.target.value)}
           />
           <div className="grid gap-2 sm:grid-cols-2">
             <Input
               type="date"
               value={dueDate}
-              aria-label="Due date"
+              aria-label={t.dueDateAria}
               onChange={(event) => setDueDate(event.target.value)}
             />
             <select
               className={FIELD_CLASS}
               value={priority}
-              aria-label="Priority"
+              aria-label={t.priorityAria}
               onChange={(event) =>
                 setPriority(event.target.value as TaskPriority)
               }
@@ -157,10 +160,10 @@ export function TaskManager({
               <select
                 className={FIELD_CLASS}
                 value={assignedAgentId}
-                aria-label="Assignee"
+                aria-label={t.assigneeAria}
                 onChange={(event) => setAssignedAgentId(event.target.value)}
               >
-                <option value="">Assign to me</option>
+                <option value="">{t.assignToMe}</option>
                 {agents.map((agent) => (
                   <option key={agent.id} value={agent.id}>
                     {agent.name}
@@ -175,7 +178,7 @@ export function TaskManager({
             disabled={pending}
             onClick={handleCreate}
           >
-            Add task
+            {t.addTask}
           </Button>
         </div>
       ) : null}
@@ -199,7 +202,7 @@ export function TaskManager({
                     checked={done}
                     disabled={pending}
                     className="mt-0.5"
-                    aria-label="Toggle task completion"
+                    aria-label={t.toggleTaskAria}
                     onCheckedChange={() => handleToggle(task)}
                   />
                 ) : null}
@@ -229,7 +232,7 @@ export function TaskManager({
                             : undefined
                         }
                       >
-                        {overdue ? "Overdue · " : "Due "}
+                        {overdue ? `${t.overdue} · ` : `${t.due} `}
                         {task.dueDate}
                       </span>
                     ) : null}
@@ -239,7 +242,7 @@ export function TaskManager({
                         href={`${ROUTES.dashboard.crmLeads}/${task.leadId}`}
                         className="hover:underline"
                       >
-                        Lead
+                        {t.leadLink}
                       </Link>
                     ) : null}
                     {showRelations && task.contactId ? (
@@ -247,7 +250,7 @@ export function TaskManager({
                         href={`${ROUTES.dashboard.crmContacts}/${task.contactId}`}
                         className="hover:underline"
                       >
-                        Contact
+                        {t.contactLink}
                       </Link>
                     ) : null}
                   </div>
@@ -259,7 +262,7 @@ export function TaskManager({
                     size="icon"
                     className="h-7 w-7 shrink-0 text-destructive"
                     disabled={pending}
-                    aria-label="Delete task"
+                    aria-label={t.deleteTaskAria}
                     onClick={() => handleDelete(task.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -271,8 +274,8 @@ export function TaskManager({
         </ul>
       ) : (
         <EmptyState
-          title="No tasks"
-          description="Tasks you create will appear here."
+          title={t.noTasksTitle}
+          description={t.noTasksDesc}
         />
       )}
     </div>

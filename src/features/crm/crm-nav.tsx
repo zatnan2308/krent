@@ -4,19 +4,28 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { ROUTES } from "@/lib/constants/routes";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: ROUTES.dashboard.crm, label: "Overview" },
-  { href: ROUTES.dashboard.crmLeads, label: "Leads" },
-  { href: ROUTES.dashboard.crmContacts, label: "Contacts" },
-  { href: ROUTES.dashboard.crmDeals, label: "Deals" },
-  { href: ROUTES.dashboard.crmTasks, label: "Tasks" },
-];
+  { href: ROUTES.dashboard.crm, key: "overview" },
+  { href: ROUTES.dashboard.crmLeads, key: "leads" },
+  { href: ROUTES.dashboard.crmContacts, key: "contacts" },
+  { href: ROUTES.dashboard.crmDeals, key: "deals" },
+  { href: ROUTES.dashboard.crmTasks, key: "tasks" },
+] as const;
 
 /** Поднавигация раздела CRM. */
 export function CrmNav() {
   const pathname = usePathname();
+  const { dict } = useI18n();
+  const labels: Record<(typeof LINKS)[number]["key"], string> = {
+    overview: dict.adminNav.overview,
+    leads: dict.dashCrm.navLeads,
+    contacts: dict.dashCrm.navContacts,
+    deals: dict.dashCrm.navDeals,
+    tasks: dict.dashCrm.navTasks,
+  };
 
   return (
     <nav className="flex flex-wrap items-center gap-x-1 border-b">
@@ -37,7 +46,7 @@ export function CrmNav() {
                 : "text-muted-foreground hover:text-foreground after:bg-transparent",
             )}
           >
-            {link.label}
+            {labels[link.key]}
           </Link>
         );
       })}

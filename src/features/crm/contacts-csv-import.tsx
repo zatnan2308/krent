@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 
 import { importContactsCsv } from "@/features/crm/contacts-import-actions";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function ContactsCsvImport() {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashCrm;
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -20,7 +23,11 @@ export function ContactsCsvImport() {
     const result = await importContactsCsv(text);
     setPending(false);
     if (result.ok) {
-      setMessage(`Imported ${result.inserted}, skipped ${result.skipped}.`);
+      setMessage(
+        t.csvImported
+          .replace("{inserted}", String(result.inserted))
+          .replace("{skipped}", String(result.skipped)),
+      );
       if (inputRef.current) inputRef.current.value = "";
       router.refresh();
     } else {
@@ -30,11 +37,12 @@ export function ContactsCsvImport() {
 
   return (
     <div className="space-y-2 rounded-md border p-3 text-sm">
-      <p className="font-semibold">Import contacts from CSV</p>
+      <p className="font-semibold">{t.csvTitle}</p>
       <p className="text-xs text-muted-foreground">
-        Header row must include <code>name</code> (or <code>full_name</code>);
-        optional <code>email</code> and <code>phone</code>. Rows with a
-        duplicate email are skipped.
+        {t.csvHelpInclude} <code>name</code> ({t.csvHelpOr}{" "}
+        <code>full_name</code>){t.csvHelpOptional} <code>email</code>{" "}
+        {t.csvHelpAnd} <code>phone</code>
+        {t.csvHelpSkip}
       </p>
       <input
         ref={inputRef}
@@ -50,7 +58,7 @@ export function ContactsCsvImport() {
           onClick={() => inputRef.current?.click()}
           disabled={pending}
         >
-          Choose CSV
+          {t.chooseCsv}
         </Button>
         {message ? (
           <span className="text-xs text-muted-foreground">{message}</span>

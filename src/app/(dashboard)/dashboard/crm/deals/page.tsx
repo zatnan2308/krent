@@ -6,6 +6,7 @@ import { DealBoard } from "@/features/crm/deal-board";
 import { getDealStages, listDeals } from "@/features/crm/queries";
 import { PageHeader } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -27,12 +28,14 @@ export default async function CrmDealsPage() {
     listDeals(context.organization.id),
   ]);
   const canManage = hasPermission(context, "crm.manage");
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Deal pipeline"
-        description="Deals progress through the stages of your sales pipeline."
+        title={t.dealsTitle}
+        description={t.dealsDesc}
       />
       <CrmNav />
       <DealBoard stages={stages} deals={deals} canManage={canManage} />

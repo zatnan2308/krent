@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants/routes";
+import { getServerDictionary } from "@/lib/i18n/runtime";
 import { requireOrganizationContext } from "@/server/organization-context";
 import { hasPermission } from "@/server/permissions";
 
@@ -55,6 +56,8 @@ export default async function CrmContactsPage({
   });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const page = Math.min(requestedPage, totalPages);
+  const dict = await getServerDictionary();
+  const t = dict.dashCrm;
 
   // Сохраняем поиск при переходе между страницами.
   const buildPageHref = (target: number): string => {
@@ -70,8 +73,8 @@ export default async function CrmContactsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Contacts"
-        description={`People who reached out to ${context.organization.name}.`}
+        title={t.navContacts}
+        description={t.contactsDesc.replace("{name}", context.organization.name)}
       />
       <CrmNav />
 
@@ -85,31 +88,33 @@ export default async function CrmContactsPage({
           type="search"
           name="q"
           defaultValue={q}
-          placeholder="Search name, email or phone…"
+          placeholder={t.searchContactsPh}
           className="h-10 w-72 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <button
           type="submit"
           className="h-10 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent"
         >
-          Search
+          {t.searchBtn}
         </button>
       </form>
 
       {contacts.length > 0 ? (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {total} contact{total === 1 ? "" : "s"}
-            {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+            {total} {t.contactsCount}
+            {totalPages > 1
+              ? ` · ${t.pageOf.replace("{page}", String(page)).replace("{total}", String(totalPages))}`
+              : ""}
           </p>
           <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Added</TableHead>
+                <TableHead>{t.colName}</TableHead>
+                <TableHead>{t.colEmail}</TableHead>
+                <TableHead>{t.colPhone}</TableHead>
+                <TableHead>{t.colAdded}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -145,8 +150,8 @@ export default async function CrmContactsPage({
         </div>
       ) : (
         <EmptyState
-          title="No contacts yet"
-          description="Contacts are created automatically when leads come in."
+          title={t.noContactsTitle}
+          description={t.noContactsDesc}
         />
       )}
     </div>
