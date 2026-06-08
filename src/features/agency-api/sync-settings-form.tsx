@@ -13,6 +13,7 @@ import type {
   PropertySyncSettings,
 } from "@/features/agency-api/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface Props {
   initial: PropertySyncSettings | null;
@@ -20,6 +21,8 @@ interface Props {
 
 export function SyncSettingsForm({ initial }: Props) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashAgentSync;
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [state, setState] = React.useState({
@@ -37,7 +40,7 @@ export function SyncSettingsForm({ initial }: Props) {
     const result = await savePropertySyncSettings(state);
     setPending(false);
     if (result.ok) {
-      setMessage("Saved.");
+      setMessage(t.saved);
       router.refresh();
     } else {
       setMessage(result.error);
@@ -47,7 +50,7 @@ export function SyncSettingsForm({ initial }: Props) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="text-xs font-medium">SEO canonical owner</label>
+        <label className="text-xs font-medium">{t.canonicalOwner}</label>
         <select
           className="w-full rounded-md border bg-background px-3 py-2 text-sm"
           value={state.defaultCanonicalOwner}
@@ -69,19 +72,19 @@ export function SyncSettingsForm({ initial }: Props) {
         {[
           {
             key: "hideOwnerContacts" as const,
-            label: "Hide owner phone and email",
+            label: t.hideOwnerContacts,
           },
           {
             key: "hideInternalNotes" as const,
-            label: "Hide internal notes",
+            label: t.hideInternalNotes,
           },
           {
             key: "hideCommission" as const,
-            label: "Hide commission fields",
+            label: t.hideCommission,
           },
           {
             key: "hidePrivateDocuments" as const,
-            label: "Hide private documents",
+            label: t.hidePrivateDocuments,
           },
         ].map(({ key, label }) => (
           <label key={key} className="flex items-center gap-2 text-sm">
@@ -98,7 +101,7 @@ export function SyncSettingsForm({ initial }: Props) {
       </div>
       <div className="flex items-center gap-3">
         <Button size="sm" type="button" onClick={handleSave} disabled={pending}>
-          Save settings
+          {t.saveSettings}
         </Button>
         {message ? (
           <span className="text-xs text-muted-foreground">{message}</span>

@@ -13,6 +13,7 @@ import type { ApiKeyDto } from "@/features/agency-api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface Props {
   keys: ApiKeyDto[];
@@ -36,6 +37,8 @@ const EMPTY_FORM: FormState = {
 
 export function ApiKeysSection({ keys }: Props) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashAgentSync;
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [createdKey, setCreatedKey] = React.useState<string | null>(null);
@@ -55,11 +58,11 @@ export function ApiKeysSection({ keys }: Props) {
 
   async function handleCreate() {
     if (!form.name.trim()) {
-      setMessage("Name is required.");
+      setMessage(t.errNameReq);
       return;
     }
     if (form.scopes.length === 0) {
-      setMessage("Select at least one scope.");
+      setMessage(t.errScopeReq);
       return;
     }
     setPending(true);
@@ -100,18 +103,14 @@ export function ApiKeysSection({ keys }: Props) {
     <div className="space-y-4">
       {createdKey ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p className="font-medium">Copy your API key now</p>
+          <p className="font-medium">{t.copyKeyNow}</p>
           <p className="mt-1 break-all font-mono text-xs">{createdKey}</p>
-          <p className="mt-2 text-xs">
-            This key will not be shown again. Store it in a secret manager.
-          </p>
+          <p className="mt-2 text-xs">{t.keyOnce}</p>
         </div>
       ) : null}
 
       {keys.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No API keys yet — create one below.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.noKeys}</p>
       ) : (
         <ul className="space-y-2">
           {keys.map((row) => (
@@ -145,7 +144,7 @@ export function ApiKeysSection({ keys }: Props) {
                     disabled={pending}
                     onClick={() => handleRevoke(row.id)}
                   >
-                    Revoke
+                    {t.revoke}
                   </Button>
                 ) : null}
               </div>
@@ -155,10 +154,10 @@ export function ApiKeysSection({ keys }: Props) {
       )}
 
       <div className="space-y-3 rounded-md border p-3">
-        <p className="text-sm font-semibold">Create a new key</p>
+        <p className="text-sm font-semibold">{t.createKey}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="space-y-1">
-            <label className="text-xs font-medium">Name</label>
+            <label className="text-xs font-medium">{t.fName}</label>
             <Input
               value={form.name}
               onChange={(event) =>
@@ -167,17 +166,17 @@ export function ApiKeysSection({ keys }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium">Agent user ID (optional)</label>
+            <label className="text-xs font-medium">{t.fAgentIdOptional}</label>
             <Input
               value={form.agentId}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, agentId: event.target.value }))
               }
-              placeholder="Leave blank for agency-wide key"
+              placeholder={t.agentIdBlank}
             />
           </div>
           <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-medium">Allowed domains (CSV)</label>
+            <label className="text-xs font-medium">{t.allowedDomainsCsv}</label>
             <Input
               value={form.allowedDomains}
               onChange={(event) =>
@@ -190,7 +189,7 @@ export function ApiKeysSection({ keys }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium">Rate limit (per minute)</label>
+            <label className="text-xs font-medium">{t.rateLimit}</label>
             <Input
               type="number"
               min={1}
@@ -209,7 +208,7 @@ export function ApiKeysSection({ keys }: Props) {
           </div>
         </div>
         <div className="space-y-1">
-          <p className="text-xs font-medium">Scopes</p>
+          <p className="text-xs font-medium">{t.scopesLabel}</p>
           <div className="grid gap-1 sm:grid-cols-2">
             {API_SCOPE_KEYS.map((scope) => (
               <label key={scope} className="flex items-center gap-2 text-xs">
@@ -227,7 +226,7 @@ export function ApiKeysSection({ keys }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <Button size="sm" type="button" onClick={handleCreate} disabled={pending}>
-            Generate key
+            {t.generateKey}
           </Button>
           {message ? (
             <span className="text-xs text-muted-foreground">{message}</span>

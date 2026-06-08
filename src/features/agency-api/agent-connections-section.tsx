@@ -18,6 +18,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface Props {
   connections: AgentWebsiteConnection[];
@@ -41,13 +42,15 @@ const EMPTY_FORM: FormState = {
 
 export function AgentConnectionsSection({ connections }: Props) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashAgentSync;
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
 
   async function handleCreate() {
     if (!form.agentId.trim() || !form.name.trim()) {
-      setMessage("Agent ID and name are required.");
+      setMessage(t.errAgentName);
       return;
     }
     setPending(true);
@@ -83,9 +86,7 @@ export function AgentConnectionsSection({ connections }: Props) {
   return (
     <div className="space-y-4">
       {connections.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No agent websites connected yet.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.noConnections}</p>
       ) : (
         <ul className="space-y-2">
           {connections.map((row) => (
@@ -103,7 +104,7 @@ export function AgentConnectionsSection({ connections }: Props) {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={row.is_active ? "default" : "secondary"}>
-                  {row.is_active ? "Active" : "Inactive"}
+                  {row.is_active ? t.active : t.inactive}
                 </Badge>
                 <Button
                   size="sm"
@@ -112,7 +113,7 @@ export function AgentConnectionsSection({ connections }: Props) {
                   disabled={pending}
                   onClick={() => handleDelete(row.id)}
                 >
-                  Remove
+                  {t.remove}
                 </Button>
               </div>
             </li>
@@ -121,10 +122,10 @@ export function AgentConnectionsSection({ connections }: Props) {
       )}
 
       <div className="space-y-3 rounded-md border p-3">
-        <p className="text-sm font-semibold">Connect a new agent site</p>
+        <p className="text-sm font-semibold">{t.connectNew}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="space-y-1">
-            <label className="text-xs font-medium">Agent user ID (uuid)</label>
+            <label className="text-xs font-medium">{t.agentUserIdUuid}</label>
             <Input
               value={form.agentId}
               onChange={(event) =>
@@ -134,7 +135,7 @@ export function AgentConnectionsSection({ connections }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium">Display name</label>
+            <label className="text-xs font-medium">{t.displayName}</label>
             <Input
               value={form.name}
               onChange={(event) =>
@@ -144,7 +145,7 @@ export function AgentConnectionsSection({ connections }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium">Primary domain</label>
+            <label className="text-xs font-medium">{t.primaryDomain}</label>
             <Input
               value={form.primaryDomain}
               onChange={(event) =>
@@ -157,7 +158,7 @@ export function AgentConnectionsSection({ connections }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium">SEO canonical</label>
+            <label className="text-xs font-medium">{t.seoCanonical}</label>
             <select
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={form.canonicalOwner}
@@ -184,11 +185,11 @@ export function AgentConnectionsSection({ connections }: Props) {
               setForm((prev) => ({ ...prev, isActive: event.target.checked }))
             }
           />
-          <span>Active</span>
+          <span>{t.active}</span>
         </label>
         <div className="flex items-center gap-3">
           <Button size="sm" type="button" onClick={handleCreate} disabled={pending}>
-            Add connection
+            {t.addConnection}
           </Button>
           {message ? (
             <span className="text-xs text-muted-foreground">{message}</span>

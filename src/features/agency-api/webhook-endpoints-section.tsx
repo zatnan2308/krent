@@ -19,6 +19,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/provider";
 
 interface Props {
   endpoints: WebhookEndpoint[];
@@ -40,6 +41,8 @@ const EMPTY_FORM: FormState = {
 
 export function WebhookEndpointsSection({ endpoints }: Props) {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.dashAgentSync;
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
@@ -63,11 +66,11 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
 
   async function handleCreate() {
     if (!form.url.trim()) {
-      setMessage("URL is required.");
+      setMessage(t.errUrlReq);
       return;
     }
     if (form.eventTypes.length === 0) {
-      setMessage("Select at least one event.");
+      setMessage(t.errEventReq);
       return;
     }
     setPending(true);
@@ -117,9 +120,7 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
   return (
     <div className="space-y-4">
       {endpoints.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No webhook endpoints configured.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.noEndpoints}</p>
       ) : (
         <ul className="space-y-2">
           {endpoints.map((row) => (
@@ -139,21 +140,20 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
                 {rotated?.id === row.id ? (
                   <div className="mt-1 space-y-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-2">
                     <p className="text-xs font-medium text-emerald-700">
-                      New secret — copy it now, it won&apos;t be shown again:
+                      {t.newSecretCopy}
                     </p>
                     <code className="block break-all text-xs">
                       {rotated.secret}
                     </code>
                     <p className="text-[11px] text-muted-foreground">
-                      The previous secret stays valid briefly so in-flight
-                      deliveries keep verifying.
+                      {t.prevSecretNote}
                     </p>
                   </div>
                 ) : null}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={row.is_active ? "default" : "secondary"}>
-                  {row.is_active ? "Active" : "Inactive"}
+                  {row.is_active ? t.active : t.inactive}
                 </Badge>
                 <Button
                   size="sm"
@@ -161,7 +161,7 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
                   disabled={pending}
                   onClick={() => handleRotate(row.id)}
                 >
-                  Rotate secret
+                  {t.rotateSecret}
                 </Button>
                 <Button
                   size="sm"
@@ -170,7 +170,7 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
                   disabled={pending}
                   onClick={() => handleDelete(row.id)}
                 >
-                  Remove
+                  {t.remove}
                 </Button>
               </div>
             </li>
@@ -179,10 +179,10 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
       )}
 
       <div className="space-y-3 rounded-md border p-3">
-        <p className="text-sm font-semibold">Add a webhook endpoint</p>
+        <p className="text-sm font-semibold">{t.addEndpoint}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-medium">URL</label>
+            <label className="text-xs font-medium">{t.urlLabel}</label>
             <Input
               value={form.url}
               onChange={(event) =>
@@ -192,9 +192,7 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
             />
           </div>
           <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-medium">
-              Signing secret (HMAC-SHA256, optional)
-            </label>
+            <label className="text-xs font-medium">{t.signingSecret}</label>
             <Input
               value={form.secret}
               onChange={(event) =>
@@ -205,7 +203,7 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
           </div>
         </div>
         <div className="space-y-1">
-          <p className="text-xs font-medium">Subscribe to events</p>
+          <p className="text-xs font-medium">{t.subscribeEvents}</p>
           <div className="grid gap-1 sm:grid-cols-2">
             {WEBHOOK_EVENT_TYPES.map((type) => (
               <label key={type} className="flex items-center gap-2 text-xs">
@@ -229,11 +227,11 @@ export function WebhookEndpointsSection({ endpoints }: Props) {
               setForm((prev) => ({ ...prev, isActive: event.target.checked }))
             }
           />
-          <span>Active</span>
+          <span>{t.active}</span>
         </label>
         <div className="flex items-center gap-3">
           <Button size="sm" type="button" onClick={handleCreate} disabled={pending}>
-            Save endpoint
+            {t.saveEndpoint}
           </Button>
           {message ? (
             <span className="text-xs text-muted-foreground">{message}</span>
