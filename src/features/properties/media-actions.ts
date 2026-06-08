@@ -95,6 +95,16 @@ export async function uploadPropertyMedia(
     .select("*", { count: "exact", head: true })
     .eq("property_id", propertyId);
 
+  // Обложка одна: снимаем её с прежних изображений перед вставкой новой
+  // (иначе у объекта окажется несколько category='cover').
+  if (category === "cover") {
+    await supabase
+      .from("property_media")
+      .update({ category: "gallery" })
+      .eq("property_id", propertyId)
+      .eq("category", "cover");
+  }
+
   const { error: insertError } = await supabase.from("property_media").insert({
     property_id: propertyId,
     organization_id: context.organization.id,
