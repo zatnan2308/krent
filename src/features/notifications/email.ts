@@ -73,6 +73,42 @@ async function recordSend(
 }
 
 /**
+ * true, если адрес в списке подавления организации: жёсткий (постоянный)
+ * bounce или жалоба на спам. Дублёт-проверку равенства делаем в JS, чтобы
+ * подстановочные `_`/`%` в ilike не дали ложных совпадений.
+ */
+async function isEmailSuppressed(
+  admin: Admin,
+  organizationId: string,
+  email: string,
+): Promise<boolean> {
+  const target = email.trim().toLowerCase();
+  if (!target) return false;
+  const pattern = target.replace(/([%_\\])/g, "\\$1");
+  const [bounce, complaint] = await Promise.all([
+    admin
+      .from("email_bounces")
+      .select("email, bounce_type")
+      .eq("organization_id", organizationId)
+      .ilike("email", pattern),
+    admin
+      .from("email_complaints")
+      .select("email")
+      .eq("organization_id", organizationId)
+      .ilike("email", pattern),
+  ]);
+  for (const row of complaint.data ?? []) {
+    if ((row.email ?? "").toLowerCase() === target) return true;
+  }
+  for (const row of bounce.data ?? []) {
+    if ((row.email ?? "").toLowerCase() !== target) continue;
+    const type = (row.bounce_type ?? "").toLowerCase();
+    if (!(type.includes("soft") || type.includes("transient"))) return true;
+  }
+  return false;
+}
+
+/**
  * Отправляет письмо через Resend и фиксирует результат в email_sends.
  * Если Resend не настроен — попытка логируется со статусом failed,
  * основной поток приложения при этом не прерывается.
@@ -90,6 +126,21 @@ export async function sendEmail(
       error: "Resend is not configured.",
     });
     return { ok: false, emailSendId: id, error: "Resend is not configured." };
+  }
+
+  // Не шлём на адреса с постоянным bounce / жалобой на спам — это бьёт по
+  // репутации отправителя и всё равно не доставится.
+  if (await isEmailSuppressed(admin, params.organizationId, params.toEmail)) {
+    const id = await recordSend(admin, params, {
+      status: "failed",
+      providerResponse: { suppressed: "true" },
+      error: "Recipient suppressed (hard bounce or spam complaint).",
+    });
+    return {
+      ok: false,
+      emailSendId: id,
+      error: "Recipient suppressed (hard bounce or spam complaint).",
+    };
   }
 
   const fromName = params.fromName.replace(/[<>"]/g, "").trim() || "Notifications";

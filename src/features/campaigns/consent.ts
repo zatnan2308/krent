@@ -18,6 +18,40 @@ export async function loadUnsubscribedEmails(
   return result;
 }
 
+/**
+ * Email-адреса, по которым нельзя слать письма: жёсткие (постоянные) bounce
+ * и жалобы на спам (complaint). Возвращается множество в нижнем регистре.
+ * Resend в `email.bounced` обычно сообщает постоянные отказы; неизвестный
+ * тип трактуем как постоянный, мягкие (soft/transient) — пропускаем.
+ */
+export async function loadSuppressedEmails(
+  admin: Admin,
+  organizationId: string,
+): Promise<Set<string>> {
+  const result = new Set<string>();
+  const [bounces, complaints] = await Promise.all([
+    admin
+      .from("email_bounces")
+      .select("email, bounce_type")
+      .eq("organization_id", organizationId),
+    admin
+      .from("email_complaints")
+      .select("email")
+      .eq("organization_id", organizationId),
+  ]);
+  for (const row of bounces.data ?? []) {
+    const type = (row.bounce_type ?? "").toLowerCase();
+    const transient = type.includes("soft") || type.includes("transient");
+    if (!transient && row.email) {
+      result.add(row.email.toLowerCase());
+    }
+  }
+  for (const row of complaints.data ?? []) {
+    if (row.email) result.add(row.email.toLowerCase());
+  }
+  return result;
+}
+
 /** contact_id с отозванным согласием на маркетинг. */
 export async function loadWithdrawnContactIds(
   admin: Admin,
