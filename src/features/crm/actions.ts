@@ -1124,6 +1124,9 @@ const createContactSchema = z.object({
     .nullable()
     .transform((value) => (value ? value.toLowerCase() : null)),
   phone: z.string().trim().max(50).nullable(),
+  role: z.enum(CONTACT_ROLES).nullable().default(null),
+  temperature: z.enum(TEMPERATURES).nullable().default(null),
+  tags: z.array(z.string().trim().min(1).max(40)).max(30).default([]),
 });
 export type CreateContactInput = z.input<typeof createContactSchema>;
 
@@ -1165,6 +1168,7 @@ export async function createContact(
     }
   }
 
+  const tags = [...new Set(d.tags.map((tag) => tag.trim()).filter(Boolean))];
   const { data: created, error } = await supabase
     .from("contacts")
     .insert({
@@ -1172,6 +1176,9 @@ export async function createContact(
       full_name: d.fullName,
       email,
       phone: d.phone,
+      role: d.role,
+      temperature: d.temperature,
+      tags,
     })
     .select("id")
     .single();
