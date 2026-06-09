@@ -345,6 +345,7 @@ export const de: DeepPartial<Dictionary> = {
     createProperty: "Objekt erstellen",
   },
   dashCrm: {
+    reqTitle: "Anforderungen (aus Anfragen)",
     navFollowUps: "Nachfassungen",
     followUpsTitle: "Nachfassungen",
     followUpsDesc: "Kontakte mit geplanter nächster Nachfassung — überfällig und anstehend.",

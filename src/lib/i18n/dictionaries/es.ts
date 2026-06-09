@@ -344,6 +344,7 @@ export const es: DeepPartial<Dictionary> = {
     createProperty: "Crear propiedad",
   },
   dashCrm: {
+    reqTitle: "Requisitos (de las consultas)",
     navFollowUps: "Seguimientos",
     followUpsTitle: "Seguimientos",
     followUpsDesc: "Contactos con un próximo seguimiento programado — vencidos y próximos.",

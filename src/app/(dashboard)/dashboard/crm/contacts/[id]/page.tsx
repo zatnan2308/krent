@@ -26,6 +26,7 @@ import { getContactChannels } from "@/features/messaging/queries";
 import {
   getContact,
   getContactBuyerProfile,
+  getContactLeadSummary,
   getContactSellerProfile,
   getEntityActivity,
   listContactOptions,
@@ -95,14 +96,23 @@ export default async function ContactDetailPage({
     relationships,
     buyerProfile,
     sellerProfile,
+    leadSummary,
   ] = await Promise.all([
     listContactDocuments(context.organization.id, params.id),
     listContactOptions(context.organization.id),
     listContactRelationships(context.organization.id, params.id),
     getContactBuyerProfile(context.organization.id, params.id),
     getContactSellerProfile(context.organization.id, params.id),
+    getContactLeadSummary(context.organization.id, params.id),
   ]);
   const { contact, leads, deals } = detail;
+  const hasBudget =
+    leadSummary.budgetMin !== null || leadSummary.budgetMax !== null;
+  const budgetText = hasBudget
+    ? `${leadSummary.budgetMin ?? "—"} – ${leadSummary.budgetMax ?? "—"}${
+        leadSummary.currency ? ` ${leadSummary.currency}` : ""
+      }`
+    : "—";
   const activity = await getEntityActivity(context.organization.id, [
     contact.id,
     ...leads.map((lead) => lead.id),
@@ -337,6 +347,30 @@ export default async function ContactDetailPage({
           />
         </CardContent>
       </Card>
+
+      {leadSummary.leadCount > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t.reqTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{t.budget}</dt>
+                <dd className="text-right font-medium">{budgetText}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{t.locationInterest}</dt>
+                <dd className="text-right font-medium">
+                  {leadSummary.locations.length > 0
+                    ? leadSummary.locations.join(", ")
+                    : "—"}
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

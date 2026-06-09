@@ -602,6 +602,58 @@ export async function getContactSellerProfile(
   return data;
 }
 
+/** Сводка требований клиента, агрегированная из его лидов. */
+export interface ContactLeadSummary {
+  budgetMin: number | null;
+  budgetMax: number | null;
+  currency: string | null;
+  locations: string[];
+  leadCount: number;
+}
+
+/** Бюджет/локации из лидов контакта (поднимаем на карточку клиента). */
+export async function getContactLeadSummary(
+  organizationId: string,
+  contactId: string,
+): Promise<ContactLeadSummary> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("leads")
+    .select("budget_min, budget_max, currency, location_interest, created_at")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false });
+  const rows = data ?? [];
+  let budgetMin: number | null = null;
+  let budgetMax: number | null = null;
+  let currency: string | null = null;
+  const locations = new Set<string>();
+  for (const row of rows) {
+    if (row.budget_min !== null) {
+      budgetMin =
+        budgetMin === null ? row.budget_min : Math.min(budgetMin, row.budget_min);
+    }
+    if (row.budget_max !== null) {
+      budgetMax =
+        budgetMax === null ? row.budget_max : Math.max(budgetMax, row.budget_max);
+    }
+    // Валюта из самого свежего лида (rows уже по убыванию даты).
+    if (row.currency && currency === null) {
+      currency = row.currency;
+    }
+    if (row.location_interest) {
+      locations.add(row.location_interest);
+    }
+  }
+  return {
+    budgetMin,
+    budgetMax,
+    currency,
+    locations: [...locations].slice(0, 8),
+    leadCount: rows.length,
+  };
+}
+
 /** Контакт с назначенным следующим касанием (дашборд follow-ups). */
 export interface FollowUpItem {
   id: string;

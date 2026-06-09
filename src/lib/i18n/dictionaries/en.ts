@@ -347,6 +347,7 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    reqTitle: "Requirements (from inquiries)",
     navFollowUps: "Follow-ups",
     followUpsTitle: "Follow-ups",
     followUpsDesc: "Contacts with a scheduled next touch — overdue and upcoming.",

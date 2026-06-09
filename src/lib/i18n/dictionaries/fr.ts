@@ -344,6 +344,7 @@ export const fr: DeepPartial<Dictionary> = {
     createProperty: "Créer l'annonce",
   },
   dashCrm: {
+    reqTitle: "Critères (issus des demandes)",
     navFollowUps: "Relances",
     followUpsTitle: "Relances",
     followUpsDesc: "Contacts avec une prochaine relance planifiée — en retard et à venir.",
