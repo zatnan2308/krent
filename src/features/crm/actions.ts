@@ -1000,6 +1000,62 @@ export async function updateContactClassification(
   return { ok: true };
 }
 
+const VERIFICATION_STATUSES = ["none", "pending", "verified"] as const;
+const updateProcessSchema = z.object({
+  contactId: z.guid(),
+  lastContactedAt: z.string().trim().nullable(),
+  nextFollowUpAt: z.string().trim().nullable(),
+  verificationStatus: z.enum(VERIFICATION_STATUSES),
+  isVip: z.boolean(),
+  internalNotes: z.string().trim().max(4000).nullable(),
+});
+
+/** datetime-local → ISO (или null). Браузер трактует значение как локаль. */
+function toIsoOrNull(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+/** Обновляет служебные поля контакта (блок G). */
+export async function updateContactProcess(
+  input: z.infer<typeof updateProcessSchema>,
+): Promise<ActionResult> {
+  const parsed = updateProcessSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const d = parsed.data;
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .update({
+      last_contacted_at: toIsoOrNull(d.lastContactedAt),
+      next_follow_up_at: toIsoOrNull(d.nextFollowUpAt),
+      verification_status: d.verificationStatus,
+      is_vip: d.isVip,
+      internal_notes: d.internalNotes,
+    })
+    .eq("id", d.contactId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not update the contact." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Contact not found or not editable." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
+  return { ok: true };
+}
+
 const updateConsentsSchema = z.object({
   contactId: z.guid(),
   consentCall: z.boolean(),

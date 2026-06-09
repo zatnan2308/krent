@@ -1902,8 +1902,13 @@ export type Database = {
           consent_sms: boolean
           consent_whatsapp: boolean
           do_not_contact: boolean
+          internal_notes: string | null
+          is_vip: boolean
+          last_contacted_at: string | null
+          next_follow_up_at: string | null
           temperature: string | null
           updated_at: string
+          verification_status: string
         }
         Insert: {
           address_line?: string | null
@@ -1942,8 +1947,13 @@ export type Database = {
           consent_sms?: boolean
           consent_whatsapp?: boolean
           do_not_contact?: boolean
+          internal_notes?: string | null
+          is_vip?: boolean
+          last_contacted_at?: string | null
+          next_follow_up_at?: string | null
           temperature?: string | null
           updated_at?: string
+          verification_status?: string
         }
         Update: {
           address_line?: string | null
@@ -1982,8 +1992,13 @@ export type Database = {
           consent_sms?: boolean
           consent_whatsapp?: boolean
           do_not_contact?: boolean
+          internal_notes?: string | null
+          is_vip?: boolean
+          last_contacted_at?: string | null
+          next_follow_up_at?: string | null
           temperature?: string | null
           updated_at?: string
+          verification_status?: string
         }
         Relationships: [
           {

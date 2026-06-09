@@ -15,6 +15,7 @@ import { ContactBuyerProfileForm } from "@/features/crm/contact-buyer-profile-fo
 import { ContactClassificationForm } from "@/features/crm/contact-classification-form";
 import { ContactConsentsForm } from "@/features/crm/contact-consents-form";
 import { ContactDocuments } from "@/features/crm/contact-documents";
+import { ContactProcessForm } from "@/features/crm/contact-process-form";
 import { ContactRelationships } from "@/features/crm/contact-relationships";
 import { ContactSellerProfileForm } from "@/features/crm/contact-seller-profile-form";
 import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
@@ -298,6 +299,25 @@ export default async function ContactDetailPage({
               doNotContact: contact.do_not_contact,
               consentSource: contact.consent_source,
               consentAt: contact.consent_at,
+            }}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.processTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactProcessForm
+            contact={{
+              id: contact.id,
+              lastContactedAt: contact.last_contacted_at,
+              nextFollowUpAt: contact.next_follow_up_at,
+              verificationStatus: contact.verification_status,
+              isVip: contact.is_vip,
+              internalNotes: contact.internal_notes,
             }}
             canManage={canManage}
           />
