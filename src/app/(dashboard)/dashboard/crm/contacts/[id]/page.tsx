@@ -13,6 +13,7 @@ import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { ContactBuyerProfileForm } from "@/features/crm/contact-buyer-profile-form";
 import { ContactClassificationForm } from "@/features/crm/contact-classification-form";
+import { ContactConsentsForm } from "@/features/crm/contact-consents-form";
 import { ContactDocuments } from "@/features/crm/contact-documents";
 import { ContactRelationships } from "@/features/crm/contact-relationships";
 import { ContactSellerProfileForm } from "@/features/crm/contact-seller-profile-form";
@@ -276,6 +277,28 @@ export default async function ContactDetailPage({
                 : null
             }
             defaultCurrency={context.organization.default_currency}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.consentsTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactConsentsForm
+            contact={{
+              id: contact.id,
+              consentCall: contact.consent_call,
+              consentSms: contact.consent_sms,
+              consentEmail: contact.consent_email,
+              consentWhatsapp: contact.consent_whatsapp,
+              consentMarketing: contact.consent_marketing,
+              doNotContact: contact.do_not_contact,
+              consentSource: contact.consent_source,
+              consentAt: contact.consent_at,
+            }}
             canManage={canManage}
           />
         </CardContent>

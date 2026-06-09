@@ -185,12 +185,16 @@ export async function sendCampaign(
       ...new Set((members ?? []).map((row) => row.contact_id)),
     ];
 
-    let contacts: { id: string; full_name: string; email: string | null }[] =
-      [];
+    let contacts: {
+      id: string;
+      full_name: string;
+      email: string | null;
+      do_not_contact: boolean;
+    }[] = [];
     if (contactIds.length > 0) {
       const { data } = await admin
         .from("contacts")
-        .select("id, full_name, email")
+        .select("id, full_name, email, do_not_contact")
         .in("id", contactIds);
       contacts = data ?? [];
     }
@@ -222,6 +226,8 @@ export async function sendCampaign(
         skipReason = "Unsubscribed from marketing.";
       } else if (suppressed.has(emailLower)) {
         skipReason = "Hard bounce or spam complaint.";
+      } else if (contact.do_not_contact) {
+        skipReason = "Contact opted out of communication.";
       }
 
       if (skipReason) {

@@ -1894,6 +1894,14 @@ export type Database = {
           secondary_email: string | null
           secondary_phone: string | null
           tags: string[]
+          consent_at: string | null
+          consent_call: boolean
+          consent_email: boolean
+          consent_marketing: boolean
+          consent_source: string | null
+          consent_sms: boolean
+          consent_whatsapp: boolean
+          do_not_contact: boolean
           temperature: string | null
           updated_at: string
         }
@@ -1926,6 +1934,14 @@ export type Database = {
           secondary_email?: string | null
           secondary_phone?: string | null
           tags?: string[]
+          consent_at?: string | null
+          consent_call?: boolean
+          consent_email?: boolean
+          consent_marketing?: boolean
+          consent_source?: string | null
+          consent_sms?: boolean
+          consent_whatsapp?: boolean
+          do_not_contact?: boolean
           temperature?: string | null
           updated_at?: string
         }
@@ -1958,6 +1974,14 @@ export type Database = {
           secondary_email?: string | null
           secondary_phone?: string | null
           tags?: string[]
+          consent_at?: string | null
+          consent_call?: boolean
+          consent_email?: boolean
+          consent_marketing?: boolean
+          consent_source?: string | null
+          consent_sms?: boolean
+          consent_whatsapp?: boolean
+          do_not_contact?: boolean
           temperature?: string | null
           updated_at?: string
         }

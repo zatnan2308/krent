@@ -1000,6 +1000,65 @@ export async function updateContactClassification(
   return { ok: true };
 }
 
+const updateConsentsSchema = z.object({
+  contactId: z.guid(),
+  consentCall: z.boolean(),
+  consentSms: z.boolean(),
+  consentEmail: z.boolean(),
+  consentWhatsapp: z.boolean(),
+  consentMarketing: z.boolean(),
+  doNotContact: z.boolean(),
+  consentSource: z.string().trim().max(200).nullable(),
+});
+
+/** Обновляет согласия контакта на связь (блок F). */
+export async function updateContactConsents(
+  input: z.infer<typeof updateConsentsSchema>,
+): Promise<ActionResult> {
+  const parsed = updateConsentsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const d = parsed.data;
+  const anyConsent =
+    d.consentCall ||
+    d.consentSms ||
+    d.consentEmail ||
+    d.consentWhatsapp ||
+    d.consentMarketing;
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .update({
+      consent_call: d.consentCall,
+      consent_sms: d.consentSms,
+      consent_email: d.consentEmail,
+      consent_whatsapp: d.consentWhatsapp,
+      consent_marketing: d.consentMarketing,
+      do_not_contact: d.doNotContact,
+      consent_source: d.consentSource,
+      consent_at: anyConsent ? new Date().toISOString() : null,
+    })
+    .eq("id", d.contactId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not update the contact." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Contact not found or not editable." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
+  return { ok: true };
+}
+
 const createContactSchema = z.object({
   fullName: z.string().trim().min(1).max(200),
   email: z
