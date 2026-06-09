@@ -19,6 +19,13 @@ import { useI18n } from "@/lib/i18n/provider";
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+/** datetime-local (локальная зона браузера) → абсолютный ISO (или null). */
+function localToIso(value: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
 /** ISO (UTC) → значение для datetime-local (локальная зона браузера). */
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
@@ -184,7 +191,7 @@ export function LeadControls({
               run(() =>
                 setLeadAppointment({
                   leadId,
-                  scheduledAt: appointment || null,
+                  scheduledAt: localToIso(appointment),
                 }),
               )
             }

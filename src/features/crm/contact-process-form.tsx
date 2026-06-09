@@ -12,6 +12,13 @@ import { useI18n } from "@/lib/i18n/provider";
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+/** datetime-local (локальная зона браузера) → абсолютный ISO (или null). */
+function localToIso(value: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
 /** ISO (UTC) → значение для datetime-local (локальная зона). */
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
@@ -65,8 +72,8 @@ export function ContactProcessForm({
     setMsg(null);
     const result = await updateContactProcess({
       contactId: contact.id,
-      lastContactedAt: lastContactedAt || null,
-      nextFollowUpAt: nextFollowUpAt || null,
+      lastContactedAt: localToIso(lastContactedAt),
+      nextFollowUpAt: localToIso(nextFollowUpAt),
       verificationStatus: verificationStatus as
         | "none"
         | "pending"

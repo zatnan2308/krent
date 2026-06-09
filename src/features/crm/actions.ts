@@ -636,7 +636,8 @@ export async function setLeadAppointment(
   const { leadId, scheduledAt } = parsed.data;
   let iso: string | null = null;
   if (scheduledAt) {
-    // datetime-local — «настенное» время; трактуем как локаль браузера → UTC.
+    // Клиент присылает уже абсолютный ISO (конвертация в TZ браузера сделана
+    // на клиенте); здесь только валидируем и нормализуем.
     const when = new Date(scheduledAt);
     if (Number.isNaN(when.getTime())) {
       return { ok: false, error: "Please enter a valid date and time." };
@@ -808,11 +809,22 @@ export async function updateContact(
   }
   const supabase = createClient();
   const d = parsed.data;
-  // Контакт не может «привести» сам себя.
-  const referredBy =
+  // Контакт не может «привести» сам себя; рефер должен быть из этой организации.
+  let referredBy =
     d.referredByContactId && d.referredByContactId !== d.contactId
       ? d.referredByContactId
       : null;
+  if (referredBy) {
+    const { data: ref } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("id", referredBy)
+      .eq("organization_id", context.organization.id)
+      .maybeSingle();
+    if (!ref) {
+      referredBy = null;
+    }
+  }
   const { data, error } = await supabase
     .from("contacts")
     .update({
@@ -883,14 +895,37 @@ export async function createContactRelationship(
     return { ok: false, error: "You do not have permission to edit contacts." };
   }
   const d = parsed.data;
-  if (!d.relatedContactId && !(d.relatedName && d.relatedName.length > 0)) {
+  const supabase = createClient();
+  // Основной контакт должен принадлежать организации.
+  const { data: own } = await supabase
+    .from("contacts")
+    .select("id")
+    .eq("id", d.contactId)
+    .eq("organization_id", context.organization.id)
+    .maybeSingle();
+  if (!own) {
+    return { ok: false, error: "Contact not found." };
+  }
+  // Связанный контакт — только из этой организации (иначе игнорируем id).
+  let relatedContactId = d.relatedContactId;
+  if (relatedContactId) {
+    const { data: rel } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("id", relatedContactId)
+      .eq("organization_id", context.organization.id)
+      .maybeSingle();
+    if (!rel) {
+      relatedContactId = null;
+    }
+  }
+  if (!relatedContactId && !(d.relatedName && d.relatedName.length > 0)) {
     return { ok: false, error: "Pick a contact or enter a name." };
   }
-  const supabase = createClient();
   const { error } = await supabase.from("contact_relationships").insert({
     organization_id: context.organization.id,
     contact_id: d.contactId,
-    related_contact_id: d.relatedContactId,
+    related_contact_id: relatedContactId,
     related_name: d.relatedName,
     relationship_type: d.relationshipType,
   });
@@ -1010,7 +1045,7 @@ const updateProcessSchema = z.object({
   internalNotes: z.string().trim().max(4000).nullable(),
 });
 
-/** datetime-local → ISO (или null). Браузер трактует значение как локаль. */
+/** Нормализует абсолютный ISO с клиента (или null) — валидирует дату. */
 function toIsoOrNull(value: string | null): string | null {
   if (!value) return null;
   const date = new Date(value);
