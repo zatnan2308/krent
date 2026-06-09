@@ -11,6 +11,7 @@ import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
+import { ContactBuyerProfileForm } from "@/features/crm/contact-buyer-profile-form";
 import { ContactClassificationForm } from "@/features/crm/contact-classification-form";
 import { ContactDocuments } from "@/features/crm/contact-documents";
 import { ContactRelationships } from "@/features/crm/contact-relationships";
@@ -21,6 +22,7 @@ import { ContactChannels } from "@/features/messaging/contact-channels";
 import { getContactChannels } from "@/features/messaging/queries";
 import {
   getContact,
+  getContactBuyerProfile,
   getEntityActivity,
   listContactOptions,
   listContactRelationships,
@@ -83,11 +85,13 @@ export default async function ContactDetailPage({
   }));
   const canManage = hasPermission(context, "crm.manage");
   const canManageAll = hasPermission(context, "crm.manage_all");
-  const [documents, contactOptions, relationships] = await Promise.all([
-    listContactDocuments(context.organization.id, params.id),
-    listContactOptions(context.organization.id),
-    listContactRelationships(context.organization.id, params.id),
-  ]);
+  const [documents, contactOptions, relationships, buyerProfile] =
+    await Promise.all([
+      listContactDocuments(context.organization.id, params.id),
+      listContactOptions(context.organization.id),
+      listContactRelationships(context.organization.id, params.id),
+      getContactBuyerProfile(context.organization.id, params.id),
+    ]);
   const { contact, leads, deals } = detail;
   const activity = await getEntityActivity(context.organization.id, [
     contact.id,
@@ -191,6 +195,33 @@ export default async function ContactDetailPage({
               priority: contact.priority,
               tags: contact.tags,
             }}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.buyerProfileTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactBuyerProfileForm
+            contactId={contact.id}
+            profile={
+              buyerProfile
+                ? {
+                    paymentMethod: buyerProfile.payment_method,
+                    preapprovalStatus: buyerProfile.preapproval_status,
+                    preapprovalAmount: buyerProfile.preapproval_amount,
+                    lenderName: buyerProfile.lender_name,
+                    downPayment: buyerProfile.down_payment,
+                    needsToSellFirst: buyerProfile.needs_to_sell_first,
+                    currentHousing: buyerProfile.current_housing,
+                    currency: buyerProfile.currency,
+                  }
+                : null
+            }
+            defaultCurrency={context.organization.default_currency}
             canManage={canManage}
           />
         </CardContent>

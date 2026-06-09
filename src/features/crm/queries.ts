@@ -1,5 +1,6 @@
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { resolveUserNames } from "@/server/user-directory";
+import type { Tables } from "@/types/database";
 
 import type {
   Contact,
@@ -541,6 +542,21 @@ export async function listContactRelationships(
       ? (names.get(row.related_contact_id) ?? row.related_name ?? "—")
       : (row.related_name ?? "—"),
   }));
+}
+
+/** Профиль покупателя (финансы + параметры поиска), 1:1 с контактом. */
+export async function getContactBuyerProfile(
+  organizationId: string,
+  contactId: string,
+): Promise<Tables<"contact_buyer_profiles"> | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("contact_buyer_profiles")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .maybeSingle();
+  return data;
 }
 
 // ---- Сделки ---------------------------------------------------

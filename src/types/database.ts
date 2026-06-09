@@ -1636,6 +1636,69 @@ export type Database = {
           },
         ]
       }
+      contact_buyer_profiles: {
+        Row: {
+          contact_id: string
+          created_at: string
+          currency: string | null
+          current_housing: string | null
+          down_payment: number | null
+          id: string
+          lender_name: string | null
+          needs_to_sell_first: boolean
+          organization_id: string
+          payment_method: string | null
+          preapproval_amount: number | null
+          preapproval_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          currency?: string | null
+          current_housing?: string | null
+          down_payment?: number | null
+          id?: string
+          lender_name?: string | null
+          needs_to_sell_first?: boolean
+          organization_id: string
+          payment_method?: string | null
+          preapproval_amount?: number | null
+          preapproval_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          currency?: string | null
+          current_housing?: string | null
+          down_payment?: number | null
+          id?: string
+          lender_name?: string | null
+          needs_to_sell_first?: boolean
+          organization_id?: string
+          payment_method?: string | null
+          preapproval_amount?: number | null
+          preapproval_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_buyer_profiles_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_buyer_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_relationships: {
         Row: {
           contact_id: string
