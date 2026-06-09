@@ -190,11 +190,12 @@ export async function sendCampaign(
       full_name: string;
       email: string | null;
       do_not_contact: boolean;
+      consent_marketing: boolean;
     }[] = [];
     if (contactIds.length > 0) {
       const { data } = await admin
         .from("contacts")
-        .select("id, full_name, email, do_not_contact")
+        .select("id, full_name, email, do_not_contact, consent_marketing")
         .in("id", contactIds);
       contacts = data ?? [];
     }
@@ -228,6 +229,8 @@ export async function sendCampaign(
         skipReason = "Hard bounce or spam complaint.";
       } else if (contact.do_not_contact) {
         skipReason = "Contact opted out of communication.";
+      } else if (!contact.consent_marketing) {
+        skipReason = "No marketing consent.";
       }
 
       if (skipReason) {
