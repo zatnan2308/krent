@@ -37,6 +37,18 @@ const buyerProfileSchema = z.object({
   needsToSellFirst: z.boolean(),
   currentHousing: z.string().trim().max(20).nullable(),
   currency: z.string().trim().max(10).nullable(),
+  // Блок D — параметры поиска объекта.
+  dealType: z.string().trim().max(20).nullable(),
+  propertyType: z.string().trim().max(30).nullable(),
+  locations: z.array(z.string().trim().min(1).max(120)).max(30),
+  bedsMin: z.number().int().min(0).max(50).nullable(),
+  bathsMin: z.number().min(0).max(50).nullable(),
+  areaMin: z.number().min(0).nullable(),
+  areaMax: z.number().min(0).nullable(),
+  budgetMin: z.number().min(0).nullable(),
+  budgetMax: z.number().min(0).nullable(),
+  mustHave: z.string().trim().max(2000).nullable(),
+  searchNotes: z.string().trim().max(2000).nullable(),
 });
 
 /** Создаёт/обновляет финансовый профиль покупателя (1:1 с контактом). */
@@ -71,6 +83,17 @@ export async function upsertContactBuyerProfile(
       needs_to_sell_first: d.needsToSellFirst,
       current_housing: d.currentHousing,
       currency: d.currency,
+      deal_type: d.dealType,
+      property_type: d.propertyType,
+      locations: [...new Set(d.locations.map((l) => l.trim()).filter(Boolean))],
+      beds_min: d.bedsMin,
+      baths_min: d.bathsMin,
+      area_min: d.areaMin,
+      area_max: d.areaMax,
+      budget_min: d.budgetMin,
+      budget_max: d.budgetMax,
+      must_have: d.mustHave,
+      search_notes: d.searchNotes,
     },
     { onConflict: "contact_id" },
   );

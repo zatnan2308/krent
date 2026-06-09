@@ -1647,9 +1647,20 @@ export type Database = {
           lender_name: string | null
           needs_to_sell_first: boolean
           organization_id: string
+          area_max: number | null
+          area_min: number | null
+          baths_min: number | null
+          beds_min: number | null
+          budget_max: number | null
+          budget_min: number | null
+          deal_type: string | null
+          locations: string[]
+          must_have: string | null
           payment_method: string | null
           preapproval_amount: number | null
           preapproval_status: string | null
+          property_type: string | null
+          search_notes: string | null
           updated_at: string
         }
         Insert: {
@@ -1662,9 +1673,20 @@ export type Database = {
           lender_name?: string | null
           needs_to_sell_first?: boolean
           organization_id: string
+          area_max?: number | null
+          area_min?: number | null
+          baths_min?: number | null
+          beds_min?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          deal_type?: string | null
+          locations?: string[]
+          must_have?: string | null
           payment_method?: string | null
           preapproval_amount?: number | null
           preapproval_status?: string | null
+          property_type?: string | null
+          search_notes?: string | null
           updated_at?: string
         }
         Update: {
@@ -1677,9 +1699,20 @@ export type Database = {
           lender_name?: string | null
           needs_to_sell_first?: boolean
           organization_id?: string
+          area_max?: number | null
+          area_min?: number | null
+          baths_min?: number | null
+          beds_min?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          deal_type?: string | null
+          locations?: string[]
+          must_have?: string | null
           payment_method?: string | null
           preapproval_amount?: number | null
           preapproval_status?: string | null
+          property_type?: string | null
+          search_notes?: string | null
           updated_at?: string
         }
         Relationships: [

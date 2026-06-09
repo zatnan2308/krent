@@ -218,6 +218,17 @@ export default async function ContactDetailPage({
                     needsToSellFirst: buyerProfile.needs_to_sell_first,
                     currentHousing: buyerProfile.current_housing,
                     currency: buyerProfile.currency,
+                    dealType: buyerProfile.deal_type,
+                    propertyType: buyerProfile.property_type,
+                    locations: buyerProfile.locations,
+                    bedsMin: buyerProfile.beds_min,
+                    bathsMin: buyerProfile.baths_min,
+                    areaMin: buyerProfile.area_min,
+                    areaMax: buyerProfile.area_max,
+                    budgetMin: buyerProfile.budget_min,
+                    budgetMax: buyerProfile.budget_max,
+                    mustHave: buyerProfile.must_have,
+                    searchNotes: buyerProfile.search_notes,
                   }
                 : null
             }
