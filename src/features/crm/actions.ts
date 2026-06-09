@@ -765,6 +765,7 @@ export async function updateDeal(
   return { ok: true };
 }
 
+const CONTACT_KINDS = ["person", "company"] as const;
 const updateContactSchema = z.object({
   contactId: z.guid(),
   fullName: z.string().trim().min(1).max(200),
@@ -772,6 +773,21 @@ const updateContactSchema = z.object({
   phone: z.string().trim().max(50).nullable(),
   preferredLanguage: z.string().trim().max(10).nullable(),
   preferredCurrency: z.string().trim().max(10).nullable(),
+  // Блок A — идентификация и контакты.
+  contactKind: z.enum(CONTACT_KINDS),
+  companyName: z.string().trim().max(200).nullable(),
+  jobTitle: z.string().trim().max(150).nullable(),
+  secondaryPhone: z.string().trim().max(50).nullable(),
+  secondaryEmail: z.string().trim().max(200).nullable(),
+  preferredChannel: z.string().trim().max(20).nullable(),
+  bestTimeToContact: z.string().trim().max(20).nullable(),
+  addressLine: z.string().trim().max(300).nullable(),
+  city: z.string().trim().max(120).nullable(),
+  postalCode: z.string().trim().max(30).nullable(),
+  country: z.string().trim().max(120).nullable(),
+  dateOfBirth: z.string().trim().max(20).nullable(),
+  referredByContactId: z.guid().nullable(),
+  referralNote: z.string().trim().max(500).nullable(),
 });
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;
 
@@ -792,6 +808,11 @@ export async function updateContact(
   }
   const supabase = createClient();
   const d = parsed.data;
+  // Контакт не может «привести» сам себя.
+  const referredBy =
+    d.referredByContactId && d.referredByContactId !== d.contactId
+      ? d.referredByContactId
+      : null;
   const { data, error } = await supabase
     .from("contacts")
     .update({
@@ -800,6 +821,20 @@ export async function updateContact(
       phone: d.phone,
       preferred_language: d.preferredLanguage,
       preferred_currency: d.preferredCurrency,
+      contact_kind: d.contactKind,
+      company_name: d.companyName,
+      job_title: d.jobTitle,
+      secondary_phone: d.secondaryPhone,
+      secondary_email: d.secondaryEmail,
+      preferred_channel: d.preferredChannel,
+      best_time_to_contact: d.bestTimeToContact,
+      address_line: d.addressLine,
+      city: d.city,
+      postal_code: d.postalCode,
+      country: d.country,
+      date_of_birth: d.dateOfBirth || null,
+      referred_by_contact_id: referredBy,
+      referral_note: d.referralNote,
     })
     .eq("id", d.contactId)
     .eq("organization_id", context.organization.id)
@@ -812,6 +847,85 @@ export async function updateContact(
   }
   revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
   revalidatePath(CRM_CONTACTS);
+  return { ok: true };
+}
+
+const RELATIONSHIP_TYPES = [
+  "spouse",
+  "partner",
+  "co_buyer",
+  "co_borrower",
+  "family",
+  "assistant",
+  "other",
+] as const;
+
+const createRelationshipSchema = z.object({
+  contactId: z.guid(),
+  relatedContactId: z.guid().nullable(),
+  relatedName: z.string().trim().max(200).nullable(),
+  relationshipType: z.enum(RELATIONSHIP_TYPES),
+});
+
+/** Добавляет связанное лицо к контакту (супруг/со-покупатель и т.п.). */
+export async function createContactRelationship(
+  input: z.infer<typeof createRelationshipSchema>,
+): Promise<ActionResult> {
+  const parsed = createRelationshipSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the related person." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const d = parsed.data;
+  if (!d.relatedContactId && !(d.relatedName && d.relatedName.length > 0)) {
+    return { ok: false, error: "Pick a contact or enter a name." };
+  }
+  const supabase = createClient();
+  const { error } = await supabase.from("contact_relationships").insert({
+    organization_id: context.organization.id,
+    contact_id: d.contactId,
+    related_contact_id: d.relatedContactId,
+    related_name: d.relatedName,
+    relationship_type: d.relationshipType,
+  });
+  if (error) {
+    return { ok: false, error: "Could not add the related person." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
+  return { ok: true };
+}
+
+/** Удаляет связанное лицо. */
+export async function deleteContactRelationship(
+  relationshipId: string,
+): Promise<ActionResult> {
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("contact_relationships")
+    .delete()
+    .eq("id", relationshipId)
+    .eq("organization_id", context.organization.id)
+    .select("contact_id");
+  if (error) {
+    return { ok: false, error: "Could not remove the related person." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Related person not found." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${data[0]?.contact_id ?? ""}`);
   return { ok: true };
 }
 

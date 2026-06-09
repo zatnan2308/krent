@@ -498,6 +498,51 @@ export async function listContactOptions(
   }));
 }
 
+/** Связанное лицо контакта (с разрешённым отображаемым именем). */
+export interface ContactRelationshipItem {
+  id: string;
+  relationshipType: string;
+  relatedContactId: string | null;
+  name: string;
+}
+
+/** Связанные лица контакта (супруг/со-покупатель и т.п.). */
+export async function listContactRelationships(
+  organizationId: string,
+  contactId: string,
+): Promise<ContactRelationshipItem[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("contact_relationships")
+    .select("id, relationship_type, related_contact_id, related_name")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: true });
+  const rows = data ?? [];
+  const ids = rows
+    .map((row) => row.related_contact_id)
+    .filter((id): id is string => id !== null);
+  const names = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: contacts } = await supabase
+      .from("contacts")
+      .select("id, full_name")
+      .eq("organization_id", organizationId)
+      .in("id", ids);
+    for (const contact of contacts ?? []) {
+      names.set(contact.id, contact.full_name);
+    }
+  }
+  return rows.map((row) => ({
+    id: row.id,
+    relationshipType: row.relationship_type,
+    relatedContactId: row.related_contact_id,
+    name: row.related_contact_id
+      ? (names.get(row.related_contact_id) ?? row.related_name ?? "—")
+      : (row.related_name ?? "—"),
+  }));
+}
+
 // ---- Сделки ---------------------------------------------------
 
 /** Стадии воронки: системные + кастомные организации. */

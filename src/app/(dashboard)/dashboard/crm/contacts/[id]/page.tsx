@@ -12,6 +12,7 @@ import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
 import { ContactDocuments } from "@/features/crm/contact-documents";
+import { ContactRelationships } from "@/features/crm/contact-relationships";
 import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -20,6 +21,8 @@ import { getContactChannels } from "@/features/messaging/queries";
 import {
   getContact,
   getEntityActivity,
+  listContactOptions,
+  listContactRelationships,
   listNotes,
 } from "@/features/crm/queries";
 import { listContactDocuments } from "@/features/portal/queries";
@@ -79,10 +82,11 @@ export default async function ContactDetailPage({
   }));
   const canManage = hasPermission(context, "crm.manage");
   const canManageAll = hasPermission(context, "crm.manage_all");
-  const documents = await listContactDocuments(
-    context.organization.id,
-    params.id,
-  );
+  const [documents, contactOptions, relationships] = await Promise.all([
+    listContactDocuments(context.organization.id, params.id),
+    listContactOptions(context.organization.id),
+    listContactRelationships(context.organization.id, params.id),
+  ]);
   const { contact, leads, deals } = detail;
   const activity = await getEntityActivity(context.organization.id, [
     contact.id,
@@ -118,7 +122,22 @@ export default async function ContactDetailPage({
                 phone: contact.phone,
                 language: contact.preferred_language,
                 currency: contact.preferred_currency,
+                contactKind: contact.contact_kind,
+                companyName: contact.company_name,
+                jobTitle: contact.job_title,
+                secondaryPhone: contact.secondary_phone,
+                secondaryEmail: contact.secondary_email,
+                preferredChannel: contact.preferred_channel,
+                bestTimeToContact: contact.best_time_to_contact,
+                addressLine: contact.address_line,
+                city: contact.city,
+                postalCode: contact.postal_code,
+                country: contact.country,
+                dateOfBirth: contact.date_of_birth,
+                referredByContactId: contact.referred_by_contact_id,
+                referralNote: contact.referral_note,
               }}
+              contactOptions={contactOptions}
               canManage={canManage}
             />
           </CardContent>
@@ -155,6 +174,20 @@ export default async function ContactDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.relatedPeople}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactRelationships
+            contactId={contact.id}
+            items={relationships}
+            contactOptions={contactOptions}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

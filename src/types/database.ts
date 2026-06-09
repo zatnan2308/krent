@@ -1636,41 +1636,128 @@ export type Database = {
           },
         ]
       }
+      contact_relationships: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          related_contact_id: string | null
+          related_name: string | null
+          relationship_type: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          related_contact_id?: string | null
+          related_name?: string | null
+          relationship_type?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          related_contact_id?: string | null
+          related_name?: string | null
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_relationships_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_relationships_related_contact_id_fkey"
+            columns: ["related_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
+          address_line: string | null
           assigned_agent_id: string | null
+          best_time_to_contact: string | null
+          city: string | null
+          company_name: string | null
+          contact_kind: string
+          country: string | null
           created_at: string
+          date_of_birth: string | null
           email: string | null
           full_name: string
           id: string
+          job_title: string | null
           organization_id: string
           phone: string | null
+          postal_code: string | null
+          preferred_channel: string | null
           preferred_currency: string | null
           preferred_language: string | null
+          referral_note: string | null
+          referred_by_contact_id: string | null
+          secondary_email: string | null
+          secondary_phone: string | null
           updated_at: string
         }
         Insert: {
+          address_line?: string | null
           assigned_agent_id?: string | null
+          best_time_to_contact?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_kind?: string
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           full_name: string
           id?: string
+          job_title?: string | null
           organization_id: string
           phone?: string | null
+          postal_code?: string | null
+          preferred_channel?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          referral_note?: string | null
+          referred_by_contact_id?: string | null
+          secondary_email?: string | null
+          secondary_phone?: string | null
           updated_at?: string
         }
         Update: {
+          address_line?: string | null
           assigned_agent_id?: string | null
+          best_time_to_contact?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_kind?: string
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           full_name?: string
           id?: string
+          job_title?: string | null
           organization_id?: string
           phone?: string | null
+          postal_code?: string | null
+          preferred_channel?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          referral_note?: string | null
+          referred_by_contact_id?: string | null
+          secondary_email?: string | null
+          secondary_phone?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1679,6 +1766,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_referred_by_contact_id_fkey"
+            columns: ["referred_by_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
