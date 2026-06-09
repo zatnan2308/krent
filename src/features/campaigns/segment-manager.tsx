@@ -33,6 +33,9 @@ export function SegmentManager({
   const ruleHints: Record<SegmentRule, string> = {
     all: "",
     lead_type: t.hintLeadType,
+    role: "buyer / seller / renter / landlord / investor",
+    lifecycle: "new / nurture / active / under_contract / past_client / sphere",
+    tag: t.hintTag,
     channel: "",
     language: t.hintLanguage,
     currency: t.hintCurrency,

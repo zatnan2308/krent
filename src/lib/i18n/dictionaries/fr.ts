@@ -344,6 +344,10 @@ export const fr: DeepPartial<Dictionary> = {
     createProperty: "Créer l'annonce",
   },
   dashCrm: {
+    filterAllRoles: "Tous les rôles",
+    filterAllStages: "Toutes les étapes",
+    filterAllTemps: "Toutes les températures",
+    filterTagPh: "Étiquette",
     processTitle: "Processus & admin",
     lastContactedAt: "Dernier contact",
     nextFollowUpAt: "Prochaine relance",
@@ -1070,6 +1074,7 @@ export const fr: DeepPartial<Dictionary> = {
       "Les e-mails transactionnels apparaîtront ici une fois les événements déclenchés.",
   },
   dashMarketing: {
+    hintTag: "Étiquette exacte",
     navAutomations: "Automatisations",
     title: "Campagnes marketing",
     description: "Créez et envoyez des newsletters à vos segments de contacts.",

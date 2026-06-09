@@ -344,6 +344,10 @@ export const uk: DeepPartial<Dictionary> = {
     createProperty: "Створити об'єкт",
   },
   dashCrm: {
+    filterAllRoles: "Усі ролі",
+    filterAllStages: "Усі стадії",
+    filterAllTemps: "Усі температури",
+    filterTagPh: "Тег",
     processTitle: "Процес і службове",
     lastContactedAt: "Останній контакт",
     nextFollowUpAt: "Наступний контакт",
@@ -1067,6 +1071,7 @@ export const uk: DeepPartial<Dictionary> = {
       "Транзакційні листи з'являться тут після спрацювання подій.",
   },
   dashMarketing: {
+    hintTag: "Точний тег",
     navAutomations: "Автоматизації",
     title: "Маркетингові кампанії",
     description: "Створюйте та надсилайте розсилки сегментам контактів.",

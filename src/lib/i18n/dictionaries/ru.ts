@@ -344,6 +344,10 @@ export const ru: DeepPartial<Dictionary> = {
     createProperty: "Создать объект",
   },
   dashCrm: {
+    filterAllRoles: "Все роли",
+    filterAllStages: "Все стадии",
+    filterAllTemps: "Все температуры",
+    filterTagPh: "Тег",
     processTitle: "Процесс и служебное",
     lastContactedAt: "Последний контакт",
     nextFollowUpAt: "Следующее касание",
@@ -1067,6 +1071,7 @@ export const ru: DeepPartial<Dictionary> = {
       "Транзакционные письма появятся здесь после срабатывания событий.",
   },
   dashMarketing: {
+    hintTag: "Точный тег",
     navAutomations: "Автоматизации",
     title: "Маркетинговые кампании",
     description: "Создавайте и отправляйте рассылки сегментам контактов.",

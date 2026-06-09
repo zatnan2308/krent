@@ -347,6 +347,10 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    filterAllRoles: "All roles",
+    filterAllStages: "All stages",
+    filterAllTemps: "All temperatures",
+    filterTagPh: "Tag",
     processTitle: "Process & admin",
     lastContactedAt: "Last contacted",
     nextFollowUpAt: "Next follow-up",
@@ -1103,6 +1107,7 @@ export const en = {
       "Transactional emails will appear here once events are triggered.",
   },
   dashMarketing: {
+    hintTag: "Exact tag",
     navAutomations: "Automations",
     title: "Marketing campaigns",
     description: "Build and send newsletters to your contact segments.",

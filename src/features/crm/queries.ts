@@ -66,6 +66,10 @@ export interface ContactListItem {
   email: string | null;
   phone: string | null;
   createdAt: string;
+  role: string | null;
+  lifecycleStage: string;
+  temperature: string | null;
+  tags: string[];
 }
 
 export interface ContactDetail {
@@ -396,6 +400,10 @@ function mapContactRow(contact: Contact): ContactListItem {
     email: contact.email,
     phone: contact.phone,
     createdAt: contact.created_at,
+    role: contact.role,
+    lifecycleStage: contact.lifecycle_stage,
+    temperature: contact.temperature,
+    tags: contact.tags,
   };
 }
 
@@ -423,7 +431,15 @@ export async function listContacts(
 /** Страница контактов с поиском `q` и срезом `.range()` (+ count для пагинации). */
 export async function listContactsPage(
   organizationId: string,
-  filters: { q?: string; page?: number; pageSize?: number } = {},
+  filters: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+    role?: string;
+    lifecycle?: string;
+    temperature?: string;
+    tag?: string;
+  } = {},
 ): Promise<ContactListResult> {
   const supabase = createClient();
   const pageSize = filters.pageSize ?? CONTACTS_PAGE_SIZE;
@@ -437,6 +453,18 @@ export async function listContactsPage(
     query = query.or(
       `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`,
     );
+  }
+  if (filters.role) {
+    query = query.eq("role", filters.role);
+  }
+  if (filters.lifecycle) {
+    query = query.eq("lifecycle_stage", filters.lifecycle);
+  }
+  if (filters.temperature) {
+    query = query.eq("temperature", filters.temperature);
+  }
+  if (filters.tag) {
+    query = query.contains("tags", [filters.tag]);
   }
   const from = (page - 1) * pageSize;
   const { data, count } = await query

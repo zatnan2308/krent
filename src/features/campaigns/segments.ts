@@ -108,6 +108,26 @@ export async function resolveSegmentContactIds(
     return unique((data ?? []).map((row) => row.contact_id));
   }
 
+  // Прямые поля контакта (роль/стадия жизненного цикла/тег).
+  if (def.rule === "role" || def.rule === "lifecycle") {
+    const column = def.rule === "role" ? "role" : "lifecycle_stage";
+    const { data } = await admin
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq(column, def.value);
+    return unique((data ?? []).map((row) => row.id));
+  }
+
+  if (def.rule === "tag") {
+    const { data } = await admin
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .contains("tags", [def.value]);
+    return unique((data ?? []).map((row) => row.id));
+  }
+
   if (def.rule === "city") {
     const { data } = await admin
       .from("leads")

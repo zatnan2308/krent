@@ -5,6 +5,9 @@ import { BLOCK_TYPES } from "./blocks";
 const SEGMENT_RULE_VALUES = [
   "all",
   "lead_type",
+  "role",
+  "lifecycle",
+  "tag",
   "channel",
   "language",
   "currency",

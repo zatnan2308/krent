@@ -345,6 +345,10 @@ export const de: DeepPartial<Dictionary> = {
     createProperty: "Objekt erstellen",
   },
   dashCrm: {
+    filterAllRoles: "Alle Rollen",
+    filterAllStages: "Alle Phasen",
+    filterAllTemps: "Alle Temperaturen",
+    filterTagPh: "Tag",
     processTitle: "Prozess & Verwaltung",
     lastContactedAt: "Letzter Kontakt",
     nextFollowUpAt: "Nächste Nachfassung",
@@ -1070,6 +1074,7 @@ export const de: DeepPartial<Dictionary> = {
       "Transaktions-E-Mails erscheinen hier, sobald Ereignisse ausgelöst werden.",
   },
   dashMarketing: {
+    hintTag: "Exaktes Tag",
     navAutomations: "Automatisierungen",
     title: "Marketing-Kampagnen",
     description: "Erstellen und senden Sie Newsletter an Ihre Kontaktsegmente.",

@@ -49,6 +49,9 @@ export const RECIPIENT_STATUS_LABELS: Record<
 export const SEGMENT_RULES = [
   { value: "all", label: "All contacts" },
   { value: "lead_type", label: "Lead type" },
+  { value: "role", label: "Contact role" },
+  { value: "lifecycle", label: "Lifecycle stage" },
+  { value: "tag", label: "Tag" },
   { value: "channel", label: "Acquisition channel" },
   { value: "language", label: "Language" },
   { value: "currency", label: "Currency" },
