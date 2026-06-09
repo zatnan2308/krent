@@ -347,6 +347,12 @@ export const en = {
     createProperty: "Create property",
   },
   dashCrm: {
+    navFollowUps: "Follow-ups",
+    followUpsTitle: "Follow-ups",
+    followUpsDesc: "Contacts with a scheduled next touch — overdue and upcoming.",
+    fuOverdue: "Overdue",
+    fuUpcoming: "Upcoming",
+    fuEmpty: "No follow-ups scheduled.",
     filterAllRoles: "All roles",
     filterAllStages: "All stages",
     filterAllTemps: "All temperatures",

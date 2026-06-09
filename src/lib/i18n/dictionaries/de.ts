@@ -345,6 +345,12 @@ export const de: DeepPartial<Dictionary> = {
     createProperty: "Objekt erstellen",
   },
   dashCrm: {
+    navFollowUps: "Nachfassungen",
+    followUpsTitle: "Nachfassungen",
+    followUpsDesc: "Kontakte mit geplanter nächster Nachfassung — überfällig und anstehend.",
+    fuOverdue: "Überfällig",
+    fuUpcoming: "Anstehend",
+    fuEmpty: "Keine Nachfassungen geplant.",
     filterAllRoles: "Alle Rollen",
     filterAllStages: "Alle Phasen",
     filterAllTemps: "Alle Temperaturen",

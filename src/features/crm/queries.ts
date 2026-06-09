@@ -602,6 +602,39 @@ export async function getContactSellerProfile(
   return data;
 }
 
+/** Контакт с назначенным следующим касанием (дашборд follow-ups). */
+export interface FollowUpItem {
+  id: string;
+  fullName: string;
+  nextFollowUpAt: string;
+  role: string | null;
+  temperature: string | null;
+}
+
+/** Контакты с заполненным next_follow_up_at, ближайшие сверху. */
+export async function listUpcomingFollowUps(
+  organizationId: string,
+  limit = 200,
+): Promise<FollowUpItem[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("contacts")
+    .select("id, full_name, next_follow_up_at, role, temperature")
+    .eq("organization_id", organizationId)
+    .not("next_follow_up_at", "is", null)
+    .order("next_follow_up_at", { ascending: true })
+    .limit(limit);
+  return (data ?? [])
+    .filter((row) => row.next_follow_up_at !== null)
+    .map((row) => ({
+      id: row.id,
+      fullName: row.full_name,
+      nextFollowUpAt: row.next_follow_up_at as string,
+      role: row.role,
+      temperature: row.temperature,
+    }));
+}
+
 // ---- Сделки ---------------------------------------------------
 
 /** Стадии воронки: системные + кастомные организации. */

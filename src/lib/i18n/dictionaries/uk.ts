@@ -344,6 +344,12 @@ export const uk: DeepPartial<Dictionary> = {
     createProperty: "Створити об'єкт",
   },
   dashCrm: {
+    navFollowUps: "Нагадування",
+    followUpsTitle: "Найближчі контакти",
+    followUpsDesc: "Контакти з призначеним наступним контактом — прострочені та найближчі.",
+    fuOverdue: "Прострочені",
+    fuUpcoming: "Найближчі",
+    fuEmpty: "Нагадувань не заплановано.",
     filterAllRoles: "Усі ролі",
     filterAllStages: "Усі стадії",
     filterAllTemps: "Усі температури",

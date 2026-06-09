@@ -36,6 +36,7 @@ export const ROUTES = {
     crmContacts: "/dashboard/crm/contacts",
     crmDeals: "/dashboard/crm/deals",
     crmTasks: "/dashboard/crm/tasks",
+    crmFollowUps: "/dashboard/crm/follow-ups",
     clients: "/dashboard/clients",
     rentals: "/dashboard/rentals",
     bookings: "/dashboard/bookings",

@@ -13,6 +13,7 @@ const LINKS = [
   { href: ROUTES.dashboard.crmContacts, key: "contacts" },
   { href: ROUTES.dashboard.crmDeals, key: "deals" },
   { href: ROUTES.dashboard.crmTasks, key: "tasks" },
+  { href: ROUTES.dashboard.crmFollowUps, key: "followUps" },
 ] as const;
 
 /** Поднавигация раздела CRM. */
@@ -25,6 +26,7 @@ export function CrmNav() {
     contacts: dict.dashCrm.navContacts,
     deals: dict.dashCrm.navDeals,
     tasks: dict.dashCrm.navTasks,
+    followUps: dict.dashCrm.navFollowUps,
   };
 
   return (

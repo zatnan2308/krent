@@ -344,6 +344,12 @@ export const es: DeepPartial<Dictionary> = {
     createProperty: "Crear propiedad",
   },
   dashCrm: {
+    navFollowUps: "Seguimientos",
+    followUpsTitle: "Seguimientos",
+    followUpsDesc: "Contactos con un próximo seguimiento programado — vencidos y próximos.",
+    fuOverdue: "Vencidos",
+    fuUpcoming: "Próximos",
+    fuEmpty: "No hay seguimientos programados.",
     filterAllRoles: "Todos los roles",
     filterAllStages: "Todas las etapas",
     filterAllTemps: "Todas las temperaturas",

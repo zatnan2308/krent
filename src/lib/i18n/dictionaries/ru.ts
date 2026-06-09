@@ -344,6 +344,12 @@ export const ru: DeepPartial<Dictionary> = {
     createProperty: "Создать объект",
   },
   dashCrm: {
+    navFollowUps: "Касания",
+    followUpsTitle: "Предстоящие касания",
+    followUpsDesc: "Контакты с назначенным следующим касанием — просроченные и ближайшие.",
+    fuOverdue: "Просроченные",
+    fuUpcoming: "Ближайшие",
+    fuEmpty: "Касаний не запланировано.",
     filterAllRoles: "Все роли",
     filterAllStages: "Все стадии",
     filterAllTemps: "Все температуры",
