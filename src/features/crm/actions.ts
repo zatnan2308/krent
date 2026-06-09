@@ -929,6 +929,77 @@ export async function deleteContactRelationship(
   return { ok: true };
 }
 
+const CONTACT_ROLES = [
+  "buyer",
+  "seller",
+  "renter",
+  "landlord",
+  "investor",
+  "other",
+] as const;
+const LIFECYCLE_STAGES = [
+  "new",
+  "nurture",
+  "active",
+  "under_contract",
+  "past_client",
+  "sphere",
+] as const;
+const TEMPERATURES = ["hot", "warm", "cold"] as const;
+const PRIORITIES = ["low", "medium", "high"] as const;
+
+const updateClassificationSchema = z.object({
+  contactId: z.guid(),
+  role: z.enum(CONTACT_ROLES).nullable(),
+  lifecycleStage: z.enum(LIFECYCLE_STAGES),
+  temperature: z.enum(TEMPERATURES).nullable(),
+  leadScore: z.number().int().min(0).max(100).nullable(),
+  priority: z.enum(PRIORITIES).nullable(),
+  tags: z.array(z.string().trim().min(1).max(40)).max(30),
+});
+
+/** Обновляет классификацию контакта (роль/стадия/температура/скор/приоритет/теги). */
+export async function updateContactClassification(
+  input: z.infer<typeof updateClassificationSchema>,
+): Promise<ActionResult> {
+  const parsed = updateClassificationSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const d = parsed.data;
+  const tags = [...new Set(d.tags.map((tag) => tag.trim()).filter(Boolean))];
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .update({
+      role: d.role,
+      lifecycle_stage: d.lifecycleStage,
+      temperature: d.temperature,
+      lead_score: d.leadScore,
+      priority: d.priority,
+      tags,
+    })
+    .eq("id", d.contactId)
+    .eq("organization_id", context.organization.id)
+    .select("id");
+  if (error) {
+    return { ok: false, error: "Could not update the contact." };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Contact not found or not editable." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
+  revalidatePath(CRM_CONTACTS);
+  return { ok: true };
+}
+
 const createContactSchema = z.object({
   fullName: z.string().trim().min(1).max(200),
   email: z

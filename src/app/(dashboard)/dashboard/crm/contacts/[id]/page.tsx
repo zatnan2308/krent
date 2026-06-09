@@ -11,6 +11,7 @@ import { ActivityTimeline } from "@/features/crm/activity-timeline";
 import { ContactEditForm } from "@/features/crm/contact-edit-form";
 import { ContactMergeCard } from "@/features/crm/contact-merge-card";
 import { ContactPortalAccess } from "@/features/crm/contact-portal-access";
+import { ContactClassificationForm } from "@/features/crm/contact-classification-form";
 import { ContactDocuments } from "@/features/crm/contact-documents";
 import { ContactRelationships } from "@/features/crm/contact-relationships";
 import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
@@ -174,6 +175,26 @@ export default async function ContactDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.classificationTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactClassificationForm
+            contact={{
+              id: contact.id,
+              role: contact.role,
+              lifecycleStage: contact.lifecycle_stage,
+              temperature: contact.temperature,
+              leadScore: contact.lead_score,
+              priority: contact.priority,
+              tags: contact.tags,
+            }}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

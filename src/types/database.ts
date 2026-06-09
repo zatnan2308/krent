@@ -1702,10 +1702,16 @@ export type Database = {
           preferred_channel: string | null
           preferred_currency: string | null
           preferred_language: string | null
+          lead_score: number | null
+          lifecycle_stage: string
+          priority: string | null
           referral_note: string | null
           referred_by_contact_id: string | null
+          role: string | null
           secondary_email: string | null
           secondary_phone: string | null
+          tags: string[]
+          temperature: string | null
           updated_at: string
         }
         Insert: {
@@ -1728,10 +1734,16 @@ export type Database = {
           preferred_channel?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          lead_score?: number | null
+          lifecycle_stage?: string
+          priority?: string | null
           referral_note?: string | null
           referred_by_contact_id?: string | null
+          role?: string | null
           secondary_email?: string | null
           secondary_phone?: string | null
+          tags?: string[]
+          temperature?: string | null
           updated_at?: string
         }
         Update: {
@@ -1754,10 +1766,16 @@ export type Database = {
           preferred_channel?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          lead_score?: number | null
+          lifecycle_stage?: string
+          priority?: string | null
           referral_note?: string | null
           referred_by_contact_id?: string | null
+          role?: string | null
           secondary_email?: string | null
           secondary_phone?: string | null
+          tags?: string[]
+          temperature?: string | null
           updated_at?: string
         }
         Relationships: [
