@@ -1114,6 +1114,7 @@ export const en = {
       "Transactional emails will appear here once events are triggered.",
   },
   dashMarketing: {
+    selectValue: "Select a value",
     hintTag: "Exact tag",
     navAutomations: "Automations",
     title: "Marketing campaigns",

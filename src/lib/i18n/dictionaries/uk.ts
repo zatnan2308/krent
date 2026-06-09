@@ -1078,6 +1078,7 @@ export const uk: DeepPartial<Dictionary> = {
       "Транзакційні листи з'являться тут після спрацювання подій.",
   },
   dashMarketing: {
+    selectValue: "Виберіть значення",
     hintTag: "Точний тег",
     navAutomations: "Автоматизації",
     title: "Маркетингові кампанії",

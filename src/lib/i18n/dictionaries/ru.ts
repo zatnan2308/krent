@@ -1078,6 +1078,7 @@ export const ru: DeepPartial<Dictionary> = {
       "Транзакционные письма появятся здесь после срабатывания событий.",
   },
   dashMarketing: {
+    selectValue: "Выберите значение",
     hintTag: "Точный тег",
     navAutomations: "Автоматизации",
     title: "Маркетинговые кампании",

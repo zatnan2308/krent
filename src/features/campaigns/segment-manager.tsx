@@ -21,6 +21,23 @@ import { useI18n } from "@/lib/i18n/provider";
 const FIELD_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+const ROLE_VALUES = [
+  "buyer",
+  "seller",
+  "renter",
+  "landlord",
+  "investor",
+  "other",
+] as const;
+const LIFECYCLE_VALUES = [
+  "new",
+  "nurture",
+  "active",
+  "under_contract",
+  "past_client",
+  "sphere",
+] as const;
+
 /** Конструктор и список сегментов контактов. */
 export function SegmentManager({
   segments,
@@ -41,6 +58,22 @@ export function SegmentManager({
     currency: t.hintCurrency,
     city: t.hintCity,
     property_type: t.hintPropertyType,
+  };
+  const roleValueLabels: Record<string, string> = {
+    buyer: dict.dashCrm.roleBuyer,
+    seller: dict.dashCrm.roleSeller,
+    renter: dict.dashCrm.roleRenter,
+    landlord: dict.dashCrm.roleLandlord,
+    investor: dict.dashCrm.roleInvestor,
+    other: dict.dashCrm.roleOther,
+  };
+  const lifecycleValueLabels: Record<string, string> = {
+    new: dict.dashCrm.lcNew,
+    nurture: dict.dashCrm.lcNurture,
+    active: dict.dashCrm.lcActive,
+    under_contract: dict.dashCrm.lcUnderContract,
+    past_client: dict.dashCrm.lcPastClient,
+    sphere: dict.dashCrm.lcSphere,
   };
   const [name, setName] = React.useState("");
   const [rule, setRule] = React.useState<SegmentRule>("lead_type");
@@ -136,6 +169,34 @@ export function SegmentManager({
               {SEGMENT_CHANNELS.map((channel) => (
                 <option key={channel.value} value={channel.value}>
                   {channel.label}
+                </option>
+              ))}
+            </select>
+          ) : rule === "role" ? (
+            <select
+              className={FIELD_CLASS}
+              value={value}
+              aria-label={t.segmentValueAria}
+              onChange={(event) => setValue(event.target.value)}
+            >
+              <option value="">{t.selectValue}</option>
+              {ROLE_VALUES.map((option) => (
+                <option key={option} value={option}>
+                  {roleValueLabels[option]}
+                </option>
+              ))}
+            </select>
+          ) : rule === "lifecycle" ? (
+            <select
+              className={FIELD_CLASS}
+              value={value}
+              aria-label={t.segmentValueAria}
+              onChange={(event) => setValue(event.target.value)}
+            >
+              <option value="">{t.selectValue}</option>
+              {LIFECYCLE_VALUES.map((option) => (
+                <option key={option} value={option}>
+                  {lifecycleValueLabels[option]}
                 </option>
               ))}
             </select>

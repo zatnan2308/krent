@@ -1081,6 +1081,7 @@ export const de: DeepPartial<Dictionary> = {
       "Transaktions-E-Mails erscheinen hier, sobald Ereignisse ausgelöst werden.",
   },
   dashMarketing: {
+    selectValue: "Wert wählen",
     hintTag: "Exaktes Tag",
     navAutomations: "Automatisierungen",
     title: "Marketing-Kampagnen",
