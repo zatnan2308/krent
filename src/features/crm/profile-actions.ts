@@ -103,3 +103,73 @@ export async function upsertContactBuyerProfile(
   revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
   return { ok: true };
 }
+
+const sellerProfileSchema = z.object({
+  contactId: z.guid(),
+  address: z.string().trim().max(300).nullable(),
+  propertyType: z.string().trim().max(30).nullable(),
+  beds: z.number().int().min(0).max(50).nullable(),
+  baths: z.number().min(0).max(50).nullable(),
+  area: z.number().min(0).nullable(),
+  yearBuilt: z.number().int().min(1700).max(2100).nullable(),
+  expectedPrice: z.number().min(0).nullable(),
+  mortgageBalance: z.number().min(0).nullable(),
+  hoaFees: z.number().min(0).nullable(),
+  reason: z.string().trim().max(2000).nullable(),
+  timeline: z.string().trim().max(200).nullable(),
+  needsCounterPurchase: z.boolean(),
+  contractType: z.string().trim().max(30).nullable(),
+  commissionNote: z.string().trim().max(200).nullable(),
+  currency: z.string().trim().max(10).nullable(),
+  notes: z.string().trim().max(2000).nullable(),
+});
+
+/** Создаёт/обновляет профиль продавца (объект на продажу, 1:1 с контактом). */
+export async function upsertContactSellerProfile(
+  input: z.infer<typeof sellerProfileSchema>,
+): Promise<Result> {
+  const parsed = sellerProfileSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the form." };
+  }
+  const context = await requireOrganizationContext();
+  if (!context.organization) {
+    return { ok: false, error: "No active organization." };
+  }
+  if (!hasPermission(context, "crm.manage")) {
+    return { ok: false, error: "You do not have permission to edit contacts." };
+  }
+  const d = parsed.data;
+  const supabase = createClient();
+  if (!(await assertContactInOrg(supabase, context.organization.id, d.contactId))) {
+    return { ok: false, error: "Contact not found." };
+  }
+  const { error } = await supabase.from("contact_seller_profiles").upsert(
+    {
+      organization_id: context.organization.id,
+      contact_id: d.contactId,
+      address: d.address,
+      property_type: d.propertyType,
+      beds: d.beds,
+      baths: d.baths,
+      area: d.area,
+      year_built: d.yearBuilt,
+      expected_price: d.expectedPrice,
+      mortgage_balance: d.mortgageBalance,
+      hoa_fees: d.hoaFees,
+      reason: d.reason,
+      timeline: d.timeline,
+      needs_counter_purchase: d.needsCounterPurchase,
+      contract_type: d.contractType,
+      commission_note: d.commissionNote,
+      currency: d.currency,
+      notes: d.notes,
+    },
+    { onConflict: "contact_id" },
+  );
+  if (error) {
+    return { ok: false, error: "Could not save the seller profile." };
+  }
+  revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
+  return { ok: true };
+}

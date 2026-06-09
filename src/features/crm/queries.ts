@@ -559,6 +559,21 @@ export async function getContactBuyerProfile(
   return data;
 }
 
+/** Профиль продавца (объект на продажу), 1:1 с контактом. */
+export async function getContactSellerProfile(
+  organizationId: string,
+  contactId: string,
+): Promise<Tables<"contact_seller_profiles"> | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("contact_seller_profiles")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .maybeSingle();
+  return data;
+}
+
 // ---- Сделки ---------------------------------------------------
 
 /** Стадии воронки: системные + кастомные организации. */

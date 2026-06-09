@@ -15,6 +15,7 @@ import { ContactBuyerProfileForm } from "@/features/crm/contact-buyer-profile-fo
 import { ContactClassificationForm } from "@/features/crm/contact-classification-form";
 import { ContactDocuments } from "@/features/crm/contact-documents";
 import { ContactRelationships } from "@/features/crm/contact-relationships";
+import { ContactSellerProfileForm } from "@/features/crm/contact-seller-profile-form";
 import { CrmDeleteButton } from "@/features/crm/crm-delete-button";
 import { CrmNav } from "@/features/crm/crm-nav";
 import { NotesPanel } from "@/features/crm/notes-panel";
@@ -23,6 +24,7 @@ import { getContactChannels } from "@/features/messaging/queries";
 import {
   getContact,
   getContactBuyerProfile,
+  getContactSellerProfile,
   getEntityActivity,
   listContactOptions,
   listContactRelationships,
@@ -85,13 +87,19 @@ export default async function ContactDetailPage({
   }));
   const canManage = hasPermission(context, "crm.manage");
   const canManageAll = hasPermission(context, "crm.manage_all");
-  const [documents, contactOptions, relationships, buyerProfile] =
-    await Promise.all([
-      listContactDocuments(context.organization.id, params.id),
-      listContactOptions(context.organization.id),
-      listContactRelationships(context.organization.id, params.id),
-      getContactBuyerProfile(context.organization.id, params.id),
-    ]);
+  const [
+    documents,
+    contactOptions,
+    relationships,
+    buyerProfile,
+    sellerProfile,
+  ] = await Promise.all([
+    listContactDocuments(context.organization.id, params.id),
+    listContactOptions(context.organization.id),
+    listContactRelationships(context.organization.id, params.id),
+    getContactBuyerProfile(context.organization.id, params.id),
+    getContactSellerProfile(context.organization.id, params.id),
+  ]);
   const { contact, leads, deals } = detail;
   const activity = await getEntityActivity(context.organization.id, [
     contact.id,
@@ -229,6 +237,41 @@ export default async function ContactDetailPage({
                     budgetMax: buyerProfile.budget_max,
                     mustHave: buyerProfile.must_have,
                     searchNotes: buyerProfile.search_notes,
+                  }
+                : null
+            }
+            defaultCurrency={context.organization.default_currency}
+            canManage={canManage}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.sellerProfileTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContactSellerProfileForm
+            contactId={contact.id}
+            profile={
+              sellerProfile
+                ? {
+                    address: sellerProfile.address,
+                    propertyType: sellerProfile.property_type,
+                    beds: sellerProfile.beds,
+                    baths: sellerProfile.baths,
+                    area: sellerProfile.area,
+                    yearBuilt: sellerProfile.year_built,
+                    expectedPrice: sellerProfile.expected_price,
+                    mortgageBalance: sellerProfile.mortgage_balance,
+                    hoaFees: sellerProfile.hoa_fees,
+                    reason: sellerProfile.reason,
+                    timeline: sellerProfile.timeline,
+                    needsCounterPurchase: sellerProfile.needs_counter_purchase,
+                    contractType: sellerProfile.contract_type,
+                    commissionNote: sellerProfile.commission_note,
+                    currency: sellerProfile.currency,
+                    notes: sellerProfile.notes,
                   }
                 : null
             }

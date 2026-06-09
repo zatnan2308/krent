@@ -1777,6 +1777,93 @@ export type Database = {
           },
         ]
       }
+      contact_seller_profiles: {
+        Row: {
+          address: string | null
+          area: number | null
+          baths: number | null
+          beds: number | null
+          commission_note: string | null
+          contact_id: string
+          contract_type: string | null
+          created_at: string
+          currency: string | null
+          expected_price: number | null
+          hoa_fees: number | null
+          id: string
+          mortgage_balance: number | null
+          needs_counter_purchase: boolean
+          notes: string | null
+          organization_id: string
+          property_type: string | null
+          reason: string | null
+          timeline: string | null
+          updated_at: string
+          year_built: number | null
+        }
+        Insert: {
+          address?: string | null
+          area?: number | null
+          baths?: number | null
+          beds?: number | null
+          commission_note?: string | null
+          contact_id: string
+          contract_type?: string | null
+          created_at?: string
+          currency?: string | null
+          expected_price?: number | null
+          hoa_fees?: number | null
+          id?: string
+          mortgage_balance?: number | null
+          needs_counter_purchase?: boolean
+          notes?: string | null
+          organization_id: string
+          property_type?: string | null
+          reason?: string | null
+          timeline?: string | null
+          updated_at?: string
+          year_built?: number | null
+        }
+        Update: {
+          address?: string | null
+          area?: number | null
+          baths?: number | null
+          beds?: number | null
+          commission_note?: string | null
+          contact_id?: string
+          contract_type?: string | null
+          created_at?: string
+          currency?: string | null
+          expected_price?: number | null
+          hoa_fees?: number | null
+          id?: string
+          mortgage_balance?: number | null
+          needs_counter_purchase?: boolean
+          notes?: string | null
+          organization_id?: string
+          property_type?: string | null
+          reason?: string | null
+          timeline?: string | null
+          updated_at?: string
+          year_built?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_seller_profiles_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_seller_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           address_line: string | null
