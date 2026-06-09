@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { setMarketingConsent } from "@/features/campaigns/consent";
 import { enqueueDealConversion } from "@/features/integrations/offline-conversions";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
@@ -1146,6 +1147,14 @@ export async function updateContactConsents(
   if (!data || data.length === 0) {
     return { ok: false, error: "Contact not found or not editable." };
   }
+  // Зеркалим в аудит-лог contact_consents (история granted/withdrawn + source).
+  await setMarketingConsent(
+    createAdminClient(),
+    context.organization.id,
+    d.contactId,
+    d.consentMarketing,
+    "crm_form",
+  );
   revalidatePath(`${CRM_CONTACTS}/${d.contactId}`);
   return { ok: true };
 }

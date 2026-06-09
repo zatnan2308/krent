@@ -52,24 +52,6 @@ export async function loadSuppressedEmails(
   return result;
 }
 
-/** contact_id с отозванным согласием на маркетинг. */
-export async function loadWithdrawnContactIds(
-  admin: Admin,
-  organizationId: string,
-): Promise<Set<string>> {
-  const result = new Set<string>();
-  const { data } = await admin
-    .from("contact_consents")
-    .select("contact_id")
-    .eq("organization_id", organizationId)
-    .eq("consent_type", "marketing")
-    .eq("status", "withdrawn");
-  for (const row of data ?? []) {
-    result.add(row.contact_id);
-  }
-  return result;
-}
-
 /**
  * Записывает согласие на маркетинг (granted) либо его отзыв (withdrawn).
  * Одна строка на пару (contact, consent_type) — upsert вручную.
@@ -110,4 +92,11 @@ export async function setMarketingConsent(
       withdrawn_at: granted ? null : now,
     });
   }
+
+  // Синхронизируем единый источник правды — колонку на контакте.
+  await admin
+    .from("contacts")
+    .update({ consent_marketing: granted })
+    .eq("id", contactId)
+    .eq("organization_id", organizationId);
 }

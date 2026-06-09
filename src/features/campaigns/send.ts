@@ -9,11 +9,7 @@ import {
   renderCampaignEmail,
 } from "./block-renderer";
 import { type BlockType, type CampaignBlockData, isBlockType } from "./blocks";
-import {
-  loadSuppressedEmails,
-  loadUnsubscribedEmails,
-  loadWithdrawnContactIds,
-} from "./consent";
+import { loadSuppressedEmails, loadUnsubscribedEmails } from "./consent";
 import { getEmailPropertyData } from "./queries";
 import { materializeSegment } from "./segments";
 
@@ -200,7 +196,6 @@ export async function sendCampaign(
       contacts = data ?? [];
     }
 
-    const withdrawn = await loadWithdrawnContactIds(admin, organizationId);
     const unsubscribed = await loadUnsubscribedEmails(admin, organizationId);
     const suppressed = await loadSuppressedEmails(admin, organizationId);
 
@@ -223,7 +218,7 @@ export async function sendCampaign(
         skipReason = "No email address.";
       } else if (seenEmails.has(emailLower)) {
         skipReason = "Duplicate email.";
-      } else if (withdrawn.has(contact.id) || unsubscribed.has(emailLower)) {
+      } else if (unsubscribed.has(emailLower)) {
         skipReason = "Unsubscribed from marketing.";
       } else if (suppressed.has(emailLower)) {
         skipReason = "Hard bounce or spam complaint.";

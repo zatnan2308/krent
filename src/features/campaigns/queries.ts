@@ -3,7 +3,7 @@ import { getClientEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/server";
 
 import { type BlockType, type CampaignBlockData, isBlockType } from "./blocks";
-import { loadUnsubscribedEmails, loadWithdrawnContactIds } from "./consent";
+import { loadUnsubscribedEmails } from "./consent";
 import { parseDefinition } from "./segments";
 import type { Campaign, CampaignReport, CampaignStatus } from "./types";
 
@@ -299,19 +299,19 @@ export async function listMarketingContacts(
   const admin = createAdminClient();
   const { data } = await admin
     .from("contacts")
-    .select("id, full_name, email, preferred_language")
+    .select("id, full_name, email, preferred_language, consent_marketing")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
     .limit(300);
   const rows = data ?? [];
 
-  const withdrawn = await loadWithdrawnContactIds(admin, organizationId);
+  // Единый источник правды — колонка consent_marketing; плюс email-отписки.
   const unsubscribed = await loadUnsubscribedEmails(admin, organizationId);
 
   return rows.map((row) => {
     const emailLower = (row.email ?? "").toLowerCase();
     const subscribed =
-      !withdrawn.has(row.id) &&
+      row.consent_marketing &&
       !(emailLower !== "" && unsubscribed.has(emailLower));
     return {
       id: row.id,
